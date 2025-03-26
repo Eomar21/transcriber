@@ -72,7 +72,7 @@ namespace Transcriber.Maui
             // Update the label with the transcript location
             if (output.Any())
             {
-                TranscriptLocationLabel.Text = $"Transcript saved at: {Path.GetFileNameWithoutExtension(FilePathEntry.Text)}_transcript.txt";
+                TranscriptLocationLabel.Text = $"Transcript saved here: {Path.GetFileNameWithoutExtension(FilePathEntry.Text)}_transcript.txt";
             }
 
         }
