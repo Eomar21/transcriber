@@ -21,10 +21,13 @@ jobs:
       - name: Install .NET MAUI Workloads
         run: |
           dotnet workload install maui
+          dotnet workload install maui-ios
+          dotnet workload install maui-android
+          dotnet workload install maui-maccatalyst
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.0'
+          xcode-version: latest-stable
 
       # Restore only the MAUI project instead of the whole solution
       - name: Restore NuGet Packages
