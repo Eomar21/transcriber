@@ -17,16 +17,16 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '9.0.x'  # or '8.0.x' if you change your TFM to net8.0-maccatalyst
+          dotnet-version: '8.0.x'
 
       - name: Install MAUI Workload
         run: dotnet workload install maui
 
       - name: Restore NuGet Packages
-        run: dotnet restore "Transcriber.sln"
+        run: dotnet restore "./source/Transcriber/Transcriber.sln"
 
       - name: Build MacCatalyst App
-        run: dotnet publish "./Transcriber.Maui/Transcriber.Maui.csproj" -f net9.0-maccatalyst -c Release -o ./publish
+        run: dotnet publish "./source/Transcriber/Transcriber.Maui/Transcriber.Maui.csproj" -f net9.0-maccatalyst -c Release -o ./publish
 
       - name: List Published Files
         run: ls -la ./publish
