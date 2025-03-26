@@ -1,0 +1,50 @@
+name: Build Mac Installer
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'  # or '8.0.x' if you change your TFM to net8.0-maccatalyst
+
+      - name: Install MAUI Workload
+        run: dotnet workload install maui
+
+      - name: Restore NuGet Packages
+        run: dotnet restore "Transcriber.sln"
+
+      - name: Build MacCatalyst App
+        run: dotnet publish "./Transcriber.Maui/Transcriber.Maui.csproj" -f net9.0-maccatalyst -c Release -o ./publish
+
+      - name: List Published Files
+        run: ls -la ./publish
+
+      - name: Create DMG Installer
+        run: |
+          mkdir -p installer
+          # If your .app is named Transcriber.Maui.app, adjust accordingly:
+          hdiutil create -volname "Transcriber" \
+            -srcfolder "./publish/Transcriber.Maui.app" \
+            -ov -format UDZO \
+            "./installer/Transcriber.dmg"
+
+      - name: Verify Installer Folder
+        run: ls -la installer
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-installer
+          path: installer/Transcriber.dmg
