@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="Transcriber.Maui.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="25">
+
+            <!-- Title Label -->
+            <Label Text="Choose a file (mp3 or mp4)" 
+                   FontSize="20" 
+                   HorizontalOptions="Center" />
+
+            <!-- File picker section -->
+            <HorizontalStackLayout Spacing="10">
+                <!-- Entry to show file path, read-only -->
+                <Entry x:Name="FilePathEntry" 
+                       Placeholder="No file chosen yet" 
+                       IsReadOnly="True" 
+                       HorizontalOptions="FillAndExpand" />
+                <!-- Browse button to open file picker -->
+                <Button x:Name="BrowseButton" 
+                        Text="Browse" 
+                        Clicked="OnBrowseClicked" />
+            </HorizontalStackLayout>
+
+            <!-- Process file button -->
+            <Button x:Name="ProcessButton" 
+                    Text="Process the file" 
+                    Clicked="OnProcessClicked" 
+                    HorizontalOptions="Fill" />
+
+            <!-- ActivityIndicator for processing status -->
+            <ActivityIndicator x:Name="ProcessingIndicator" 
+                               IsVisible="False" 
+                               IsRunning="False" 
+                               HorizontalOptions="Center" />
+
+            <!-- Label to show transcript file location when done -->
+            <Label x:Name="TranscriptLocationLabel" 
+                   Text="" 
+                   TextColor="Green" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

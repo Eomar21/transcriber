@@ -1,0 +1,52 @@
+name: Build Mac Installer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install MAUI Workload
+        run: dotnet workload install maui
+
+      # Restore your solution
+      # Adjust the path if your .sln is in a different subfolder
+      - name: Restore NuGet Packages
+        run: dotnet restore "Transcriber.sln"
+
+      # Publish the MacCatalyst app
+      # If your .csproj is named Transcriber.Maui.csproj in that folder, specify it here:
+      - name: Build MacCatalyst App
+        run: dotnet publish "./Transcriber.Maui/Transcriber.Maui.csproj" -f net9.0-maccatalyst -c Release -o ./publish
+
+      - name: List Published Files
+        run: ls -la ./publish
+
+      - name: Create DMG Installer
+        run: |
+          mkdir -p installer
+          # The .app bundle is typically named after your project/assembly.
+          # If your output is actually "Transcriber.Maui.app", do this:
+          hdiutil create -volname "Transcriber" \
+            -srcfolder "./publish/Transcriber.Maui.app" \
+            -ov -format UDZO \
+            "./installer/Transcriber.dmg"
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mac-installer
+          path: installer/Transcriber.dmg
