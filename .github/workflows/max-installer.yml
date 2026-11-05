@@ -1,5 +1,9 @@
 name: Build Mac Installer
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
 on:
   push:
     branches: [ master ]
