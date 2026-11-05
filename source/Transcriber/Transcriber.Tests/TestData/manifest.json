@@ -1,0 +1,50 @@
+[
+  {
+    "file": "en-01.mp3",
+    "language": "en",
+    "transcript": "Article 1. All human beings are born free and equal in dignity and rights. They are endowed with reason and conscience and should act towards one another in a spirit of brotherhood.",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Universal_Declaration_of_Human_Rights_-_eng_-_drb_-_Art1.ogg",
+    "license": "Public domain (LibriVox public domain dedication, via Wikimedia Commons)",
+    "attribution": "David Barnes, LibriVox (UDHR Article 1, English); original also saved as en-01.ogg"
+  },
+  {
+    "file": "en-02.mp3",
+    "language": "en",
+    "transcript": "Article 1. All human beings are born free and equal in dignity and rights. They are endowed with reason and conscience and should act towards one another in a spirit of brotherhood.",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Universal_Declaration_of_Human_Rights_-_eng_-_ks_-_Article_1.ogg",
+    "license": "Public domain (LibriVox public domain dedication, via Wikimedia Commons)",
+    "attribution": "Kara Shallenberg, LibriVox (UDHR Article 1, English); original also saved as en-02.ogg"
+  },
+  {
+    "file": "nl-01.mp3",
+    "language": "nl",
+    "transcript": "Alle mensen worden vrij en gelijk in waardigheid en rechten geboren. Zij zijn begiftigd met verstand en geweten, en behoren zich jegens elkander in een geest van broederschap te gedragen.",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Universal_Declaration_of_Human_Rights_-_dut_-_aw_-_Art1.ogg",
+    "license": "Public domain (LibriVox public domain dedication, via Wikimedia Commons)",
+    "attribution": "Ans Wink, LibriVox (UDHR Article 1, Dutch); original also saved as nl-01.ogg"
+  },
+  {
+    "file": "nl-02.mp3",
+    "language": "nl",
+    "transcript": "Artikel 1. Alle mensen worden vrij en gelijk in waardigheid en rechten geboren. Zij zijn begiftigd met verstand en geweten, en behoren zich jegens elkander in een geest van broederschap te gedragen.",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Universal_Declaration_of_Human_Rights_-_dut_-_mb_-_Art1.ogg",
+    "license": "Public domain (LibriVox public domain dedication, via Wikimedia Commons)",
+    "attribution": "Menno, LibriVox (UDHR Article 1, Dutch); original also saved as nl-02.ogg"
+  },
+  {
+    "file": "ar-01.mp3",
+    "language": "ar",
+    "transcript": "المادة الأولى. يولد جميع الناس أحراراً متساوين في الكرامة والحقوق. وقد وهبوا عقلاً وضميراً وعليهم أن يعامل بعضهم بعضاً بروح الإخاء.",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Universal_Declaration_of_Human_Rights_-_arz_-_ef_-_Art1.ogg",
+    "license": "Public domain (LibriVox public domain dedication, via Wikimedia Commons)",
+    "attribution": "Faris, LibriVox (UDHR Article 1, Arabic, Egyptian reader); original also saved as ar-01.ogg"
+  },
+  {
+    "file": "es-01.mp3",
+    "language": "es",
+    "transcript": "Artículo 1. Todos los seres humanos nacen libres e iguales en dignidad y derechos y, dotados como están de razón y conciencia, deben comportarse fraternalmente los unos con los otros.",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Universal_Declaration_of_Human_Rights_-_spa_-_mr_-_Art1.ogg",
+    "license": "Public domain (LibriVox public domain dedication, via Wikimedia Commons)",
+    "attribution": "Marisela Riveros, LibriVox (UDHR Article 1, Spanish); original also saved as es-01.ogg"
+  }
+]

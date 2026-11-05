@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  SOLUTION_DIR: source/Transcriber
+
+jobs:
+  test:
+    name: Tests (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      # Runners have no GPU, so force the CPU runtime for deterministic results.
+      TRANSCRIBER_TEST_CPU: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION_DIR }}/Transcriber.Tests/Transcriber.Tests.csproj
+
+      - name: Fast unit tests
+        run: dotnet test ${{ env.SOLUTION_DIR }}/Transcriber.Tests --no-restore --filter "FullyQualifiedName!~TranscriptionTests"
+
+      # The end-to-end tests need the ggml-small model (~490 MB). Cache it so it downloads once.
+      - name: Cache Whisper test model
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\TranscriberTests
+          key: whisper-test-model-small-v1
+
+      - name: End-to-end transcription tests (English, Dutch, Arabic, Spanish)
+        run: dotnet test ${{ env.SOLUTION_DIR }}/Transcriber.Tests --no-restore --filter "FullyQualifiedName~TranscriptionTests" --logger "console;verbosity=normal"
+
+  build-app:
+    name: Build MAUI app (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows
+
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj -c Release -p:WindowsOnly=true

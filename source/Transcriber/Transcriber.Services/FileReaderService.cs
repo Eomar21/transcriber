@@ -1,5 +1,11 @@
 ﻿public class FileReaderService : IFileReaderService
 {
+    // mp3 and wav are decoded in-process; everything else needs ffmpeg.
+    private static readonly HashSet<string> NativeAudio = [".mp3", ".wav"];
+    private static readonly HashSet<string> FfmpegFormats = [".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4a", ".flac", ".ogg", ".aac"];
+
+    public static readonly IReadOnlyList<string> SupportedExtensions = [.. NativeAudio, .. FfmpegFormats];
+
     private readonly IAudioService _audioService;
     private readonly IVideoReaderService _videoReaderService;
 
@@ -13,19 +19,11 @@
     {
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
-        // Check if it's a video file.
-        if (ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv")
-        {
-            return await _videoReaderService.ConvertVideoToAudioAsync(filePath);
-        }
-        // Check if it's an audio file.
-        else if (ext == ".mp3" || ext == ".wav")
-        {
+        if (NativeAudio.Contains(ext))
             return await _audioService.GetAudioFilePathAsync(filePath);
-        }
-        else
-        {
-            throw new NotSupportedException("File type not supported.");
-        }
+        if (FfmpegFormats.Contains(ext))
+            return await _videoReaderService.ConvertVideoToAudioAsync(filePath);
+
+        throw new NotSupportedException($"File type '{ext}' is not supported.");
     }
 }

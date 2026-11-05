@@ -17,7 +17,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'  # Match your .NET MAUI version
+          dotnet-version: '10.0.x'  # Match your .NET MAUI version
       - name: Install .NET MAUI Workloads
         run: |
           dotnet workload install maui
@@ -34,11 +34,11 @@ jobs:
         run: dotnet restore "./source/Transcriber/Transcriber.Maui/Transcriber.Maui.csproj"
 
       - name: Build MacCatalyst App
-        run: dotnet publish "./source/Transcriber/Transcriber.Maui/Transcriber.Maui.csproj" -f net9.0-maccatalyst -c Release -o ./publish
+        run: dotnet publish "./source/Transcriber/Transcriber.Maui/Transcriber.Maui.csproj" -f net10.0-maccatalyst -c Release -o ./publish
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
           name: mac-installer
           path: |
-            **/bin/Release/net9.0-macos/publish/*.app
+            **/bin/Release/net10.0-macos/publish/*.app

@@ -15,6 +15,7 @@ namespace Transcriber.Maui
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            builder.Services.AddSingleton<IModelManager, ModelManager>();
             builder.Services.AddSingleton<IWhisperService, WhisperService>();
             builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
             builder.Services.AddSingleton<IAudioService, AudioService>();

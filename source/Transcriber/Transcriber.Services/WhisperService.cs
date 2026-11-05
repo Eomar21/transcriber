@@ -1,75 +1,57 @@
-﻿using Whisper.net.Ggml;
-using Whisper.net.Logger;
-using Whisper.net;
+﻿using Whisper.net;
+using Whisper.net.LibraryLoader;
 
 public class WhisperService : IWhisperService
 {
-    private const string ModelFileName = "ggml-base.bin";
-    private readonly GgmlType _ggmlType = GgmlType.Base;
+    private readonly IModelManager _modelManager;
 
-    public async Task<List<TranscriptSegment>> TranscribeAsync(string audioFilePath)
+    public WhisperService(IModelManager modelManager)
     {
-        // Ensure the model exists. If not, download it.
-        if (!File.Exists(ModelFileName))
-        {
-            await DownloadModel(ModelFileName, _ggmlType);
-        }
+        _modelManager = modelManager;
+    }
 
-        // Optional logging from the native library
-        using var whisperLogger = LogProvider.AddConsoleLogging(WhisperLogLevel.Debug);
+    /// <summary>The native runtime that was actually loaded for the last run, e.g. "Vulkan" or "Cpu".</summary>
+    public string? LastRuntime { get; private set; }
 
-        // Create the whisper factory and processor.
-        using var whisperFactory = WhisperFactory.FromPath(ModelFileName);
-        using var processor = whisperFactory.CreateBuilder()
-            .WithLanguage("auto")
-            .Build();
+    public async Task<List<TranscriptSegment>> TranscribeAsync(
+        string audioFilePath,
+        TranscriptionOptions? options = null,
+        IProgress<TranscriptionProgress>? progress = null,
+        CancellationToken ct = default)
+    {
+        options ??= new TranscriptionOptions();
+
+        // Don't download or load a model (and pin a native runtime) for a run that is already cancelled.
+        ct.ThrowIfCancellationRequested();
+
+        var modelPath = await _modelManager.EnsureModelAsync(options.Model, progress, ct);
+
+        // Prefer the GPU, fall back to the CPU if no compatible runtime or driver is present.
+        RuntimeOptions.RuntimeLibraryOrder = options.UseGpu
+            ? [RuntimeLibrary.Vulkan, RuntimeLibrary.Cpu]
+            : [RuntimeLibrary.Cpu];
+
+        using var factory = WhisperFactory.FromPath(modelPath);
+        LastRuntime = RuntimeOptions.LoadedLibrary?.ToString();
+
+        var builder = factory.CreateBuilder()
+            .WithLanguage(options.Language)
+            .WithNoSpeechThreshold(options.NoSpeechThreshold)
+            .WithProgressHandler(p => progress?.Report(new TranscriptionProgress($"Transcribing ({LastRuntime})", p / 100.0)));
+
+        if (!string.IsNullOrWhiteSpace(options.Prompt))
+            builder = builder.WithPrompt(options.Prompt);
+
+        await using var processor = builder.Build();
 
         var segments = new List<TranscriptSegment>();
-
-        // Open the audio file.
-        using var fileStream = File.OpenRead(audioFilePath);
-
-        // Process the audio and add each segment to the list.
-        await foreach (var result in processor.ProcessAsync(fileStream))
+        await using var fileStream = File.OpenRead(audioFilePath);
+        await foreach (var result in processor.ProcessAsync(fileStream, ct))
         {
-            segments.Add(new TranscriptSegment
-            {
-                Start = TimeSpan.FromSeconds(result.Start.TotalSeconds), // TODO - check if this is correct
-                End = TimeSpan.FromSeconds(result.End.TotalSeconds), // TODO - check if this is correct
-                Text = result.Text
-            });
+            segments.Add(new TranscriptSegment { Start = result.Start, End = result.End, Text = result.Text });
         }
 
-        // Write the transcript segments to a file next to the input audio file.
-        string transcriptPath = await WriteTranscriptToFileAsync(segments, audioFilePath);
-        Console.WriteLine($"Transcript saved at: {transcriptPath}");
-
-        return segments;
-    }
-
-    private async Task<string> WriteTranscriptToFileAsync(List<TranscriptSegment> segments, string audioFilePath)
-    {
-        // Get directory of the loaded resource. If not available, use current directory.
-        string directory = Path.GetDirectoryName(audioFilePath) ?? Directory.GetCurrentDirectory();
-        // Create a new file name by appending _transcript to the original file name.
-        string transcriptFileName = Path.GetFileNameWithoutExtension(audioFilePath) + "_transcript.txt";
-        string transcriptFilePath = Path.Combine(directory, transcriptFileName);
-
-        var lines = new List<string>();
-        foreach (var segment in segments)
-        {
-            lines.Add($"{segment.Start} -> {segment.End}: {segment.Text}");
-        }
-
-        await File.WriteAllLinesAsync(transcriptFilePath, lines);
-        return transcriptFilePath;
-    }
-
-    private static async Task DownloadModel(string fileName, GgmlType ggmlType)
-    {
-        Console.WriteLine($"Downloading Model {fileName}");
-        using var modelStream = await WhisperGgmlDownloader.GetGgmlModelAsync(ggmlType);
-        using var fileWriter = File.OpenWrite(fileName);
-        await modelStream.CopyToAsync(fileWriter);
+        progress?.Report(new TranscriptionProgress("Done", 1));
+        return options.FilterHallucinations ? TranscriptFilter.Clean(segments) : segments;
     }
 }
