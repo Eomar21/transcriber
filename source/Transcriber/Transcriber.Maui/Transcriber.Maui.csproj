@@ -74,4 +74,19 @@
 	</PropertyGroup>
 	<Import Project="..\build\BundledAssets.targets" />
 
+
+	<!--
+		Whisper.net.Runtime ships native libraries for every OS. The Mac Catalyst toolchain tries to
+		post-process all of them and fails on the Windows, Linux and Android ones, so keep only the macOS ones.
+	-->
+	<Target Name="KeepOnlyMacWhisperRuntimes" AfterTargets="ResolvePackageAssets;ComputeResolvedFilesToPublishList"
+	        Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
+		<ItemGroup>
+			<_OtherOsNative Include="@(ReferenceCopyLocalPaths);@(ResolvedFileToPublish)"
+			                Condition="$([System.String]::Copy('%(Identity)').Replace('\','/').Contains('/runtimes/')) And !$([System.String]::Copy('%(Identity)').Replace('\','/').Contains('/runtimes/macos')) And !$([System.String]::Copy('%(Identity)').Replace('\','/').Contains('/runtimes/maccatalyst')) And !$([System.String]::Copy('%(Identity)').Replace('\','/').Contains('/runtimes/osx'))" />
+			<ReferenceCopyLocalPaths Remove="@(_OtherOsNative)" />
+			<ResolvedFileToPublish Remove="@(_OtherOsNative)" />
+		</ItemGroup>
+	</Target>
+
 </Project>
