@@ -5,6 +5,9 @@ public record WhisperModel(string Id, string DisplayName, GgmlType Type, Quantiz
 {
     public string FileName => $"ggml-{Id}.bin";
 
+    // Pickers and lists show the friendly name without needing a display binding.
+    public override string ToString() => DisplayName;
+
     public static readonly WhisperModel Base = new("base", "Base (fast, lowest accuracy)", GgmlType.Base, QuantizationType.NoQuantization, 148_000_000);
     public static readonly WhisperModel Small = new("small", "Small (balanced)", GgmlType.Small, QuantizationType.NoQuantization, 488_000_000);
     public static readonly WhisperModel SmallQ5 = new("small-q5_1", "Small, compressed", GgmlType.Small, QuantizationType.Q5_1, 190_000_000);
