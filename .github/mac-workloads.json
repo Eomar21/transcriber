@@ -1,0 +1,5 @@
+{
+  "microsoft.net.sdk.maccatalyst": "26.5.10318/10.0.100",
+  "microsoft.net.sdk.maui": "10.0.20/10.0.100",
+  "microsoft.net.workload.mono.toolchain.current": "10.0.112/10.0.100"
+}
