@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transcriber.Services", "Tra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transcriber.Tests", "Transcriber.Tests\Transcriber.Tests.csproj", "{E2541AB1-E6B8-47D0-9635-1FBF63325AA4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transcriber.ViewModels", "Transcriber.ViewModels\Transcriber.ViewModels.csproj", "{67021CD2-5064-4A7B-AF75-803762013826}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,18 @@ Global
 		{E2541AB1-E6B8-47D0-9635-1FBF63325AA4}.Release|x64.Build.0 = Release|Any CPU
 		{E2541AB1-E6B8-47D0-9635-1FBF63325AA4}.Release|x86.ActiveCfg = Release|Any CPU
 		{E2541AB1-E6B8-47D0-9635-1FBF63325AA4}.Release|x86.Build.0 = Release|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Debug|x64.Build.0 = Debug|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Debug|x86.Build.0 = Debug|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Release|x64.ActiveCfg = Release|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Release|x64.Build.0 = Release|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Release|x86.ActiveCfg = Release|Any CPU
+		{67021CD2-5064-4A7B-AF75-803762013826}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
