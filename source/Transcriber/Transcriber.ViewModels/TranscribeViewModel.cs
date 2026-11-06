@@ -121,10 +121,18 @@ public partial class TranscribeViewModel : ObservableObject
     [ObservableProperty] private ResultKind _resultKind;
 
     /// <summary>Secondary line under the result: the saved file's path (or folder, for several files).</summary>
-    [ObservableProperty] private string _resultDetail = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasResultDetail))]
+    private string _resultDetail = string.Empty;
+
+    public bool HasResultDetail => ResultDetail.Length > 0;
 
     /// <summary>Muted note about how the run was processed, e.g. "Processed with Vulkan".</summary>
-    [ObservableProperty] private string _runtimeNote = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRuntimeNote))]
+    private string _runtimeNote = string.Empty;
+
+    public bool HasRuntimeNote => RuntimeNote.Length > 0;
 
     private void ClearResult()
     {

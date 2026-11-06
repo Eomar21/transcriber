@@ -84,18 +84,50 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Result message -->
-            <Label Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold"
-                   IsVisible="{Binding HasResultMessage}">
-                <Label.Triggers>
-                    <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Success">
-                        <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
-                    </DataTrigger>
-                    <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Error">
-                        <Setter Property="TextColor" Value="{StaticResource ErrorColor}" />
-                    </DataTrigger>
-                </Label.Triggers>
-            </Label>
+            <!-- Result: plain status line (icon + text), path and runtime as captions, then real buttons. -->
+            <VerticalStackLayout IsVisible="{Binding HasResultMessage}" Spacing="6">
+                <HorizontalStackLayout Spacing="8">
+                    <Label x:Name="StatusIcon" FontAttributes="Bold" VerticalOptions="Center"
+                           SemanticProperties.Description="Status">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Success">
+                                <Setter Property="Text" Value="&#x2713;" />
+                                <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Error">
+                                <Setter Property="Text" Value="!" />
+                                <Setter Property="TextColor" Value="{StaticResource ErrorColor}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Label Text="{Binding ResultDetail}" Style="{StaticResource Caption}" LineBreakMode="MiddleTruncation"
+                       ToolTipProperties.Text="{Binding ResultDetail}" IsVisible="{Binding HasResultDetail}" />
+                <Label Text="{Binding RuntimeNote}" Style="{StaticResource Caption}" IsVisible="{Binding HasRuntimeNote}" />
+
+                <HorizontalStackLayout Spacing="10" Margin="0,4,0,0" IsVisible="{Binding HasSavedFiles}">
+                    <Button Text="Open transcript" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding OpenTranscriptCommand}" IsVisible="{Binding CanOpenTranscript}"
+                            SemanticProperties.Description="Open the saved transcript in its default app" />
+                    <Button Text="{Binding ShowInFolderLabel}" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding ShowInFolderCommand}"
+                            SemanticProperties.Description="Show the saved transcript in its folder">
+                        <Button.Triggers>
+                            <!-- For a batch there is no "Open", so the folder action becomes the primary one. -->
+                            <DataTrigger TargetType="Button" Binding="{Binding CanOpenTranscript}" Value="False">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                <Setter Property="TextColor" Value="White" />
+                                <Setter Property="BorderWidth" Value="0" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </HorizontalStackLayout>
+
+                <Label Text="{Binding ActionMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
+                       FontSize="13" IsVisible="{Binding HasActionMessage}" />
+            </VerticalStackLayout>
 
             <!-- 4. Results -->
             <Border Style="{StaticResource Card}" IsVisible="{Binding HasResults}">

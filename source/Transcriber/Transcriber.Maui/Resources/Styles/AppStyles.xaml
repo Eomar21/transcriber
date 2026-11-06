@@ -17,6 +17,7 @@
     <Color x:Key="TextMutedDark">#9A9EB0</Color>
     <Color x:Key="SuccessColor">#1F9D55</Color>
     <Color x:Key="ErrorColor">#D64545</Color>
+    <Color x:Key="WarningColor">#C77700</Color>
 
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}" />

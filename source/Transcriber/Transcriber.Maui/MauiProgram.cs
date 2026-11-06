@@ -23,6 +23,7 @@ namespace Transcriber.Maui
             builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
             builder.Services.AddSingleton<IAudioService, AudioService>();
             builder.Services.AddSingleton<IFileReaderService, FileReaderService>();
+            builder.Services.AddSingleton<IFileLauncher, ShellFileLauncher>();
 
             // Platform services the view models depend on through interfaces.
             builder.Services.AddSingleton<IFilePickerService, MauiFilePickerService>();
