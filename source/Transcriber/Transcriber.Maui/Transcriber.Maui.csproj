@@ -68,4 +68,7 @@
 	  <ProjectReference Include="..\Transcriber.ViewModels\Transcriber.ViewModels.csproj" />
 	</ItemGroup>
 
+	<!-- Bundles ffmpeg with the app (see build\Ffmpeg.targets). -->
+	<Import Project="..\build\Ffmpeg.targets" />
+
 </Project>
