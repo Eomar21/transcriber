@@ -1,0 +1,100 @@
+<Project>
+
+  <!--
+    Bundles ffmpeg with the app so users never install anything.
+    At build time the pinned release below is downloaded once (cached in obj/ffmpeg), verified against its
+    SHA-256, unpacked, and copied next to the app together with its licence text.
+    The binary comes from github.com/eugeneware/ffmpeg-static, tag b6.1.1 (tags are permanent).
+    Windows ships one binary; macOS ships both Apple Silicon and Intel and the app picks at runtime.
+  -->
+
+  <PropertyGroup>
+    <FfmpegTag>b6.1.1</FfmpegTag>
+    <FfmpegBaseUrl>https://github.com/eugeneware/ffmpeg-static/releases/download/$(FfmpegTag)</FfmpegBaseUrl>
+    <FfmpegCacheDir>$(MSBuildProjectDirectory)\obj\ffmpeg\</FfmpegCacheDir>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
+    <FfmpegAsset Include="win32-x64"
+                 Gz="ffmpeg-win32-x64.gz" GzSha="8883a3dffbd0a16cf4ef95206ea05283f78908dbfb118f73c83f4951dcc06d77"
+                 Licence="win32-x64.LICENSE" LicenceSha="8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+                 OutName="ffmpeg.exe" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <FfmpegAsset Include="darwin-arm64"
+                 Gz="ffmpeg-darwin-arm64.gz" GzSha="8923876afa8db5585022d7860ec7e589af192f441c56793971276d450ed3bbfa"
+                 Licence="darwin-arm64.LICENSE" LicenceSha="cb48bf09a11f5fb576cddb0431c8f5ed0a60157a9ec942adffc13907cbe083f2"
+                 OutName="ffmpeg-arm64" />
+    <FfmpegAsset Include="darwin-x64"
+                 Gz="ffmpeg-darwin-x64.gz" GzSha="929b375c1182d956c51f7ac25e0b2b0411fb01f6f407aa15c9758efeb4242106"
+                 Licence="darwin-x64.LICENSE" LicenceSha="2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af"
+                 OutName="ffmpeg-x64" />
+  </ItemGroup>
+
+  <UsingTask TaskName="VerifyAndUnpack" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Source ParameterType="System.String" Required="true" />
+      <ExpectedSha256 ParameterType="System.String" Required="true" />
+      <Destination ParameterType="System.String" Required="true" />
+      <Gunzip ParameterType="System.Boolean" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.IO.Compression" />
+      <Using Namespace="System.Security.Cryptography" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        string actual;
+        using (var sha = SHA256.Create())
+        using (var input = File.OpenRead(Source))
+            actual = BitConverter.ToString(sha.ComputeHash(input)).Replace("-", "").ToLowerInvariant();
+
+        if (!string.Equals(actual, ExpectedSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            File.Delete(Source);
+            Log.LogError("Checksum mismatch for " + Path.GetFileName(Source) + ": expected " + ExpectedSha256 + " but got " + actual);
+            return false;
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(Destination));
+        if (Gunzip)
+        {
+            using (var input = File.OpenRead(Source))
+            using (var gz = new GZipStream(input, CompressionMode.Decompress))
+            using (var output = File.Create(Destination))
+                gz.CopyTo(output);
+        }
+        else
+        {
+            File.Copy(Source, Destination, true);
+        }
+]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="FetchFfmpeg" BeforeTargets="AssignTargetPaths" Condition="'@(FfmpegAsset)' != ''">
+    <MakeDir Directories="$(FfmpegCacheDir)downloads" />
+
+    <!-- Binary: download, verify checksum, unpack. Skipped when already cached. -->
+    <DownloadFile Condition="!Exists('$(FfmpegCacheDir)%(FfmpegAsset.OutName)')"
+                  SourceUrl="$(FfmpegBaseUrl)/%(FfmpegAsset.Gz)"
+                  DestinationFolder="$(FfmpegCacheDir)downloads" Retries="3" />
+    <VerifyAndUnpack Condition="!Exists('$(FfmpegCacheDir)%(FfmpegAsset.OutName)')"
+                     Source="$(FfmpegCacheDir)downloads\%(FfmpegAsset.Gz)" ExpectedSha256="%(FfmpegAsset.GzSha)"
+                     Destination="$(FfmpegCacheDir)%(FfmpegAsset.OutName)" Gunzip="true" />
+
+    <!-- Licence text travels with the binary. -->
+    <DownloadFile Condition="!Exists('$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt')"
+                  SourceUrl="$(FfmpegBaseUrl)/%(FfmpegAsset.Licence)"
+                  DestinationFolder="$(FfmpegCacheDir)downloads" Retries="3" />
+    <VerifyAndUnpack Condition="!Exists('$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt')"
+                     Source="$(FfmpegCacheDir)downloads\%(FfmpegAsset.Licence)" ExpectedSha256="%(FfmpegAsset.LicenceSha)"
+                     Destination="$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt" Gunzip="false" />
+
+    <ItemGroup>
+      <Content Include="$(FfmpegCacheDir)%(FfmpegAsset.OutName)" Link="%(FfmpegAsset.OutName)" CopyToOutputDirectory="PreserveNewest" />
+      <Content Include="$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt" Link="licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+</Project>
