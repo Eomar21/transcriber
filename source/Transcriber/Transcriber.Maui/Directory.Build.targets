@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    The WinUI XAML compiler probes for the Visual C++ tools, but only when it runs inside Visual Studio
+    (the dotnet CLI skips the probe). This app is fully managed and never uses them, so skip the probe.
+    Without this, building in Visual Studio fails unless the "Desktop development with C++" workload
+    is installed. Directory.Build.targets is imported after NuGet package targets, so this replaces
+    the package's GetVCInstallPath target.
+  -->
+  <Target Name="GetVCInstallPath" />
+
+</Project>
