@@ -110,7 +110,11 @@ public partial class TranscribeViewModel : ObservableObject
 
     [ObservableProperty] private double _progress;
     [ObservableProperty] private string _statusText = string.Empty;
-    [ObservableProperty] private string _resultMessage = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasResultMessage))]
+    private string _resultMessage = string.Empty;
+
+    public bool HasResultMessage => ResultMessage.Length > 0;
     [ObservableProperty] private ResultKind _resultKind;
 
     private void ClearResult()
