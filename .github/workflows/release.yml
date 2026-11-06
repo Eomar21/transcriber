@@ -2,7 +2,7 @@ name: Release
 
 # Publishes a GitHub Release ONLY when a version tag is pushed, e.g.:
 #   git tag v1.0.0 && git push origin v1.0.0
-# Running it by hand (workflow_dispatch) builds and uploads the zip as a workflow artifact
+# Running it by hand (workflow_dispatch) builds the installers and uploads them as workflow artifacts
 # for inspection but never creates a release.
 on:
   push:
@@ -78,33 +78,92 @@ jobs:
           -p:ApplicationDisplayVersion=${{ steps.ver.outputs.core }} -p:ApplicationVersion=${{ github.run_number }}
           -o publish/win-x64
 
-      - name: Zip
+      - name: Zip (portable)
         shell: pwsh
-        run: Compress-Archive -Path publish/win-x64/* -DestinationPath "Transcriber-${{ steps.ver.outputs.version }}-win-x64.zip"
+        run: Compress-Archive -Path publish/win-x64/* -DestinationPath "Transcriber-${{ steps.ver.outputs.version }}-win-x64-portable.zip"
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=${{ steps.ver.outputs.core }}" "/DSourceDir=$PWD\publish\win-x64" "/DOutputDir=$PWD" installer\windows\Transcriber.iss
 
       - uses: actions/upload-artifact@v4
         with:
           name: Transcriber-win-x64
-          path: Transcriber-*-win-x64.zip
+          path: |
+            Transcriber-*-win-x64-portable.zip
+            Transcriber-*-win-x64-setup.exe
+          if-no-files-found: error
+
+  mac:
+    name: Build macOS disk image
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Work out version
+        id: ver
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then full="${GITHUB_REF_NAME#v}"; else full="0.0.0-dev.${GITHUB_RUN_NUMBER}"; fi
+          echo "version=${full}" >> "$GITHUB_OUTPUT"
+          echo "core=${full%%-*}" >> "$GITHUB_OUTPUT"
+
+      # The newest MacCatalyst workload needs a newer Xcode than the runner has, so pin the
+      # workload versions (see .github/mac-workloads.json) to ones that match the installed Xcode 26.
+      - name: Install MAUI Mac Catalyst workload
+        run: dotnet workload install maui-maccatalyst --from-rollback-file .github/mac-workloads.json
+
+      - name: Cache bundled Whisper model
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/models
+          key: bundled-whisper-model-5359861c739e955e79d9a303bcbc70fb988958b1-small
+
+      - name: Publish Mac app
+        run: >
+          dotnet publish ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj
+          -f net10.0-maccatalyst -c Release -p:RuntimeIdentifier=maccatalyst-arm64
+          -p:CreatePackage=false -p:EnableCodeSigning=false -p:EnablePackageSigning=false
+          -p:ApplicationDisplayVersion=${{ steps.ver.outputs.core }} -p:ApplicationVersion=${{ github.run_number }}
+          -o publish/mac
+
+      - name: Create disk image
+        run: |
+          mkdir -p dmg && cp -R publish/mac/Transcriber.Maui.app dmg/Transcriber.app
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "Transcriber" -srcfolder dmg -ov -format UDZO "Transcriber-${{ steps.ver.outputs.version }}-mac-arm64.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Transcriber-mac-arm64
+          path: Transcriber-*-mac-arm64.dmg
           if-no-files-found: error
 
   release:
     name: Create GitHub Release
-    # Only for real version tags. Manual runs stop after the build above.
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: windows
+    # Only for real version tags. Manual runs stop after the builds above.
+    # Windows is required; the Mac image is attached too when it built.
+    if: ${{ always() && startsWith(github.ref, 'refs/tags/v') && needs.windows.result == 'success' }}
+    needs: [windows, mac]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Transcriber-win-x64
+          path: assets
+          merge-multiple: true
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >
-          gh release create "${{ github.ref_name }}" Transcriber-*-win-x64.zip
-          --repo "${{ github.repository }}"
-          --title "Transcriber ${{ github.ref_name }}"
-          --generate-notes
-          ${{ contains(github.ref_name, '-') && '--prerelease' || '' }}
+        run: |
+          ls -la assets
+          gh release create "${{ github.ref_name }}" assets/* \
+            --repo "${{ github.repository }}" \
+            --title "Transcriber ${{ github.ref_name }}" \
+            --generate-notes
