@@ -39,22 +39,16 @@ jobs:
           dotnet publish ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj
           -f net10.0-maccatalyst -c Release -p:RuntimeIdentifier=maccatalyst-arm64
           -p:CreatePackage=false -p:EnableCodeSigning=false -p:EnablePackageSigning=false
-          -o publish/mac -v:detailed "-flp:v=detailed;logfile=mac-build.log"
+         
 
       - name: Zip the app
         run: |
-          cd publish/mac
-          ditto -c -k --keepParent Transcriber.Maui.app ../../Transcriber-mac-arm64.zip
+          APP=source/Transcriber/Transcriber.Maui/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Transcriber.Maui.app
+          echo "App size:"; du -sh "$APP"; find "$APP" -name 'ggml-small.bin' -o -name 'ffmpeg-arm64' | head
+          ditto -c -k --keepParent "$APP" Transcriber-mac-arm64.zip
 
       - uses: actions/upload-artifact@v4
         with:
           name: Transcriber-mac-arm64
           path: Transcriber-mac-arm64.zip
           if-no-files-found: error
-
-      - name: Upload build log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac-build-log
-          path: mac-build.log
