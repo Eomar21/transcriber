@@ -9,6 +9,10 @@ public class TranscriptionTests(ITestOutputHelper output)
 {
     private record Sample(string File, string Language, string Transcript);
 
+    // TRANSCRIBER_TEST_MODEL=<model id> runs the whole suite against another model (default: small).
+    private static readonly WhisperModel TestModel =
+        WhisperModel.All.FirstOrDefault(m => m.Id == Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_MODEL")) ?? WhisperModel.Small;
+
     private static readonly ModelManager Models = new(Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TranscriberTests"));
 
@@ -37,7 +41,7 @@ public class TranscriptionTests(ITestOutputHelper output)
             var segments = await whisper.TranscribeAsync(wav, new TranscriptionOptions
             {
                 Language = language,
-                Model = WhisperModel.Small,
+                Model = TestModel,
                 // CI runners have no GPU: TRANSCRIBER_TEST_CPU=1 forces the CPU runtime so results are deterministic.
                 UseGpu = useGpu && Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
             });
@@ -95,7 +99,7 @@ public class TranscriptionTests(ITestOutputHelper output)
                 var segments = await new WhisperService(Models).TranscribeAsync(wav, new TranscriptionOptions
                 {
                     Language = "en",
-                    Model = WhisperModel.Small,
+                    Model = TestModel,
                     UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
                 });
                 var actual = string.Join(' ', segments.Select(s => s.Text));
