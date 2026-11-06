@@ -43,11 +43,23 @@ public class TranscribeViewModelTests : IDisposable
         public Task<IReadOnlyList<string>> PickMediaFilesAsync() => Task.FromResult(Result);
     }
 
+    private sealed class FakeLauncher : IFileLauncher
+    {
+        public LaunchResult OpenResult { get; set; } = LaunchResult.Opened;
+        public LaunchResult RevealResult { get; set; } = LaunchResult.Opened;
+        public List<string> Opened { get; } = [];
+        public List<string> Revealed { get; } = [];
+        public LaunchResult Open(string path) { Opened.Add(path); return OpenResult; }
+        public LaunchResult Reveal(string path) { Revealed.Add(path); return RevealResult; }
+    }
+
     private sealed class FakeClipboard : IClipboardService
     {
         public string? Text { get; private set; }
         public Task SetTextAsync(string text) { Text = text; return Task.CompletedTask; }
     }
+
+    private readonly FakeLauncher Launcher = new();
 
     private (TranscribeViewModel Vm, FakeFileReader Reader, FakeWhisper Whisper, FakePicker Picker, FakeClipboard Clipboard) Create()
     {
@@ -55,7 +67,7 @@ public class TranscribeViewModelTests : IDisposable
         var whisper = new FakeWhisper();
         var picker = new FakePicker();
         var clipboard = new FakeClipboard();
-        return (new TranscribeViewModel(reader, whisper, picker, clipboard), reader, whisper, picker, clipboard);
+        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher), reader, whisper, picker, clipboard);
     }
 
     private string MakeInput(string name = "talk.mp3")
@@ -126,7 +138,8 @@ public class TranscribeViewModelTests : IDisposable
         await vm.TranscribeCommand.ExecuteAsync(null);
 
         Assert.Equal(ResultKind.Success, vm.ResultKind);
-        Assert.Contains("talk_transcript.srt", vm.ResultMessage);
+        Assert.Equal("Transcript saved", vm.ResultMessage);
+        Assert.EndsWith("talk_transcript.srt", vm.ResultDetail);
         Assert.True(File.Exists(Path.Combine(_dir, "talk_transcript.srt")));
         Assert.Equal(["Hello world", "Goodbye moon"], vm.VisibleSegments.Select(s => s.Text));
         Assert.True(vm.HasResults);

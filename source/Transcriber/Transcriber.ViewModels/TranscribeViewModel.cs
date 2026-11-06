@@ -10,6 +10,7 @@ public partial class TranscribeViewModel : ObservableObject
     private readonly IWhisperService _whisper;
     private readonly IFilePickerService _filePicker;
     private readonly IClipboardService _clipboard;
+    private readonly IFileLauncher _launcher;
 
     private List<SegmentItem> _allSegments = [];
 
@@ -17,12 +18,14 @@ public partial class TranscribeViewModel : ObservableObject
         IFileReaderService fileReader,
         IWhisperService whisper,
         IFilePickerService filePicker,
-        IClipboardService clipboard)
+        IClipboardService clipboard,
+        IFileLauncher launcher)
     {
         _fileReader = fileReader;
         _whisper = whisper;
         _filePicker = filePicker;
         _clipboard = clipboard;
+        _launcher = launcher;
 
         Languages = SupportedLanguages.All.Select(l => new LanguageOption(l.Code, l.Name)).ToList();
         Models = WhisperModel.All;
@@ -117,16 +120,118 @@ public partial class TranscribeViewModel : ObservableObject
     public bool HasResultMessage => ResultMessage.Length > 0;
     [ObservableProperty] private ResultKind _resultKind;
 
+    /// <summary>Secondary line under the result: the saved file's path (or folder, for several files).</summary>
+    [ObservableProperty] private string _resultDetail = string.Empty;
+
+    /// <summary>Muted note about how the run was processed, e.g. "Processed with Vulkan".</summary>
+    [ObservableProperty] private string _runtimeNote = string.Empty;
+
     private void ClearResult()
     {
         ResultMessage = string.Empty;
+        ResultDetail = string.Empty;
+        RuntimeNote = string.Empty;
         ResultKind = ResultKind.None;
+        ClearSavedFiles();
     }
 
     private void SetResult(ResultKind kind, string message)
     {
         ResultKind = kind;
         ResultMessage = message;
+    }
+
+    // ---- Saved transcripts: open / show in folder ----------------------------------------
+
+    private IReadOnlyList<string> _savedFiles = [];
+
+    /// <summary>True once a run finished and wrote at least one transcript.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenTranscriptCommand), nameof(ShowInFolderCommand))]
+    private bool _hasSavedFiles;
+
+    /// <summary>Opening a single file is offered; for a batch only "show in folder" makes sense.</summary>
+    [ObservableProperty] private bool _canOpenTranscript;
+
+    /// <summary>Set after a "not found" error so both buttons stay disabled.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenTranscriptCommand), nameof(ShowInFolderCommand))]
+    private bool _savedFilesMissing;
+
+    /// <summary>Inline warning shown under the buttons, never a modal dialog.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActionMessage))]
+    private string _actionMessage = string.Empty;
+
+    public bool HasActionMessage => ActionMessage.Length > 0;
+
+    /// <summary>"Show in Finder" on macOS, "Show in folder" elsewhere.</summary>
+    public string ShowInFolderLabel => OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst() ? "Show in Finder" : "Show in folder";
+
+    private void SetSavedFiles(IReadOnlyList<string> files)
+    {
+        _savedFiles = files;
+        SavedFilesMissing = false;
+        ActionMessage = string.Empty;
+        CanOpenTranscript = files.Count == 1;
+        HasSavedFiles = files.Count > 0;
+    }
+
+    private void ClearSavedFiles() => SetSavedFiles([]);
+
+    private bool CanUseSavedFiles() => HasSavedFiles && !SavedFilesMissing;
+
+    [RelayCommand(CanExecute = nameof(CanUseSavedFiles))]
+    private void OpenTranscript()
+    {
+        if (_savedFiles.Count != 1) return;
+        var path = _savedFiles[0];
+        var name = Path.GetFileName(path);
+
+        switch (_launcher.Open(path))
+        {
+            case LaunchResult.Opened:
+                ActionMessage = string.Empty;
+                break;
+            case LaunchResult.NotFound:
+                MarkMissing(name);
+                break;
+            case LaunchResult.NoHandler:
+                // Fall back to showing the file so the user can still get to it.
+                _launcher.Reveal(path);
+                ActionMessage = $"No app is set to open {Path.GetExtension(path)} files. Showing it in the folder instead.";
+                break;
+            default:
+                ActionMessage = $"Couldn't open {name}.";
+                break;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUseSavedFiles))]
+    private void ShowInFolder()
+    {
+        if (_savedFiles.Count == 0) return;
+        var path = _savedFiles[0]; // for a batch, reveal the first file
+
+        switch (_launcher.Reveal(path))
+        {
+            case LaunchResult.Opened:
+                ActionMessage = string.Empty;
+                break;
+            case LaunchResult.NotFound:
+                ActionMessage = "The folder is no longer available.";
+                SavedFilesMissing = true;
+                break;
+            default:
+                ActionMessage = "Couldn't open the folder.";
+                break;
+        }
+    }
+
+    private void MarkMissing(string name)
+    {
+        ActionMessage = $"Couldn't find {name}. It may have been moved or deleted.";
+        SavedFilesMissing = true;
     }
 
     // ---- Transcription -------------------------------------------------------------------
@@ -184,10 +289,12 @@ public partial class TranscribeViewModel : ObservableObject
             SearchText = string.Empty;
             RefreshVisibleSegments();
 
-            var runtime = _whisper.LastRuntime is { } r ? $"  (runtime: {r})" : string.Empty;
+            SetSavedFiles(saved);
+            ResultDetail = saved.Count == 1 ? saved[0] : Path.GetDirectoryName(saved[0]) ?? string.Empty;
+            RuntimeNote = _whisper.LastRuntime is { } r ? $"Processed with {r}" : string.Empty;
             SetResult(ResultKind.Success, saved.Count == 1
-                ? $"Transcript saved: {saved[0]}{runtime}"
-                : $"{saved.Count} transcripts saved next to the source files{runtime}");
+                ? "Transcript saved"
+                : $"{saved.Count} transcripts saved next to the source files");
         }
         catch (OperationCanceledException)
         {
