@@ -64,5 +64,12 @@ jobs:
       - name: Install MAUI Windows workload
         run: dotnet workload install maui-windows
 
+      # The app bundles the default model (~490 MB); cache the verified download between runs.
+      - name: Cache bundled Whisper model
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/models
+          key: bundled-whisper-model-5359861c739e955e79d9a303bcbc70fb988958b1-small
+
       - name: Build
         run: dotnet build ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj -c Release
