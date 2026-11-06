@@ -22,6 +22,7 @@ public record TranscriptionProgress(string Stage, double Fraction);
 public interface IModelManager
 {
     string ModelsDirectory { get; }
+    bool IsBundled(WhisperModel model);
     bool IsDownloaded(WhisperModel model);
     Task<string> EnsureModelAsync(WhisperModel model, IProgress<TranscriptionProgress>? progress = null, CancellationToken ct = default);
 }
@@ -35,16 +36,29 @@ public class ModelManager : IModelManager
 {
     public string ModelsDirectory { get; }
 
-    public ModelManager(string? modelsDirectory = null)
+    /// <summary>Read-only folder inside the app that holds models shipped with it (no download needed).</summary>
+    public string BundledDirectory { get; }
+
+    public ModelManager(string? modelsDirectory = null, string? bundledDirectory = null)
     {
         ModelsDirectory = modelsDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Transcriber", "models");
+        BundledDirectory = bundledDirectory ?? Path.Combine(AppContext.BaseDirectory, "models");
     }
 
-    public bool IsDownloaded(WhisperModel model) => File.Exists(Path.Combine(ModelsDirectory, model.FileName));
+    private string BundledPath(WhisperModel model) => Path.Combine(BundledDirectory, model.FileName);
+
+    /// <summary>True if the model ships inside the app.</summary>
+    public bool IsBundled(WhisperModel model) => File.Exists(BundledPath(model));
+
+    public bool IsDownloaded(WhisperModel model) =>
+        IsBundled(model) || File.Exists(Path.Combine(ModelsDirectory, model.FileName));
 
     public async Task<string> EnsureModelAsync(WhisperModel model, IProgress<TranscriptionProgress>? progress = null, CancellationToken ct = default)
     {
+        // A model shipped with the app always wins: works offline, no download, nothing to install.
+        if (IsBundled(model)) return BundledPath(model);
+
         Directory.CreateDirectory(ModelsDirectory);
         var finalPath = Path.Combine(ModelsDirectory, model.FileName);
         if (File.Exists(finalPath)) return finalPath;
