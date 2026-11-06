@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.TranscribePage"
+    x:DataType="vm:TranscribeViewModel"
+    Title="Transcribe">
+
+    <ScrollView>
+      <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
+      <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="16">
+
+            <!-- Header -->
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Transcriber" Style="{StaticResource PageTitle}" />
+                <Label Text="Private, offline transcription. Your audio never leaves this computer." Style="{StaticResource Caption}" />
+            </VerticalStackLayout>
+
+            <!-- 1. Files -->
+            <Border Style="{StaticResource Card}">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                        <Label Text="Files" Style="{StaticResource SectionTitle}" />
+                        <Label Text="{Binding FilesSummary}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
+                        <Label Text="mp3, wav, mp4, mov, m4a and more" Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding ClearFilesCommand}" IsVisible="{Binding HasFiles}" />
+                    <Button Grid.Column="2" Text="Choose files" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding BrowseCommand}" IsEnabled="{Binding IsIdle}" />
+                </Grid>
+            </Border>
+
+            <!-- 2. Settings (wraps onto new rows when the window is narrow) -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="Settings" Style="{StaticResource SectionTitle}" />
+
+                    <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Start">
+                        <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
+                            <Label Text="Language" Style="{StaticResource Caption}" />
+                            <Picker ItemsSource="{Binding Languages}" ItemDisplayBinding="{Binding Name, x:DataType=vm:LanguageOption}"
+                                    SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
+                            <Label Text="Model (bigger is more accurate, slower)" Style="{StaticResource Caption}" />
+                            <Picker ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}" IsEnabled="{Binding IsIdle}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,0,10">
+                            <Label Text="Save as" Style="{StaticResource Caption}" />
+                            <Picker ItemsSource="{Binding Formats}" ItemDisplayBinding="{Binding Label, x:DataType=vm:FormatOption}"
+                                    SelectedItem="{Binding SelectedFormat}" IsEnabled="{Binding IsIdle}" />
+                        </VerticalStackLayout>
+                    </FlexLayout>
+
+                    <VerticalStackLayout>
+                        <Label Text="Names or special terms (optional, improves recognition)" Style="{StaticResource Caption}" />
+                        <Entry Text="{Binding Prompt}" Placeholder="e.g. Eindhoven, Dr. Haddad" IsEnabled="{Binding IsIdle}" />
+                    </VerticalStackLayout>
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Switch IsToggled="{Binding UseGpu}" IsEnabled="{Binding IsIdle}" VerticalOptions="Center" />
+                        <VerticalStackLayout VerticalOptions="Center">
+                            <Label Text="Use graphics card when available" Style="{StaticResource Body}" />
+                            <Label Text="Falls back to the processor automatically. A change applies after restarting the app." Style="{StaticResource Caption}" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 3. Action -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <Button Text="Transcribe" Style="{StaticResource PrimaryButton}" Command="{Binding TranscribeCommand}" />
+                <Button Grid.Column="1" Text="Cancel" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding TranscribeCancelCommand}" IsVisible="{Binding IsBusy}" />
+            </Grid>
+
+            <!-- Progress -->
+            <Border Style="{StaticResource Card}" IsVisible="{Binding IsBusy}">
+                <VerticalStackLayout Spacing="8">
+                    <ProgressBar Progress="{Binding Progress}" ProgressColor="{StaticResource Primary}" />
+                    <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Result message -->
+            <Label Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold"
+                   IsVisible="{Binding HasResultMessage}">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Success">
+                        <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Error">
+                        <Setter Property="TextColor" Value="{StaticResource ErrorColor}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <!-- 4. Results -->
+            <Border Style="{StaticResource Card}" IsVisible="{Binding HasResults}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <SearchBar Placeholder="Search the transcript" Text="{Binding SearchText}" />
+                        <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SecondaryButton}" Command="{Binding CopyAllCommand}" />
+                    </Grid>
+                    <CollectionView ItemsSource="{Binding VisibleSegments}" HeightRequest="340">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SegmentItem">
+                                <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="0,5">
+                                    <Label Text="{Binding Time}" Style="{StaticResource Caption}" VerticalOptions="Start" />
+                                    <Label Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Body}" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+      </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

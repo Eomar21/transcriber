@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Transcriber.Maui.Services;
+using Transcriber.ViewModels;
 
 namespace Transcriber.Maui
 {
@@ -15,11 +17,20 @@ namespace Transcriber.Maui
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // Core services (platform independent).
             builder.Services.AddSingleton<IModelManager, ModelManager>();
             builder.Services.AddSingleton<IWhisperService, WhisperService>();
             builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
             builder.Services.AddSingleton<IAudioService, AudioService>();
             builder.Services.AddSingleton<IFileReaderService, FileReaderService>();
+
+            // Platform services the view models depend on through interfaces.
+            builder.Services.AddSingleton<IFilePickerService, MauiFilePickerService>();
+            builder.Services.AddSingleton<IClipboardService, MauiClipboardService>();
+
+            // View models are singletons so a screen keeps its state while you switch tabs.
+            builder.Services.AddSingleton<TranscribeViewModel>();
+            builder.Services.AddTransient<TranscribePage>();
 
 #if DEBUG
             builder.Logging.AddDebug();
