@@ -21,12 +21,14 @@ Private, offline speech-to-text for your desktop. Drop in an audio or video file
 
 Download the latest build from the [Releases page](../../releases).
 
-| Platform | Status |
-| --- | --- |
-| Windows 10/11 (x64) | Unzip and run `Transcriber.Maui.exe`. |
-| macOS | Planned. The app is built for Mac Catalyst but there is no release yet. |
+| Platform | Download | Notes |
+| --- | --- | --- |
+| Windows 10/11 (x64) | `Transcriber-<version>-win-x64-setup.exe` | Installer. A portable `.zip` is also available: unzip and run `Transcriber.Maui.exe`. |
+| macOS (Apple Silicon) | `Transcriber-<version>-mac-arm64.dmg` | Open the image and drag Transcriber to Applications. |
 
-The Windows download is large (the model alone is 488 MB) because it includes the Whisper model, so no first-run download is needed.
+The downloads are large (about 550 MB) because they include the Whisper model, so nothing is downloaded on first launch.
+
+The builds are not code signed yet. On Windows, SmartScreen may show a warning: choose **More info**, then **Run anyway**. On macOS, right-click the app and choose **Open** the first time.
 
 ## How it works
 
