@@ -28,7 +28,7 @@
     <Content Include="TestData\**\*.mp3;TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- Gives the tests the same bundled ffmpeg the app ships with (see build\Ffmpeg.targets). -->
-  <Import Project="..\build\Ffmpeg.targets" />
+  <!-- Gives the tests the same bundled ffmpeg the app ships with (see build\BundledAssets.targets). -->
+  <Import Project="..\build\BundledAssets.targets" />
 
 </Project>

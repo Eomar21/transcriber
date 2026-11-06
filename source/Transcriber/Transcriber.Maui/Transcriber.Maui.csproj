@@ -68,7 +68,10 @@
 	  <ProjectReference Include="..\Transcriber.ViewModels\Transcriber.ViewModels.csproj" />
 	</ItemGroup>
 
-	<!-- Bundles ffmpeg with the app (see build\Ffmpeg.targets). -->
-	<Import Project="..\build\Ffmpeg.targets" />
+	<!-- Bundles ffmpeg and the default Whisper model with the app (see build\BundledAssets.targets). -->
+	<PropertyGroup>
+		<BundleWhisperModel>true</BundleWhisperModel>
+	</PropertyGroup>
+	<Import Project="..\build\BundledAssets.targets" />
 
 </Project>

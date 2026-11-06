@@ -1,11 +1,15 @@
 <Project>
 
   <!--
-    Bundles ffmpeg with the app so users never install anything.
-    At build time the pinned release below is downloaded once (cached in obj/ffmpeg), verified against its
-    SHA-256, unpacked, and copied next to the app together with its licence text.
+    Bundles what the app needs so users never install or download anything.
+
+    ffmpeg: at build time the pinned release below is downloaded once (cached in obj/ffmpeg), verified against
+    its SHA-256, unpacked, and copied next to the app together with its licence text.
     The binary comes from github.com/eugeneware/ffmpeg-static, tag b6.1.1 (tags are permanent).
     Windows ships one binary; macOS ships both Apple Silicon and Intel and the app picks at runtime.
+
+    Whisper model: when a project sets BundleWhisperModel=true, the default "small" model is fetched from a
+    pinned commit of the whisper.cpp model repository, verified, and copied to a models folder next to the app.
   -->
 
   <PropertyGroup>
@@ -94,6 +98,29 @@
     <ItemGroup>
       <Content Include="$(FfmpegCacheDir)%(FfmpegAsset.OutName)" Link="%(FfmpegAsset.OutName)" CopyToOutputDirectory="PreserveNewest" />
       <Content Include="$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt" Link="licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Default Whisper model (ggml-small.bin, 488 MB). Pinned to an exact repository commit and checksum. -->
+  <PropertyGroup>
+    <WhisperModelCommit>5359861c739e955e79d9a303bcbc70fb988958b1</WhisperModelCommit>
+    <WhisperModelFile>ggml-small.bin</WhisperModelFile>
+    <WhisperModelSha>1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b</WhisperModelSha>
+    <WhisperModelCacheDir>$(MSBuildProjectDirectory)\obj\models\</WhisperModelCacheDir>
+  </PropertyGroup>
+
+  <Target Name="FetchWhisperModel" BeforeTargets="AssignTargetPaths" Condition="'$(BundleWhisperModel)' == 'true'">
+    <MakeDir Directories="$(WhisperModelCacheDir)downloads" />
+
+    <DownloadFile Condition="!Exists('$(WhisperModelCacheDir)$(WhisperModelFile)')"
+                  SourceUrl="https://huggingface.co/ggerganov/whisper.cpp/resolve/$(WhisperModelCommit)/$(WhisperModelFile)"
+                  DestinationFolder="$(WhisperModelCacheDir)downloads" Retries="3" />
+    <VerifyAndUnpack Condition="!Exists('$(WhisperModelCacheDir)$(WhisperModelFile)')"
+                     Source="$(WhisperModelCacheDir)downloads\$(WhisperModelFile)" ExpectedSha256="$(WhisperModelSha)"
+                     Destination="$(WhisperModelCacheDir)$(WhisperModelFile)" Gunzip="false" />
+
+    <ItemGroup>
+      <Content Include="$(WhisperModelCacheDir)$(WhisperModelFile)" Link="models\$(WhisperModelFile)" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
 
