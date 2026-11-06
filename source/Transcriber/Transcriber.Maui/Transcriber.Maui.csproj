@@ -94,10 +94,10 @@
 		Whisper.net ships static Mac Catalyst libraries. Reference them here so they are always linked into the app
 		(the package's own build targets are not picked up through the class library reference).
 	-->
-	<PropertyGroup Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
 		<WhisperMacLibDir>$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/maccatalyst/</WhisperMacLibDir>
 	</PropertyGroup>
-	<ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst' And Exists('$(WhisperMacLibDir)libwhisper.a')">
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' And Exists('$(WhisperMacLibDir)libwhisper.a')">
 		<NativeReference Include="$(WhisperMacLibDir)libwhisper.a">
 			<Kind>Static</Kind>
 			<SmartLink>true</SmartLink>
