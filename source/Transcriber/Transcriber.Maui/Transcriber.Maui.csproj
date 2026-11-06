@@ -83,7 +83,7 @@
 	        Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
 		<ItemGroup>
 			<_OtherOsNative Include="@(ReferenceCopyLocalPaths);@(ResolvedFileToPublish)"
-			                Condition="$([System.String]::Copy('%(NuGetPackageId)').StartsWith('Whisper.net.Runtime')) And '%(Extension)' != '.a'" />
+			                Condition="('%(Extension)' == '.dylib' Or '%(Extension)' == '.so' Or '%(Extension)' == '.dll') And ($([System.String]::Copy('%(Filename)').StartsWith('libwhisper')) Or $([System.String]::Copy('%(Filename)').StartsWith('libggml')) Or $([System.String]::Copy('%(Filename)').StartsWith('whisper')) Or $([System.String]::Copy('%(Filename)').StartsWith('ggml')))" />
 			<ReferenceCopyLocalPaths Remove="@(_OtherOsNative)" />
 			<ResolvedFileToPublish Remove="@(_OtherOsNative)" />
 		</ItemGroup>
