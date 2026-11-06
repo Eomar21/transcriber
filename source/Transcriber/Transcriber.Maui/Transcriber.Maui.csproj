@@ -68,6 +68,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
+	  <ProjectReference Include="..\Transcriber.ViewModels\Transcriber.ViewModels.csproj" />
 	</ItemGroup>
 
 </Project>
