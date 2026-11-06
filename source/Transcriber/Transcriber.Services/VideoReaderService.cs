@@ -4,17 +4,19 @@ using System.Diagnostics;
 public class VideoReaderService : IVideoReaderService
 {
     private readonly string _ffmpegPath;
+    private readonly string _tempDirectory;
 
     /// <param name="ffmpegPath">Path to ffmpeg. Defaults to the copy bundled with the app, then PATH (developer machines).</param>
-    public VideoReaderService(string? ffmpegPath = null)
+    public VideoReaderService(string? ffmpegPath = null, string? tempDirectory = null)
     {
         _ffmpegPath = ffmpegPath ?? FfmpegLocator.Locate() ?? "ffmpeg";
+        _tempDirectory = tempDirectory ?? Path.GetTempPath();
     }
 
     public async Task<string> ConvertVideoToAudioAsync(string videoFilePath)
     {
         // Temp file, so a video "talk.wav"-style name collision can never overwrite the user's files.
-        var outputFile = Path.Combine(Path.GetTempPath(), $"transcriber_{Guid.NewGuid():N}.wav");
+        var outputFile = Path.Combine(_tempDirectory, $"transcriber_{Guid.NewGuid():N}.wav");
 
         var startInfo = new ProcessStartInfo
         {

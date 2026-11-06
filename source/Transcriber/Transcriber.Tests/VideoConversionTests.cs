@@ -88,11 +88,13 @@ public class VideoConversionTests : IDisposable
     {
         var bad = Path.Combine(_dir, "broken.mp4");
         await File.WriteAllTextAsync(bad, "this is not a video");
-        var before = Directory.GetFiles(Path.GetTempPath(), "transcriber_*.wav").Length;
+        // A private temp folder, so other tests running in parallel cannot affect the count.
+        var tempDir = Directory.CreateDirectory(Path.Combine(_dir, "tmp")).FullName;
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => new VideoReaderService().ConvertVideoToAudioAsync(bad));
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new VideoReaderService(tempDirectory: tempDir).ConvertVideoToAudioAsync(bad));
 
         Assert.Contains("ffmpeg failed", ex.Message);
-        Assert.Equal(before, Directory.GetFiles(Path.GetTempPath(), "transcriber_*.wav").Length);
+        Assert.Empty(Directory.GetFiles(tempDir));
     }
 }
