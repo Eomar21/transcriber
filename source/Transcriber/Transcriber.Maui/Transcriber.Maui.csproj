@@ -83,7 +83,7 @@
 	        Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
 		<ItemGroup>
 			<_OtherOsNative Include="@(ReferenceCopyLocalPaths);@(ResolvedFileToPublish)"
-			                Condition="$([System.String]::Copy('%(Identity)').Replace('\','/').Contains('/runtimes/'))" />
+			                Condition="$([System.String]::Copy('%(NuGetPackageId)').StartsWith('Whisper.net.Runtime')) And '%(Extension)' != '.a'" />
 			<ReferenceCopyLocalPaths Remove="@(_OtherOsNative)" />
 			<ResolvedFileToPublish Remove="@(_OtherOsNative)" />
 		</ItemGroup>
