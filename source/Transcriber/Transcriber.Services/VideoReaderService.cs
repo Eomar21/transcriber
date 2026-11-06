@@ -5,11 +5,10 @@ public class VideoReaderService : IVideoReaderService
 {
     private readonly string _ffmpegPath;
 
-    /// <param name="ffmpegPath">Path to ffmpeg. Defaults to ffmpeg.exe next to the app, then PATH.</param>
+    /// <param name="ffmpegPath">Path to ffmpeg. Defaults to the copy bundled with the app, then PATH (developer machines).</param>
     public VideoReaderService(string? ffmpegPath = null)
     {
-        var bundled = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
-        _ffmpegPath = ffmpegPath ?? (File.Exists(bundled) ? bundled : "ffmpeg");
+        _ffmpegPath = ffmpegPath ?? FfmpegLocator.Locate() ?? "ffmpeg";
     }
 
     public async Task<string> ConvertVideoToAudioAsync(string videoFilePath)
@@ -37,7 +36,7 @@ public class VideoReaderService : IVideoReaderService
         catch (Win32Exception)
         {
             throw new InvalidOperationException(
-                "ffmpeg was not found. Install it (Windows: winget install Gyan.FFmpeg) or place ffmpeg next to the app, then try again.");
+                "ffmpeg was not found. It is bundled with the app, so the installation looks incomplete: please reinstall the app.");
         }
 
         using (process)
