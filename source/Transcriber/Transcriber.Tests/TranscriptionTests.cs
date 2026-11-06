@@ -80,6 +80,34 @@ public class TranscriptionTests(ITestOutputHelper output)
         Assert.False(string.IsNullOrEmpty(runtime));
     }
 
+    [Theory]
+    [InlineData(".mp4")]
+    [InlineData(".mkv")]
+    public async Task A_video_file_transcribes_end_to_end_with_the_bundled_ffmpeg(string extension)
+    {
+        var dir = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var video = await VideoConversionTests.MakeVideoAsync(dir, Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"), extension);
+            var wav = await new FileReaderService(new AudioService(), new VideoReaderService()).GetAudioFileFromFileAsync(video);
+            try
+            {
+                var segments = await new WhisperService(Models).TranscribeAsync(wav, new TranscriptionOptions
+                {
+                    Language = "en",
+                    Model = WhisperModel.Small,
+                    UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
+                });
+                var actual = string.Join(' ', segments.Select(s => s.Text));
+                var wer = TextMetrics.WordErrorRate("Article 1. All human beings are born free and equal in dignity and rights. They are endowed with reason and conscience and should act towards one another in a spirit of brotherhood.", actual);
+                output.WriteLine($"{extension} WER={wer:P1}\n  got: {actual}");
+                Assert.True(wer <= 0.05, $"WER {wer:P0}: {actual}");
+            }
+            finally { File.Delete(wav); }
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
     [Fact]
     public async Task Cancellation_stops_transcription()
     {
