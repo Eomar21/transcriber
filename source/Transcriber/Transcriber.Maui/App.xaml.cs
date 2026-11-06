@@ -1,4 +1,4 @@
-﻿namespace Transcriber.Maui
+namespace Transcriber.Maui
 {
     public partial class App : Application
     {
@@ -9,7 +9,14 @@
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            return new Window(new AppShell())
+            {
+                Title = "Transcriber",
+                Width = 1040,
+                Height = 820,
+                MinimumWidth = 520,
+                MinimumHeight = 560,
+            };
         }
     }
 }
