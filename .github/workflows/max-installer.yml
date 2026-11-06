@@ -39,7 +39,7 @@ jobs:
           dotnet publish ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj
           -f net10.0-maccatalyst -c Release -p:RuntimeIdentifier=maccatalyst-arm64
           -p:CreatePackage=false -p:EnableCodeSigning=false -p:EnablePackageSigning=false
-          -o publish/mac
+          -o publish/mac -v:detailed "-flp:v=detailed;logfile=mac-build.log"
 
       - name: Zip the app
         run: |
@@ -51,3 +51,10 @@ jobs:
           name: Transcriber-mac-arm64
           path: Transcriber-mac-arm64.zip
           if-no-files-found: error
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-build-log
+          path: mac-build.log
