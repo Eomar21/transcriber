@@ -73,7 +73,7 @@ public class AppTests
             var target = new Point(box.Left + box.Width / 2, box.Top + 280);
 
             DragSource.DropFiles(target, TimeSpan.FromSeconds(60),
-                whileOverTarget: () => app.SaveScreenshot("drag-over"),
+                whileOverTarget: () => { app.SaveScreenshot("drag-over"); AppDriver.SaveScreen("drag-over-screen"); },
                 audio, notes);
 
             AppDriver.Wait(() => app.TextOf("FilesSummary").Contains("en-02.mp3"), TimeSpan.FromSeconds(15), "the dropped file to appear");

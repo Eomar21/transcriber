@@ -75,6 +75,17 @@ public sealed class AppDriver : IDisposable
         throw new TimeoutException($"Timed out waiting for {what}.");
     }
 
+    public static void SaveScreen(string name)
+    {
+        try
+        {
+            var dir = Path.Combine(AppContext.BaseDirectory, "screenshots");
+            Directory.CreateDirectory(dir);
+            Capture.Screen().ToFile(Path.Combine(dir, name + ".png"));
+        }
+        catch { }
+    }
+
     public void SaveScreenshot(string name)
     {
         try

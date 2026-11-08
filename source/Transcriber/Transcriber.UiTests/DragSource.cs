@@ -84,6 +84,7 @@ public static class DragSource
             {
                 begin.Stop();
                 Mouse.Position = new Point(form.Left + 100, form.Top + 70);
+                AppDriver.SaveScreen("drag-before-press");
                 Mouse.Down(MouseButton.Left);
                 Mouse.MoveBy(4, 4);
             };
