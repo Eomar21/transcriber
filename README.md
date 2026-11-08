@@ -14,6 +14,7 @@ Private, offline speech-to-text for your desktop. Drop in an audio or video file
 - **Batch.** Select several files and transcribe them in one run.
 - **Speaker labels.** Optionally marks each line as Speaker 1, Speaker 2 and so on, in the list and in every export. Tell it how many people speak, or let it work that out.
 - **Click to listen.** Click any line to hear the recording from that moment.
+- **Practice tab.** Choose a recording of yourself speaking and get your pace, pauses, filler words and stumbles, plain-language tips, and your progress over time. Optional written feedback comes from a model running locally in [Ollama](https://ollama.com) if you have it; nothing is uploaded either way. Works for English, Dutch and Spanish.
 - **Better names and terms.** Optional hint field for names or jargon, which improves recognition.
 - **GPU acceleration.** Uses your graphics card through Vulkan when available and falls back to the processor automatically.
 - **Search and copy.** Search inside the transcript, copy it all, or open the saved file and reveal it in Explorer or Finder with one click.
@@ -62,6 +63,7 @@ The first build downloads ffmpeg and the Whisper model (about 570 MB in total). 
 | Project | Purpose |
 | --- | --- |
 | `Transcriber.Services` | Audio, video, Whisper, model management and export. No UI dependencies. |
+| `Transcriber.Coach` | Speech analysis for the Practice tab: pace, pauses, filler words, stumbles, tips, history, optional Ollama feedback. No UI dependencies. |
 | `Transcriber.ViewModels` | MVVM view models (CommunityToolkit.Mvvm) behind small interfaces for platform services. |
 | `Transcriber.Maui` | The .NET MAUI app: pages, styles and platform implementations. |
 | `Transcriber.Tests` | xUnit tests, including end-to-end transcription of real recordings. |
