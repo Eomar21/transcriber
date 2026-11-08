@@ -8,10 +8,17 @@
     Shell.NavBarIsVisible="False"
     Title="Transcriber">
 
-    <!-- Each feature is a tab. With a single tab Shell hides the tab bar. -->
-    <ShellContent
-        Title="Transcribe"
-        ContentTemplate="{DataTemplate local:TranscribePage}"
-        Route="transcribe" />
+    <!-- Each feature is a tab. -->
+    <TabBar>
+        <ShellContent
+            Title="Transcribe"
+            ContentTemplate="{DataTemplate local:TranscribePage}"
+            Route="transcribe" />
+
+        <ShellContent
+            Title="Practice"
+            ContentTemplate="{DataTemplate local:PracticePage}"
+            Route="practice" />
+    </TabBar>
 
 </Shell>
