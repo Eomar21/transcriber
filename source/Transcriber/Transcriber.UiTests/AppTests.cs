@@ -93,6 +93,10 @@ public class AppTests
         Assert.Equal("No recording chosen", app.TextOf("PracticeFileName"));
         Assert.False(app.Get("AnalyzeButton").IsEnabled);
         Assert.True(app.Get("PracticeChooseButton").IsEnabled);
+        // Recording is offered, but nothing is recording and no microphone is touched by this test.
+        Assert.True(app.Get("RecordButton").IsEnabled);
+        Assert.Null(app.Find("StopRecordingButton"));
+        Assert.Null(app.Find("RecordingText"));
         Assert.Null(app.Find("PracticeTips")); // no results are shown before an analysis
     }
 
