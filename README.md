@@ -34,7 +34,7 @@ Both use [OpenAI Whisper](https://github.com/openai/whisper) through [Whisper.ne
 
 ## Transcribe mode
 
-![The Transcribe tab, with speaker labels on a finished transcript](docs/transcribe.png)
+![Transcribe mode: open a recording, turn on speaker labels, transcribe, then click a line to hear it](docs/transcribe.gif)
 
 Drop in audio or video and get a transcript, without sending it anywhere.
 
@@ -76,7 +76,7 @@ A bundled model finds where speech changes hands, another describes each voice, 
 
 ## Practice mode
 
-![The Practice tab showing pace, filler words, pauses, stumbles and tips](docs/practice.png)
+![Practice mode: analyse a recording and read the pace, filler word, pause and stumble results, tips and your progress](docs/practice.gif)
 
 Rehearse a talk, an interview answer or a presentation, then see how you did. Nothing leaves your computer.
 
