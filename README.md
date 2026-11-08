@@ -14,7 +14,7 @@ Private, offline speech-to-text for your desktop. Drop in an audio or video file
 - **Batch.** Select several files and transcribe them in one run.
 - **Speaker labels.** Optionally marks each line as Speaker 1, Speaker 2 and so on, in the list and in every export. Tell it how many people speak, or let it work that out.
 - **Click to listen.** Click any line to hear the recording from that moment.
-- **Practice tab.** Choose a recording of yourself speaking and get your pace, pauses, filler words and stumbles, plain-language tips, and your progress over time. Optional written feedback comes from a model running locally in [Ollama](https://ollama.com) if you have it; nothing is uploaded either way. Works for English, Dutch and Spanish.
+- **Practice tab.** Record yourself with the microphone, or choose a recording of yourself speaking and get your pace, pauses, filler words and stumbles, plain-language tips, and your progress over time. Optional written feedback comes from a model running locally in [Ollama](https://ollama.com) if you have it; nothing is uploaded either way. Works for English, Dutch and Spanish.
 - **Better names and terms.** Optional hint field for names or jargon, which improves recognition.
 - **GPU acceleration.** Uses your graphics card through Vulkan when available and falls back to the processor automatically.
 - **Search and copy.** Search inside the transcript, copy it all, or open the saved file and reveal it in Explorer or Finder with one click.
