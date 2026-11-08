@@ -61,6 +61,28 @@ public class AppTests
     }
 
     [UiFact]
+    public void Labelling_speakers_names_who_said_each_line_in_the_saved_transcript()
+    {
+        var file = CopyToTemp("two-speakers-en.wav", out var dir);
+        using var app = new AppDriver(file);
+        try
+        {
+            Assert.Null(app.Find("SpeakerCountPicker"));
+            app.Get("IdentifySpeakersSwitch").Patterns.Toggle.Pattern.Toggle();
+            AppDriver.Wait(() => app.Find("SpeakerCountPicker") is not null, TimeSpan.FromSeconds(10), "the speaker count picker");
+
+            app.Click("TranscribeButton");
+            AppDriver.Wait(() => app.TextOf("ResultMessage") == "Transcript saved", TimeSpan.FromMinutes(5), "the transcript to be saved");
+
+            var saved = File.ReadAllText(Path.Combine(dir, "two-speakers-en_transcript.txt"));
+            Assert.Contains("Speaker 1:", saved);
+            Assert.Contains("Speaker 2:", saved);
+        }
+        catch { app.SaveScreenshot(nameof(Labelling_speakers_names_who_said_each_line_in_the_saved_transcript)); throw; }
+        finally { app.Dispose(); Directory.Delete(dir, true); }
+    }
+
+    [UiFact]
     public void Clicking_a_transcript_line_starts_playback_and_the_player_bar_can_stop_it()
     {
         var file = CopyToTemp("en-01.mp3", out var dir);

@@ -98,6 +98,27 @@ public class TranscriptionTests(ITestOutputHelper output)
         }
     }
 
+    [Fact]
+    public async Task Speakers_are_identified_in_a_two_person_conversation()
+    {
+        var wav = Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav");
+        var whisper = new WhisperService(Models, new SileroSpeechDetector(), new SherpaSpeakerDiarizer());
+
+        var segments = await whisper.TranscribeAsync(wav, new TranscriptionOptions
+        {
+            Language = "en",
+            Model = TestModel,
+            UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
+            IdentifySpeakers = true,
+            SpeakerCount = 2,
+        });
+
+        output.WriteLine(string.Join("\n", segments.Select(s => $"{s.Start.TotalSeconds:F1}s Speaker {s.Speaker}: {s.Text}")));
+        Assert.NotEmpty(segments);
+        Assert.All(segments, s => Assert.NotNull(s.Speaker));
+        Assert.Equal(2, segments.Select(s => s.Speaker).Distinct().Count());
+    }
+
     [Theory]
     [MemberData(nameof(Samples))]
     public async Task Transcript_matches_reference(string file, string language, string reference)

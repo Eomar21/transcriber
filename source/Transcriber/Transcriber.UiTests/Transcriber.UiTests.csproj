@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <!-- Sample recordings reused from the main test project. -->
-    <Content Include="..\Transcriber.Tests\TestData\en-01.mp3;..\Transcriber.Tests\TestData\en-02.mp3" Link="TestData\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Transcriber.Tests\TestData\en-01.mp3;..\Transcriber.Tests\TestData\en-02.mp3;..\Transcriber.Tests\TestData\two-speakers-en.wav" Link="TestData\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
