@@ -33,6 +33,15 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # ffmpeg is downloaded from a GitHub release during the build; cache it so a slow download cannot fail the job.
+      - name: Cache bundled ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/ffmpeg
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
+          key: bundled-ffmpeg-b6.1.1-${{ runner.os }}
+
       - name: Work out version
         id: ver
         shell: bash
@@ -106,6 +115,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      # ffmpeg is downloaded from a GitHub release during the build; cache it so a slow download cannot fail the job.
+      - name: Cache bundled ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/ffmpeg
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
+          key: bundled-ffmpeg-b6.1.1-${{ runner.os }}
 
       - name: Work out version
         id: ver

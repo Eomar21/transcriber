@@ -82,7 +82,7 @@
     <!-- Binary: download, verify checksum, unpack. Skipped when already cached. -->
     <DownloadFile Condition="!Exists('$(FfmpegCacheDir)%(FfmpegAsset.OutName)')"
                   SourceUrl="$(FfmpegBaseUrl)/%(FfmpegAsset.Gz)"
-                  DestinationFolder="$(FfmpegCacheDir)downloads" Retries="3" />
+                  DestinationFolder="$(FfmpegCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
     <VerifyAndUnpack Condition="!Exists('$(FfmpegCacheDir)%(FfmpegAsset.OutName)')"
                      Source="$(FfmpegCacheDir)downloads\%(FfmpegAsset.Gz)" ExpectedSha256="%(FfmpegAsset.GzSha)"
                      Destination="$(FfmpegCacheDir)%(FfmpegAsset.OutName)" Gunzip="true" />
@@ -90,7 +90,7 @@
     <!-- Licence text travels with the binary. -->
     <DownloadFile Condition="!Exists('$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt')"
                   SourceUrl="$(FfmpegBaseUrl)/%(FfmpegAsset.Licence)"
-                  DestinationFolder="$(FfmpegCacheDir)downloads" Retries="3" />
+                  DestinationFolder="$(FfmpegCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
     <VerifyAndUnpack Condition="!Exists('$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt')"
                      Source="$(FfmpegCacheDir)downloads\%(FfmpegAsset.Licence)" ExpectedSha256="%(FfmpegAsset.LicenceSha)"
                      Destination="$(FfmpegCacheDir)licenses\ffmpeg-LICENSE-%(FfmpegAsset.Identity).txt" Gunzip="false" />
@@ -114,7 +114,7 @@
 
     <DownloadFile Condition="!Exists('$(WhisperModelCacheDir)$(WhisperModelFile)')"
                   SourceUrl="https://huggingface.co/ggerganov/whisper.cpp/resolve/$(WhisperModelCommit)/$(WhisperModelFile)"
-                  DestinationFolder="$(WhisperModelCacheDir)downloads" Retries="3" />
+                  DestinationFolder="$(WhisperModelCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
     <VerifyAndUnpack Condition="!Exists('$(WhisperModelCacheDir)$(WhisperModelFile)')"
                      Source="$(WhisperModelCacheDir)downloads\$(WhisperModelFile)" ExpectedSha256="$(WhisperModelSha)"
                      Destination="$(WhisperModelCacheDir)$(WhisperModelFile)" Gunzip="false" />
