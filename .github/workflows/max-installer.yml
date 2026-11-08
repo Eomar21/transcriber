@@ -30,7 +30,7 @@ jobs:
           path: |
             ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/ffmpeg
             ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
-          key: bundled-ffmpeg-b6.1.1-${{ runner.os }}
+          key: bundled-ffmpeg-b6.1.1-${{ runner.os }}-${{ github.job }}
 
       # The newest MacCatalyst workload needs a newer Xcode than the runner has, so pin the
       # workload versions (see .github/mac-workloads.json) to ones that match the installed Xcode 26.
