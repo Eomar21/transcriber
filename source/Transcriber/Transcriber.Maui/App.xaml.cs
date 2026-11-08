@@ -9,6 +9,11 @@ namespace Transcriber.Maui
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
+            // "Open with" and tests: files passed on the command line are added to the list.
+            var files = Environment.GetCommandLineArgs().Skip(1).Where(File.Exists).ToList();
+            if (files.Count > 0)
+                IPlatformApplication.Current?.Services.GetService<Transcriber.ViewModels.TranscribeViewModel>()?.AddFiles(files);
+
             return new Window(new AppShell())
             {
                 Title = "Transcriber",

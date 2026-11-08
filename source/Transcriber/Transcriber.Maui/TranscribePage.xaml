@@ -32,7 +32,7 @@
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                     <VerticalStackLayout VerticalOptions="Center" Spacing="2">
                         <Label Text="Files" Style="{StaticResource SectionTitle}" />
-                        <Label Text="{Binding FilesSummary}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
+                        <Label AutomationId="FilesSummary" Text="{Binding FilesSummary}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
                         <Label Text="Drop files here, or choose them. mp3, wav, mp4, mov, m4a and more" Style="{StaticResource Caption}">
                             <Label.Triggers>
                                 <DataTrigger TargetType="Label" Binding="{Binding IsDragOver}" Value="True">
@@ -41,12 +41,12 @@
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
-                        <Label Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
+                        <Label AutomationId="DropMessage" Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
                                FontSize="13" IsVisible="{Binding HasDropMessage}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}"
+                    <Button AutomationId="ClearFilesButton" Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}"
                             Command="{Binding ClearFilesCommand}" IsVisible="{Binding HasFiles}" />
-                    <Button Grid.Column="2" Text="Choose files" Style="{StaticResource PrimaryButton}"
+                    <Button AutomationId="ChooseFilesButton" Grid.Column="2" Text="Choose files" Style="{StaticResource PrimaryButton}"
                             Command="{Binding BrowseCommand}" IsEnabled="{Binding IsIdle}" />
                 </Grid>
             </Border>
@@ -90,7 +90,7 @@
 
             <!-- 3. Action -->
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                <Button Text="Transcribe" Style="{StaticResource PrimaryButton}" Command="{Binding TranscribeCommand}" />
+                <Button AutomationId="TranscribeButton" Text="Transcribe" Style="{StaticResource PrimaryButton}" Command="{Binding TranscribeCommand}" />
                 <Button Grid.Column="1" Text="Cancel" Style="{StaticResource SecondaryButton}"
                         Command="{Binding TranscribeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
@@ -119,18 +119,18 @@
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
-                    <Label Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold" VerticalOptions="Center" />
+                    <Label AutomationId="ResultMessage" Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold" VerticalOptions="Center" />
                 </HorizontalStackLayout>
 
-                <Label Text="{Binding ResultDetail}" Style="{StaticResource Caption}" LineBreakMode="MiddleTruncation"
+                <Label AutomationId="ResultDetail" Text="{Binding ResultDetail}" Style="{StaticResource Caption}" LineBreakMode="MiddleTruncation"
                        ToolTipProperties.Text="{Binding ResultDetail}" IsVisible="{Binding HasResultDetail}" />
                 <Label Text="{Binding RuntimeNote}" Style="{StaticResource Caption}" IsVisible="{Binding HasRuntimeNote}" />
 
                 <HorizontalStackLayout Spacing="10" Margin="0,4,0,0" IsVisible="{Binding HasSavedFiles}">
-                    <Button Text="Open transcript" Style="{StaticResource PrimaryButton}"
+                    <Button AutomationId="OpenTranscriptButton" Text="Open transcript" Style="{StaticResource PrimaryButton}"
                             Command="{Binding OpenTranscriptCommand}" IsVisible="{Binding CanOpenTranscript}"
                             SemanticProperties.Description="Open the saved transcript in its default app" />
-                    <Button Text="{Binding ShowInFolderLabel}" Style="{StaticResource SecondaryButton}"
+                    <Button AutomationId="ShowInFolderButton" Text="{Binding ShowInFolderLabel}" Style="{StaticResource SecondaryButton}"
                             Command="{Binding ShowInFolderCommand}"
                             SemanticProperties.Description="Show the saved transcript in its folder">
                         <Button.Triggers>
@@ -144,7 +144,7 @@
                     </Button>
                 </HorizontalStackLayout>
 
-                <Label Text="{Binding ActionMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
+                <Label AutomationId="ActionMessage" Text="{Binding ActionMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
                        FontSize="13" IsVisible="{Binding HasActionMessage}" />
             </VerticalStackLayout>
 

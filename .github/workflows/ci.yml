@@ -73,3 +73,42 @@ jobs:
 
       - name: Build
         run: dotnet build ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj -c Release
+
+  # Launches the real app and drives it through UI Automation, including a real mouse drag and drop.
+  ui-tests:
+    name: UI tests (Windows app)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows
+
+      - name: Cache bundled Whisper model
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/models
+          key: bundled-whisper-model-5359861c739e955e79d9a303bcbc70fb988958b1-small
+
+      - name: Build app
+        run: dotnet build ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj -c Release
+
+      - name: UI tests
+        env:
+          TRANSCRIBER_UI_TESTS: '1'
+          TRANSCRIBER_UI_DRAG: '1'
+          TRANSCRIBER_APP_EXE: ${{ github.workspace }}\source\Transcriber\Transcriber.Maui\bin\Release\net10.0-windows10.0.19041.0\win-x64\Transcriber.Maui.exe
+        run: dotnet test ${{ env.SOLUTION_DIR }}/Transcriber.UiTests -c Release --logger "console;verbosity=normal"
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-screenshots
+          path: ${{ env.SOLUTION_DIR }}/Transcriber.UiTests/bin/Release/**/screenshots/*.png
+          if-no-files-found: ignore
