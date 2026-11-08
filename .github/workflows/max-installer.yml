@@ -43,6 +43,13 @@ jobs:
           path: ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/models
           key: bundled-whisper-model-5359861c739e955e79d9a303bcbc70fb988958b1-small
 
+      # The speaker detection tool comes out of a 236 MB release archive; keep the extracted program.
+      - name: Cache speaker detection tool
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/sherpacli
+          key: sherpa-cli-v2.0.1-osx-arm64-static
+
       - name: Publish Mac app
         run: >
           dotnet publish ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj
@@ -55,15 +62,28 @@ jobs:
           APP=source/Transcriber/Transcriber.Maui/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Transcriber.Maui.app
           RES="$APP/Contents/Resources"
           echo "App size:"; du -sh "$APP"
-          for f in ffmpeg-arm64 models/ggml-small.bin models/ggml-silero-v5.1.2.bin models/pyannote-segmentation-3.0.int8.onnx models/3dspeaker-campplus-zh-en-16k.onnx; do
+          for f in sherpa-onnx-offline-speaker-diarization ffmpeg-arm64 models/ggml-small.bin models/ggml-silero-v5.1.2.bin models/pyannote-segmentation-3.0.int8.onnx models/3dspeaker-campplus-zh-en-16k.onnx; do
             test -s "$RES/$f" || { echo "::error::Missing from the app bundle: $f"; exit 1; }
           done
           # An Apple Silicon build must not carry the Intel ffmpeg.
           test ! -e "$RES/ffmpeg-x64" || { echo "::error::The arm64 app contains the Intel ffmpeg"; exit 1; }
           # The bundled ffmpeg has to be an arm64 executable.
           file "$RES/ffmpeg-arm64" | grep -q arm64 || { echo "::error::ffmpeg-arm64 is not an arm64 binary"; file "$RES/ffmpeg-arm64"; exit 1; }
-          # Speaker labelling needs the sherpa-onnx native library; report whether it made it in.
-          find "$APP" -iname '*sherpa-onnx-c-api*' -o -iname 'libonnxruntime*' | grep . || echo "::warning::No sherpa-onnx native library in the app, so speaker labels are unavailable on this build"
+          file "$RES/sherpa-onnx-offline-speaker-diarization" | grep -q arm64 || { echo "::error::The speaker detection tool is not an arm64 binary"; exit 1; }
+
+      # Runs the bundled program on a recording of two people, with the same options the app uses,
+      # and checks both voices are told apart.
+      - name: Check speaker detection in the app bundle
+        run: |
+          RES=source/Transcriber/Transcriber.Maui/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Transcriber.Maui.app/Contents/Resources
+          chmod +x "$RES/sherpa-onnx-offline-speaker-diarization"
+          "$RES/sherpa-onnx-offline-speaker-diarization" \
+            --segmentation.pyannote-model="$RES/models/pyannote-segmentation-3.0.int8.onnx" --segmentation.num-threads=2 \
+            --embedding.model="$RES/models/3dspeaker-campplus-zh-en-16k.onnx" --embedding.num-threads=2 \
+            --clustering.num-clusters=-1 --clustering.cluster-threshold=0.5 --min-duration-on=0.3 --min-duration-off=0.5 \
+            source/Transcriber/Transcriber.Tests/TestData/two-speakers-en.wav 2>&1 | tee diarization.txt
+          grep -q "speaker_00" diarization.txt && grep -q "speaker_01" diarization.txt \
+            || { echo "::error::The bundled tool did not find two speakers"; exit 1; }
 
       - name: Zip the app
         run: |

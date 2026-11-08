@@ -163,6 +163,34 @@
     <DiarizationCacheDir>$(MSBuildProjectDirectory)\obj\diarization\</DiarizationCacheDir>
   </PropertyGroup>
 
+  <!--
+    macOS only: sherpa-onnx's statically linked speaker diarization tool (about 28 MB, Apache 2.0, ONNX Runtime inside is MIT),
+    taken from the official release archive pinned by checksum. A Mac Catalyst app cannot load the native library the Windows
+    build uses, so the app runs this program instead. The archive is large, so only the one program is kept.
+  -->
+  <PropertyGroup>
+    <SherpaCliVersion>v2.0.1</SherpaCliVersion>
+    <SherpaCliArchive>sherpa-onnx-$(SherpaCliVersion)-osx-arm64-static-no-tts.tar.bz2</SherpaCliArchive>
+    <SherpaCliSha>e2496931fd955ab449c2df1a6839e4c17cedf451e018cc3efd1a77180980c49b</SherpaCliSha>
+    <SherpaCliTool>sherpa-onnx-offline-speaker-diarization</SherpaCliTool>
+    <SherpaCliCacheDir>$(MSBuildProjectDirectory)/obj/sherpacli/</SherpaCliCacheDir>
+  </PropertyGroup>
+
+  <Target Name="FetchSherpaCli" BeforeTargets="AssignTargetPaths" Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
+    <MakeDir Directories="$(SherpaCliCacheDir)" />
+
+    <DownloadFile Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
+                  SourceUrl="https://github.com/k2-fsa/sherpa-onnx/releases/download/$(SherpaCliVersion)/$(SherpaCliArchive)"
+                  DestinationFolder="$(SherpaCliCacheDir)" Retries="5" RetryDelayMilliseconds="5000" />
+    <Exec Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
+          WorkingDirectory="$(SherpaCliCacheDir)"
+          Command="echo &quot;$(SherpaCliSha)  $(SherpaCliArchive)&quot; | shasum -a 256 -c - &amp;&amp; tar -xjf $(SherpaCliArchive) --strip-components=2 &quot;sherpa-onnx-$(SherpaCliVersion)-osx-arm64-static-no-tts/bin/$(SherpaCliTool)&quot; &amp;&amp; chmod +x $(SherpaCliTool) &amp;&amp; rm -f $(SherpaCliArchive)" />
+
+    <ItemGroup>
+      <Content Include="$(SherpaCliCacheDir)$(SherpaCliTool)" Link="$(SherpaCliTool)" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="FetchDiarizationModels" BeforeTargets="AssignTargetPaths">
     <MakeDir Directories="$(DiarizationCacheDir)downloads" />
 

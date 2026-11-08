@@ -31,7 +31,7 @@ public static class FfmpegLocator
     }
 
     // App bundles and archives can drop the executable bit; restore it so the file can be started.
-    private static void EnsureExecutable(string path)
+    internal static void EnsureExecutable(string path)
     {
         if (OperatingSystem.IsWindows()) return;
         try

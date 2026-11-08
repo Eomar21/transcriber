@@ -21,7 +21,12 @@ namespace Transcriber.Maui
             // Core services (platform independent).
             builder.Services.AddSingleton<IModelManager, ModelManager>();
             builder.Services.AddSingleton<ISpeechDetector, SileroSpeechDetector>();
+#if MACCATALYST
+            // Mac Catalyst cannot load the native sherpa-onnx library, so run its bundled command-line tool instead.
+            builder.Services.AddSingleton<ISpeakerDiarizer, SherpaCliSpeakerDiarizer>();
+#else
             builder.Services.AddSingleton<ISpeakerDiarizer, SherpaSpeakerDiarizer>();
+#endif
             builder.Services.AddSingleton<IWhisperService, WhisperService>();
             builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
             builder.Services.AddSingleton<IAudioService, AudioService>();
