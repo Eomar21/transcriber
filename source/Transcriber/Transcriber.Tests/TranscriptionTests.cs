@@ -56,6 +56,48 @@ public class TranscriptionTests(ITestOutputHelper output)
         }
     }
 
+    [Fact]
+    public async Task With_speech_detection_text_keeps_its_place_in_the_recording_and_silence_gives_nothing()
+    {
+        const int lead = 6; // seconds of silence in front of the speech
+        var sample = await new AudioService().GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
+        var padded = Path.Combine(Path.GetTempPath(), $"vad_{Guid.NewGuid():N}.wav");
+        var silent = Path.Combine(Path.GetTempPath(), $"vad_{Guid.NewGuid():N}.wav");
+        try
+        {
+            var format = new NAudio.Wave.WaveFormat(16000, 16, 1);
+            using (var writer = new NAudio.Wave.WaveFileWriter(padded, format))
+            {
+                writer.Write(new byte[lead * format.AverageBytesPerSecond], 0, lead * format.AverageBytesPerSecond);
+                using var reader = new NAudio.Wave.WaveFileReader(sample);
+                reader.CopyTo(writer);
+            }
+            using (var writer = new NAudio.Wave.WaveFileWriter(silent, format))
+                writer.Write(new byte[10 * format.AverageBytesPerSecond], 0, 10 * format.AverageBytesPerSecond);
+
+            var whisper = new WhisperService(Models, new SileroSpeechDetector());
+            var options = new TranscriptionOptions
+            {
+                Language = "en",
+                Model = TestModel,
+                UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
+            };
+
+            var segments = await whisper.TranscribeAsync(padded, options);
+            output.WriteLine(string.Join(" | ", segments.Select(s => $"{s.Start.TotalSeconds:F1}-{s.End.TotalSeconds:F1} {s.Text}")));
+            Assert.NotEmpty(segments);
+            Assert.True(segments[0].Start >= TimeSpan.FromSeconds(lead - 1), $"first line starts at {segments[0].Start}");
+
+            Assert.Empty(await whisper.TranscribeAsync(silent, options));
+        }
+        finally
+        {
+            File.Delete(sample);
+            File.Delete(padded);
+            File.Delete(silent);
+        }
+    }
+
     [Theory]
     [MemberData(nameof(Samples))]
     public async Task Transcript_matches_reference(string file, string language, string reference)

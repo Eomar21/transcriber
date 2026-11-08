@@ -19,6 +19,7 @@ namespace Transcriber.Maui
 
             // Core services (platform independent).
             builder.Services.AddSingleton<IModelManager, ModelManager>();
+            builder.Services.AddSingleton<ISpeechDetector, SileroSpeechDetector>();
             builder.Services.AddSingleton<IWhisperService, WhisperService>();
             builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
             builder.Services.AddSingleton<IAudioService, AudioService>();
