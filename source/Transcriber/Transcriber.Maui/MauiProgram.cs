@@ -28,6 +28,7 @@ namespace Transcriber.Maui
             // Platform services the view models depend on through interfaces.
             builder.Services.AddSingleton<IFilePickerService, MauiFilePickerService>();
             builder.Services.AddSingleton<IClipboardService, MauiClipboardService>();
+            builder.Services.AddSingleton<IDialogService, MauiDialogService>();
 
             // View models are singletons so a screen keeps its state while you switch tabs.
             builder.Services.AddSingleton<TranscribeViewModel>();

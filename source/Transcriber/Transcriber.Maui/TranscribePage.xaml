@@ -61,7 +61,8 @@
                         </VerticalStackLayout>
                         <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
                             <Label Text="Model (bigger is more accurate, slower)" Style="{StaticResource Caption}" />
-                            <Picker ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}" IsEnabled="{Binding IsIdle}" />
+                            <Picker AutomationId="ModelPicker" ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModelOption}" IsEnabled="{Binding IsIdle}" />
+                            <Label AutomationId="ModelHint" Text="{Binding ModelHint}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasModelHint}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,0,10">
                             <Label Text="Save as" Style="{StaticResource Caption}" />
