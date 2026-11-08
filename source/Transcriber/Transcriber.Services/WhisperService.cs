@@ -19,7 +19,21 @@ public class WhisperService : IWhisperService
 
     public bool CanIdentifySpeakers => _speakerDiarizer is { IsAvailable: true };
 
+    // Both tabs share one engine, and two runs at once would fight over the GPU and the loaded native library.
+    private static readonly SemaphoreSlim OneRunAtATime = new(1, 1);
+
     public async Task<List<TranscriptSegment>> TranscribeAsync(
+        string audioFilePath,
+        TranscriptionOptions? options = null,
+        IProgress<TranscriptionProgress>? progress = null,
+        CancellationToken ct = default)
+    {
+        await OneRunAtATime.WaitAsync(ct);
+        try { return await TranscribeCoreAsync(audioFilePath, options, progress, ct); }
+        finally { OneRunAtATime.Release(); }
+    }
+
+    private async Task<List<TranscriptSegment>> TranscribeCoreAsync(
         string audioFilePath,
         TranscriptionOptions? options = null,
         IProgress<TranscriptionProgress>? progress = null,

@@ -11,7 +11,7 @@ public sealed class OllamaException(string message) : Exception(message);
 /// Optional written feedback from a model running locally in Ollama (https://ollama.com).
 /// The transcript is sent only to the address given here, which defaults to this computer.
 /// </summary>
-public sealed class OllamaCoach(HttpClient http, string baseAddress = OllamaCoach.DefaultAddress)
+public sealed class OllamaCoach(HttpClient http, string baseAddress = OllamaCoach.DefaultAddress) : ICoachFeedback
 {
     public const string DefaultAddress = "http://localhost:11434";
 
@@ -76,4 +76,14 @@ public sealed class OllamaCoach(HttpClient http, string baseAddress = OllamaCoac
         sb.AppendLine(transcript);
         return sb.ToString();
     }
+}
+
+/// <summary>Written feedback from a model, kept behind an interface so the app and its tests do not depend on Ollama itself.</summary>
+public interface ICoachFeedback
+{
+    /// <summary>The models that can give feedback; empty when the service is not running.</summary>
+    Task<IReadOnlyList<string>> ListModelsAsync(CancellationToken ct = default);
+
+    /// <exception cref="OllamaException">The service could not be reached or gave no answer.</exception>
+    Task<string> GetFeedbackAsync(string model, string transcript, SpeechReport report, CancellationToken ct = default);
 }
