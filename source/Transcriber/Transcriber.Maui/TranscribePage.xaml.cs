@@ -9,12 +9,31 @@ public partial class TranscribePage : ContentPage
     private const double SideMargin = 24;
 
     private readonly TranscribeViewModel _viewModel;
+#if WINDOWS
+    private bool _dropHooked;
+#endif
 
     // The page is only a view: all behaviour lives in the view model.
     public TranscribePage(TranscribeViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
+
+#if MACCATALYST
+        var drop = new DropGestureRecognizer { AllowDrop = true };
+        drop.DragOver += (_, e) =>
+        {
+            e.AcceptedOperation = _viewModel.IsBusy ? DataPackageOperation.None : DataPackageOperation.Copy;
+            _viewModel.IsDragOver = !_viewModel.IsBusy;
+        };
+        drop.DragLeave += (_, _) => _viewModel.IsDragOver = false;
+        drop.Drop += async (_, e) =>
+        {
+            try { _viewModel.AddFiles(await DroppedFiles.GetPathsAsync(e)); }
+            catch { _viewModel.IsDragOver = false; }
+        };
+        Content.GestureRecognizers.Add(drop);
+#endif
     }
 
     // Layout only: keep the content column centred, at most 912 wide, and shrinking with the window.
@@ -25,24 +44,32 @@ public partial class TranscribePage : ContentPage
             Column.WidthRequest = Math.Max(0, Math.Min(MaxColumnWidth, width - 2 * SideMargin));
     }
 
-    // Drag and drop: the platform specifics stay in DroppedFiles, the rules live in the view model.
-    private void OnDragOver(object? sender, DragEventArgs e)
+#if WINDOWS
+    // Windows file drags only reach the native WinUI events, so hook them on the page itself.
+    protected override void OnHandlerChanged()
     {
-        e.AcceptedOperation = _viewModel.IsBusy ? DataPackageOperation.None : DataPackageOperation.Copy;
-        _viewModel.IsDragOver = !_viewModel.IsBusy;
-    }
+        base.OnHandlerChanged();
+        if (_dropHooked || Handler?.PlatformView is not Microsoft.UI.Xaml.UIElement page) return;
+        _dropHooked = true;
 
-    private void OnDragLeave(object? sender, DragEventArgs e) => _viewModel.IsDragOver = false;
-
-    private async void OnDrop(object? sender, DropEventArgs e)
-    {
-        try
+        page.AllowDrop = true;
+        page.DragOver += (_, e) =>
         {
-            _viewModel.AddFiles(await DroppedFiles.GetPathsAsync(e));
-        }
-        catch
+            var accept = !_viewModel.IsBusy && DroppedFiles.HasFiles(e.DataView);
+            e.AcceptedOperation = accept ? Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy
+                                         : Windows.ApplicationModel.DataTransfer.DataPackageOperation.None;
+            if (accept) e.DragUIOverride.Caption = "Add to transcribe";
+            _viewModel.IsDragOver = accept;
+        };
+        page.DragLeave += (_, _) => _viewModel.IsDragOver = false;
+        page.Drop += async (_, e) =>
         {
-            _viewModel.IsDragOver = false;
-        }
+            // Keep the drop open while the items are read asynchronously.
+            var deferral = e.GetDeferral();
+            try { _viewModel.AddFiles(await DroppedFiles.GetPathsAsync(e.DataView)); }
+            catch { _viewModel.IsDragOver = false; }
+            finally { deferral.Complete(); }
+        };
     }
+#endif
 }

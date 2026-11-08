@@ -8,9 +8,6 @@
     Title="Transcribe">
 
     <ScrollView>
-      <ScrollView.GestureRecognizers>
-        <DropGestureRecognizer AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop" />
-      </ScrollView.GestureRecognizers>
       <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
       <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="16">
 
