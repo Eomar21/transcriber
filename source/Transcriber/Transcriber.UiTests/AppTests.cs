@@ -60,7 +60,7 @@ public class AppTests
         finally { app.Dispose(); Directory.Delete(dir, true); }
     }
 
-    [UiDragFact]
+    [UiFact]
     public void Clicking_a_transcript_line_starts_playback_and_the_player_bar_can_stop_it()
     {
         var file = CopyToTemp("en-01.mp3", out var dir);
@@ -71,9 +71,13 @@ public class AppTests
             AppDriver.Wait(() => app.TextOf("ResultMessage") == "Transcript saved", TimeSpan.FromMinutes(5), "the transcript to be saved");
 
             // Rows are named by their text (accessibility description), so find one by a word from the sample.
+
             var row = AppDriver_FindRow(app, "human beings");
+
+            Thread.Sleep(500);
             Assert.Null(app.Find("PlaybackText"));
-            row.Click();
+            // Selecting the row is what a click does; doing it through UI Automation keeps the test off the real mouse.
+            row.Patterns.SelectionItem.Pattern.Select();
 
             AppDriver.Wait(() => app.TextOf("PlaybackText").StartsWith("en-01.mp3"), TimeSpan.FromSeconds(10), "the player bar to appear");
             app.Click("StopButton");
@@ -83,13 +87,13 @@ public class AppTests
         finally { app.Dispose(); Directory.Delete(dir, true); }
     }
 
-    private static FlaUI.Core.AutomationElements.AutomationElement AppDriver_FindRow(AppDriver app, string text)
+    private static FlaUI.Core.AutomationElements.AutomationElement AppDriver_FindRow(AppDriver app, string expectedText)
     {
         FlaUI.Core.AutomationElements.AutomationElement? row = null;
-        AppDriver.Wait(() => (row = app.Window.FindFirstDescendant(cf => cf.ByName("Article 1. All human beings", FlaUI.Core.Definitions.PropertyConditionFlags.MatchSubstring))
-                                    ?? app.Window.FindFirstDescendant(cf => cf.ByName(text, FlaUI.Core.Definitions.PropertyConditionFlags.MatchSubstring))) is not null,
+        AppDriver.Wait(() => (row = app.Find("Segments")?.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.ListItem))) is not null,
             TimeSpan.FromSeconds(15), "a transcript row");
-        return row!;
+        Assert.Contains(expectedText, row!.Name, StringComparison.OrdinalIgnoreCase);
+        return row;
     }
 
     [UiDragFact]

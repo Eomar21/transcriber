@@ -54,6 +54,26 @@ public sealed class AppDriver : IDisposable
         return Path.Combine(root ?? "", "Transcriber.Maui", "bin", "Debug", "net10.0-windows10.0.19041.0", "win-x64", "Transcriber.Maui.exe");
     }
 
+    /// <summary>Scrolls the page itself (not the inner lists) to the bottom so the results are on screen.</summary>
+    public void ScrollPageToBottom()
+    {
+        var anchor = Find("Segments");
+        for (var el = anchor?.Parent; el is not null; el = el.Parent)
+        {
+            var scroll = el.Patterns.Scroll.PatternOrDefault;
+            if (scroll is null || !scroll.VerticallyScrollable.ValueOrDefault) continue;
+            scroll.SetScrollPercent(FlaUI.Core.Patterns.ScrollPatternConstants.NoScroll, 100);
+            break;
+        }
+        Thread.Sleep(500);
+    }
+
+    public void Maximize()
+    {
+        try { Window.Patterns.Window.PatternOrDefault?.SetWindowVisualState(FlaUI.Core.Definitions.WindowVisualState.Maximized); } catch { }
+        Thread.Sleep(500);
+    }
+
     public AutomationElement? Find(string automationId) =>
         Window.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
 
