@@ -127,4 +127,29 @@ public class SherpaCliDiarizerTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => diarizer.DiarizeAsync("x.wav"));
     }
+
+    // Captured from the tool bundled in the Mac app, running on the two-speaker sample: progress lines and the
+    // configuration dump come first, and neighbouring turns can overlap.
+    private const string CapturedOutput = """
+        progress 97.87%
+        progress 100.00%
+        Duration : 34.000 s
+        Elapsed seconds: 4.994 s
+        Real time factor (RTF): 4.994 / 34.000 = 0.147
+        OfflineSpeakerDiarizationConfig(clustering=FastClusteringConfig(num_clusters=-1, threshold=0.5), min_duration_on=0.3)
+        0.031 -- 0.368 speaker_01
+        0.368 -- 1.043 speaker_00
+        0.875 -- 2.731 speaker_01
+        2.731 -- 7.844 speaker_00
+        """;
+
+    [Fact]
+    public void Real_output_from_the_bundled_mac_tool_is_read_including_overlaps()
+    {
+        var turns = SherpaCliSpeakerDiarizer.ParseOutput(CapturedOutput);
+
+        Assert.Equal([1, 0, 1, 0], turns.Select(t => t.Speaker));
+        Assert.True(turns[2].Start < turns[1].End, "the overlap is kept as the tool reported it");
+        Assert.Equal(TimeSpan.FromSeconds(7.844), turns[3].End);
+    }
 }
