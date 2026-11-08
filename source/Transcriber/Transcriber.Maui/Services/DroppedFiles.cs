@@ -1,5 +1,6 @@
 #if WINDOWS
-using Windows.ApplicationModel.DataTransfer;
+using WinDataPackageView = Windows.ApplicationModel.DataTransfer.DataPackageView;
+using StandardDataFormats = Windows.ApplicationModel.DataTransfer.StandardDataFormats;
 using Windows.Storage;
 #elif MACCATALYST
 using Foundation;
@@ -12,9 +13,9 @@ namespace Transcriber.Maui.Services;
 public static class DroppedFiles
 {
 #if WINDOWS
-    public static bool HasFiles(DataPackageView view) => view.Contains(StandardDataFormats.StorageItems);
+    public static bool HasFiles(WinDataPackageView view) => view.Contains(StandardDataFormats.StorageItems);
 
-    public static async Task<IReadOnlyList<string>> GetPathsAsync(DataPackageView view)
+    public static async Task<IReadOnlyList<string>> GetPathsAsync(WinDataPackageView view)
     {
         if (!HasFiles(view)) return [];
         var items = await view.GetStorageItemsAsync();
