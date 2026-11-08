@@ -695,4 +695,59 @@ public class PracticeViewModelTests : IDisposable
         Assert.True(File.Exists(fresh));
         Assert.True(File.Exists(other));
     }
+
+    [Fact]
+    public async Task A_microphone_that_stays_silent_is_flagged_after_a_few_seconds()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        _recorder.Tick(TimeSpan.FromSeconds(1), 0);
+        Assert.False(vm.MicrophoneSilent); // too early to say
+
+        _recorder.Tick(TimeSpan.FromSeconds(3.5), 0);
+        Assert.True(vm.MicrophoneSilent);
+    }
+
+    [Fact]
+    public async Task Any_sound_at_all_clears_the_silence_warning_for_good()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+        _recorder.Tick(TimeSpan.FromSeconds(3.5), 0);
+        Assert.True(vm.MicrophoneSilent);
+
+        _recorder.Tick(TimeSpan.FromSeconds(4), 0.02);
+        _recorder.Tick(TimeSpan.FromSeconds(5), 0);
+
+        Assert.False(vm.MicrophoneSilent);
+    }
+
+    [Fact]
+    public async Task A_quiet_but_live_microphone_is_not_flagged()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        _recorder.Tick(TimeSpan.FromSeconds(1), 0.004);
+        _recorder.Tick(TimeSpan.FromSeconds(6), 0.002);
+
+        Assert.False(vm.MicrophoneSilent);
+    }
+
+    [Fact]
+    public async Task The_silence_warning_does_not_carry_over_to_the_next_recording()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+        _recorder.Tick(TimeSpan.FromSeconds(4), 0);
+        Assert.True(vm.MicrophoneSilent);
+        vm.StopRecordingCommand.Execute(null);
+        Assert.False(vm.MicrophoneSilent);
+
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+        _recorder.Tick(TimeSpan.FromSeconds(1), 0);
+
+        Assert.False(vm.MicrophoneSilent);
+    }
 }
