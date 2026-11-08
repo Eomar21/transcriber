@@ -87,17 +87,46 @@ public class PracticeViewModelTests : IDisposable
         return lines;
     }
 
+    private sealed class Recorder : IAudioRecorder
+    {
+        public bool IsRecording { get; private set; }
+        public event EventHandler<RecordingProgress>? Progress;
+        public string? Path { get; private set; }
+        public RecordingException? Fail { get; set; }
+
+        /// <summary>How much audio the fake "records": 16 kHz mono 16-bit is 32,000 bytes a second.</summary>
+        public double Seconds { get; set; } = 5;
+
+        public Task StartAsync(string wavPath)
+        {
+            if (Fail is not null) throw Fail;
+            Path = wavPath;
+            IsRecording = true;
+            return Task.CompletedTask;
+        }
+
+        public void Stop()
+        {
+            if (!IsRecording) return;
+            IsRecording = false;
+            File.WriteAllBytes(Path!, new byte[44 + (int)(Seconds * 32_000)]);
+        }
+
+        public void Tick(TimeSpan elapsed, double level) => Progress?.Invoke(this, new RecordingProgress(elapsed, level));
+    }
+
     private readonly Whisper _whisper = new();
     private readonly Picker _picker = new();
     private readonly History _history = new();
     private readonly Feedback _feedback = new();
+    private readonly Recorder _recorder = new();
     private Reader _reader = null!;
     private DateTimeOffset _clock = new(2026, 3, 1, 9, 0, 0, TimeSpan.Zero);
 
     private PracticeViewModel Create(bool convert = true)
     {
         _reader = new Reader(_dir, convert);
-        return new PracticeViewModel(_reader, _whisper, _picker, _history, _feedback, () => _clock += TimeSpan.FromDays(1));
+        return new PracticeViewModel(_reader, _whisper, _picker, _history, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
     }
 
     private string MakeFile(string name = "talk.mp3")
@@ -436,5 +465,234 @@ public class PracticeViewModelTests : IDisposable
         vm.SetFile(MakeFile("two.mp3"));
 
         Assert.Equal("", vm.FeedbackText);
+    }
+
+    // ---- microphone ----
+
+    private async Task Record(PracticeViewModel vm, double seconds = 5)
+    {
+        _recorder.Seconds = seconds;
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+        vm.StopRecordingCommand.Execute(null);
+    }
+
+    [Fact]
+    public async Task Recording_starts_into_a_new_wav_and_locks_the_rest_of_the_tab()
+    {
+        var vm = Create();
+        vm.SetFile(MakeFile());
+
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsRecording);
+        Assert.False(vm.IsIdle);
+        Assert.False(vm.AnalyzeCommand.CanExecute(null));
+        Assert.False(vm.StartRecordingCommand.CanExecute(null));
+        Assert.True(vm.StopRecordingCommand.CanExecute(null));
+        Assert.Equal(_dir, Path.GetDirectoryName(_recorder.Path));
+        Assert.EndsWith(".wav", _recorder.Path);
+        Assert.Equal("Recording 0:00", vm.RecordingText);
+    }
+
+    [Fact]
+    public async Task Choosing_a_file_is_ignored_while_recording()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+        _picker.Files = [MakeFile("other.mp3")];
+
+        await vm.ChooseFileCommand.ExecuteAsync(null);
+        vm.SetFile(MakeFile("dropped.mp3"));
+
+        Assert.False(vm.HasFile);
+    }
+
+    [Fact]
+    public async Task The_clock_and_level_follow_the_recording()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        _recorder.Tick(TimeSpan.FromSeconds(65.4), 0.37);
+
+        Assert.Equal("Recording 1:05", vm.RecordingText);
+        Assert.Equal(0.37, vm.RecordingLevel, precision: 3);
+
+        _recorder.Tick(TimeSpan.FromSeconds(66), 3.0);
+        Assert.Equal(1, vm.RecordingLevel);
+    }
+
+    [Fact]
+    public async Task Progress_after_stopping_changes_nothing()
+    {
+        var vm = Create();
+        await Record(vm);
+
+        _recorder.Tick(TimeSpan.FromSeconds(99), 0.9);
+
+        Assert.Equal(0, vm.RecordingLevel);
+        Assert.DoesNotContain("1:39", vm.RecordingText);
+    }
+
+    [Fact]
+    public async Task Stopping_makes_the_recording_the_chosen_file_ready_to_analyse()
+    {
+        var vm = Create();
+
+        await Record(vm, seconds: 5);
+
+        Assert.False(vm.IsRecording);
+        Assert.True(vm.HasFile);
+        Assert.StartsWith("Recording ", vm.FileName);
+        Assert.True(File.Exists(_recorder.Path));
+        Assert.True(vm.AnalyzeCommand.CanExecute(null));
+        Assert.True(vm.IsIdle);
+    }
+
+    [Fact]
+    public async Task A_recording_can_be_analysed_and_is_kept_for_another_go()
+    {
+        var vm = Create(convert: false);
+        await Record(vm);
+
+        await Analyze(vm);
+
+        Assert.True(vm.HasResult);
+        Assert.True(File.Exists(_recorder.Path));
+        Assert.StartsWith("Recording ", _history.Sessions[0].Title);
+
+        await Analyze(vm); // for example after switching the language
+        Assert.True(vm.HasResult);
+    }
+
+    [Fact]
+    public async Task A_recording_that_is_too_short_is_discarded_with_a_hint()
+    {
+        var vm = Create();
+
+        await Record(vm, seconds: 0.3);
+
+        Assert.False(vm.HasFile);
+        Assert.Contains("too short", vm.ErrorMessage);
+        Assert.False(File.Exists(_recorder.Path));
+        Assert.True(vm.StartRecordingCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task No_microphone_is_explained_and_nothing_starts()
+    {
+        _recorder.Fail = new RecordingException("No microphone was found.");
+        var vm = Create();
+
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        Assert.False(vm.IsRecording);
+        Assert.Equal("No microphone was found.", vm.ErrorMessage);
+        Assert.True(vm.StartRecordingCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task Starting_again_clears_an_earlier_error()
+    {
+        var vm = Create();
+        await Record(vm, seconds: 0.2);
+        Assert.NotEqual("", vm.ErrorMessage);
+
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        Assert.Equal("", vm.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task A_new_recording_replaces_the_old_one_and_deletes_it()
+    {
+        var vm = Create();
+        await Record(vm);
+        var first = _recorder.Path!;
+
+        await Record(vm);
+
+        Assert.False(File.Exists(first));
+        Assert.True(File.Exists(_recorder.Path));
+        Assert.NotEqual(first, _recorder.Path);
+    }
+
+    [Fact]
+    public async Task Choosing_another_file_deletes_the_recording()
+    {
+        var vm = Create();
+        await Record(vm);
+        var recording = _recorder.Path!;
+
+        vm.SetFile(MakeFile("mine.mp3"));
+
+        Assert.False(File.Exists(recording));
+        Assert.Equal("mine.mp3", vm.FileName);
+    }
+
+    [Fact]
+    public async Task A_recording_never_deletes_a_file_the_user_chose()
+    {
+        var vm = Create();
+        var mine = MakeFile("mine.mp3");
+        vm.SetFile(mine);
+
+        await Record(vm);
+
+        Assert.True(File.Exists(mine));
+    }
+
+    [Fact]
+    public async Task Recording_stops_by_itself_at_the_limit()
+    {
+        var vm = Create();
+        await vm.StartRecordingCommand.ExecuteAsync(null);
+
+        _recorder.Seconds = 5;
+        _recorder.Tick(PracticeViewModel.MaxRecording, 0.5);
+
+        Assert.False(vm.IsRecording);
+        Assert.False(_recorder.IsRecording);
+        Assert.True(vm.HasFile);
+        Assert.Contains("30 minutes", vm.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task Recording_cannot_start_while_analysing()
+    {
+        _whisper.WaitForCancel = true;
+        var vm = Create();
+        vm.SetFile(MakeFile());
+
+        var run = Analyze(vm);
+        await Task.Delay(50);
+        Assert.False(vm.StartRecordingCommand.CanExecute(null));
+
+        vm.AnalyzeCancelCommand.Execute(null);
+        await run;
+        Assert.True(vm.StartRecordingCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void Stopping_when_nothing_is_recording_is_not_offered()
+    {
+        Assert.False(Create().StopRecordingCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void Leftover_recordings_from_earlier_sessions_are_cleaned_up_but_nothing_else()
+    {
+        var old = Path.Combine(_dir, "transcriber_practice_old.wav");
+        var fresh = Path.Combine(_dir, "transcriber_practice_fresh.wav");
+        var other = Path.Combine(_dir, "holiday.wav");
+        foreach (var f in new[] { old, fresh, other }) File.WriteAllText(f, "x");
+        File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-3));
+        File.SetLastWriteTimeUtc(other, DateTime.UtcNow.AddDays(-30));
+
+        Create();
+
+        Assert.False(File.Exists(old));
+        Assert.True(File.Exists(fresh));
+        Assert.True(File.Exists(other));
     }
 }

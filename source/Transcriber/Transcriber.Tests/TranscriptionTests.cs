@@ -134,7 +134,8 @@ public class TranscriptionTests(ITestOutputHelper output)
                 new CpuOnly(whisper),
                 new NoPicker(),
                 new Transcriber.Coach.JsonPracticeHistory(historyFile),
-                new NoFeedback());
+                new NoFeedback(),
+                new NoRecorder());
             vm.SetFile(sample);
 
             await vm.AnalyzeCommand.ExecuteAsync(null);
@@ -166,6 +167,14 @@ public class TranscriptionTests(ITestOutputHelper output)
     private sealed class NoPicker : Transcriber.ViewModels.IFilePickerService
     {
         public Task<IReadOnlyList<string>> PickMediaFilesAsync() => Task.FromResult<IReadOnlyList<string>>([]);
+    }
+
+    private sealed class NoRecorder : Transcriber.ViewModels.IAudioRecorder
+    {
+        public bool IsRecording => false;
+        public event EventHandler<Transcriber.ViewModels.RecordingProgress>? Progress { add { } remove { } }
+        public Task StartAsync(string wavPath) => throw new NotSupportedException();
+        public void Stop() { }
     }
 
     private sealed class NoFeedback : Transcriber.Coach.ICoachFeedback
