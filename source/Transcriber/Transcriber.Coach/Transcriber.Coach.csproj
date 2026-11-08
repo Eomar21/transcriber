@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Speech analysis and coaching. No UI and no platform code, so it is easy to test and to reuse. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
