@@ -7,7 +7,7 @@ Private, offline speech-to-text for your desktop. Drop in an audio or video file
 ## Features
 
 - **Fully offline.** Your audio never leaves your computer.
-- **Nothing to install.** ffmpeg and the default Whisper model are bundled with the app. It works on first launch with no downloads.
+- **Nothing to install.** ffmpeg, the default Whisper model and the voice detection model are bundled with the app. It works on first launch with no downloads.
 - **Many formats.** mp3, wav, mp4, mov, avi, mkv, webm, m4a, flac, ogg and aac. Video files have their audio extracted automatically.
 - **Many languages.** Automatic language detection, or pick one. Tested with English, Dutch, Arabic and Spanish.
 - **Several output formats.** Save as plain text (.txt), subtitles (.srt, .vtt) or JSON with timestamps.
@@ -33,8 +33,9 @@ The builds are not code signed yet. On Windows, SmartScreen may show a warning: 
 ## How it works
 
 1. **Read.** MP3 and WAV are decoded in-process. Other formats go through the bundled ffmpeg, which extracts a 16 kHz mono track.
-2. **Transcribe.** Whisper (the `small` model by default) runs locally, producing segments with start and end times. Obvious Whisper hallucinations on silence are filtered out.
-3. **Save.** The transcript is written next to the source file as `<name>_transcript.<ext>`.
+2. **Find the speech.** A bundled Silero voice activity model locates where people are talking, so silence and background noise never reach Whisper.
+3. **Transcribe.** Whisper (the `small` model by default) runs locally on those stretches, producing segments with start and end times. Obvious Whisper hallucinations are filtered out.
+4. **Save.** The transcript is written next to the source file as `<name>_transcript.<ext>`.
 
 Other models (larger and more accurate, or smaller and faster) can be downloaded on demand and are stored in `%LOCALAPPDATA%\Transcriber\models`.
 
