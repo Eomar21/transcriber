@@ -11,6 +11,8 @@ public partial class TranscribeViewModel : ObservableObject
     private readonly IFilePickerService _filePicker;
     private readonly IClipboardService _clipboard;
     private readonly IFileLauncher _launcher;
+    private readonly IModelManager _modelManager;
+    private readonly IDialogService _dialogs;
 
     private List<SegmentItem> _allSegments = [];
 
@@ -19,16 +21,20 @@ public partial class TranscribeViewModel : ObservableObject
         IWhisperService whisper,
         IFilePickerService filePicker,
         IClipboardService clipboard,
-        IFileLauncher launcher)
+        IFileLauncher launcher,
+        IModelManager modelManager,
+        IDialogService dialogs)
     {
         _fileReader = fileReader;
         _whisper = whisper;
         _filePicker = filePicker;
         _clipboard = clipboard;
         _launcher = launcher;
+        _modelManager = modelManager;
+        _dialogs = dialogs;
 
         Languages = SupportedLanguages.All.Select(l => new LanguageOption(l.Code, l.Name)).ToList();
-        Models = WhisperModel.All;
+        Models = WhisperModel.All.Select(m => new ModelOption(m, modelManager)).ToList();
         Formats =
         [
             new(TranscriptFormat.Txt, "Text (.txt)"),
@@ -38,18 +44,29 @@ public partial class TranscribeViewModel : ObservableObject
         ];
 
         _selectedLanguage = Languages[0];
-        _selectedModel = WhisperModel.Small;
+        _selectedModelOption = Models.First(m => m.Model == WhisperModel.Small);
         _selectedFormat = Formats[0];
     }
 
     // ---- Options -------------------------------------------------------------------------
 
     public IReadOnlyList<LanguageOption> Languages { get; }
-    public IReadOnlyList<WhisperModel> Models { get; }
+    public IReadOnlyList<ModelOption> Models { get; }
     public IReadOnlyList<FormatOption> Formats { get; }
 
     [ObservableProperty] private LanguageOption _selectedLanguage;
-    [ObservableProperty] private WhisperModel _selectedModel;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedModel), nameof(ModelHint), nameof(HasModelHint))]
+    private ModelOption _selectedModelOption;
+
+    public WhisperModel SelectedModel => SelectedModelOption.Model;
+
+    /// <summary>Under the picker: tells the user a download is needed before the first run with this model.</summary>
+    public string ModelHint => SelectedModelOption.IsInstalled
+        ? string.Empty
+        : $"Needs a one-time download of {SelectedModelOption.SizeText}. You will be asked before it starts.";
+
+    public bool HasModelHint => ModelHint.Length > 0;
     [ObservableProperty] private FormatOption _selectedFormat;
     [ObservableProperty] private string? _prompt;
     [ObservableProperty] private bool _useGpu = true;
@@ -285,6 +302,22 @@ public partial class TranscribeViewModel : ObservableObject
             Prompt = Prompt,
             UseGpu = UseGpu,
         };
+        // A model that is not on this computer yet is a large one-time download: ask first.
+        var chosen = SelectedModelOption;
+        if (!chosen.IsInstalled)
+        {
+            var go = await _dialogs.ConfirmAsync(
+                "Download model?",
+                $"\"{chosen.Model.DisplayName}\" needs a one-time download of {chosen.SizeText}. " +
+                "It is stored on this computer and works offline afterwards.",
+                "Download", "Cancel");
+            if (!go)
+            {
+                SetResult(ResultKind.Info, "Download cancelled. Pick an installed model to transcribe without downloading.");
+                return;
+            }
+        }
+
         var files = SelectedFiles;
         var rows = new List<SegmentItem>();
         var saved = new List<string>();
@@ -343,6 +376,9 @@ public partial class TranscribeViewModel : ObservableObject
         }
         finally
         {
+            foreach (var m in Models) m.Refresh();
+            OnPropertyChanged(nameof(ModelHint));
+            OnPropertyChanged(nameof(HasModelHint));
             IsBusy = false;
             StatusText = string.Empty;
         }

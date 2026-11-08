@@ -44,7 +44,7 @@ public class OpenResultTests : IDisposable
 
     private async Task<TranscribeViewModel> RunAsync(params string[] names)
     {
-        var vm = new TranscribeViewModel(new Reader(), new Whisper(), new Picker(), new Clipboard(), _launcher);
+        var vm = new TranscribeViewModel(new Reader(), new Whisper(), new Picker(), new Clipboard(), _launcher, new FakeModels(), new FakeDialogs());
         var files = names.Select(n => { var p = Path.Combine(_dir, n); File.WriteAllText(p, "x"); return p; }).ToList();
         vm.AddFiles(files);
         await vm.TranscribeCommand.ExecuteAsync(null);

@@ -60,6 +60,8 @@ public class TranscribeViewModelTests : IDisposable
     }
 
     private readonly FakeLauncher Launcher = new();
+    private readonly FakeModels Models = new();
+    private readonly FakeDialogs Dialogs = new();
 
     private (TranscribeViewModel Vm, FakeFileReader Reader, FakeWhisper Whisper, FakePicker Picker, FakeClipboard Clipboard) Create()
     {
@@ -67,7 +69,7 @@ public class TranscribeViewModelTests : IDisposable
         var whisper = new FakeWhisper();
         var picker = new FakePicker();
         var clipboard = new FakeClipboard();
-        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher), reader, whisper, picker, clipboard);
+        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher, Models, Dialogs), reader, whisper, picker, clipboard);
     }
 
     private string MakeInput(string name = "talk.mp3")
