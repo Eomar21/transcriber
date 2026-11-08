@@ -15,6 +15,9 @@ public record TranscriptionOptions
     /// <summary>Drop silence hallucinations and collapse repetition loops.</summary>
     public bool FilterHallucinations { get; init; } = true;
 
+    /// <summary>Find the speech first and transcribe only that, skipping silence and noise.</summary>
+    public bool UseVad { get; init; } = true;
+
     /// <summary>Segments whose no-speech probability exceeds this are treated as silence.</summary>
     public float NoSpeechThreshold { get; init; } = 0.6f;
 }
