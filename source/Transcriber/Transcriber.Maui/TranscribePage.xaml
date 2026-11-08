@@ -83,6 +83,19 @@
                             <Label Text="Falls back to the processor automatically. A change applies after restarting the app." Style="{StaticResource Caption}" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
+
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding CanIdentifySpeakers}">
+                        <HorizontalStackLayout Spacing="10">
+                            <Switch AutomationId="IdentifySpeakersSwitch" IsToggled="{Binding IdentifySpeakers}" IsEnabled="{Binding IsIdle}" VerticalOptions="Center" />
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="Label who is speaking" Style="{StaticResource Body}" />
+                                <Label Text="Marks each line as Speaker 1, Speaker 2 and so on. Adds some processing time." Style="{StaticResource Caption}" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                        <Picker AutomationId="SpeakerCountPicker" IsVisible="{Binding IdentifySpeakers}" IsEnabled="{Binding IsIdle}"
+                                ItemsSource="{Binding SpeakerCounts}" ItemDisplayBinding="{Binding Label, x:DataType=vm:SpeakerCountOption}"
+                                SelectedItem="{Binding SelectedSpeakerCount}" WidthRequest="260" HorizontalOptions="Start" />
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 
@@ -179,7 +192,10 @@
                                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActiveRowLight}, Dark={StaticResource ActiveRowDark}}" />
                                         </DataTrigger>
                                     </Grid.Triggers>
-                                    <Label Text="{Binding Time}" Style="{StaticResource Caption}" VerticalOptions="Start" />
+                                    <VerticalStackLayout Spacing="2" VerticalOptions="Start">
+                                        <Label Text="{Binding Time}" Style="{StaticResource Caption}" />
+                                        <Label Text="{Binding SpeakerLabel}" IsVisible="{Binding HasSpeaker}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource Primary}" />
+                                    </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Body}" />
                                 </Grid>
                             </DataTemplate>

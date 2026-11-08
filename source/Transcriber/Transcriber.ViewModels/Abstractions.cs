@@ -31,13 +31,14 @@ public interface IAudioPlayer
 /// <summary>One row of the transcript list.</summary>
 public sealed partial class SegmentItem : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    public SegmentItem(TimeSpan start, TimeSpan end, string text, string source = "", string filePath = "")
+    public SegmentItem(TimeSpan start, TimeSpan end, string text, string source = "", string filePath = "", int? speaker = null)
     {
         Start = start;
         End = end;
         Text = text;
         Source = source;
         FilePath = filePath;
+        Speaker = speaker;
     }
 
     public TimeSpan Start { get; }
@@ -50,6 +51,13 @@ public sealed partial class SegmentItem : CommunityToolkit.Mvvm.ComponentModel.O
     /// <summary>The media file this line came from, used to find the audio to play.</summary>
     public string FilePath { get; }
 
+    /// <summary>Who is speaking (0-based), or null when speakers were not identified.</summary>
+    public int? Speaker { get; }
+
+    public bool HasSpeaker => Speaker is not null;
+
+    public string SpeakerLabel => Speaker is { } s ? SpeakerAssigner.Label(s) : "";
+
     public string Time => (string.IsNullOrEmpty(Source) ? "" : Source + "  ") + Start.ToString(@"hh\:mm\:ss");
 
     /// <summary>True while this line is the one being played.</summary>
@@ -57,6 +65,9 @@ public sealed partial class SegmentItem : CommunityToolkit.Mvvm.ComponentModel.O
 }
 
 public sealed record LanguageOption(string Code, string Name);
+
+/// <summary>How many people speak in the recording; a null count means "work it out".</summary>
+public sealed record SpeakerCountOption(string Label, int? Count);
 
 public sealed record FormatOption(TranscriptFormat Format, string Label);
 

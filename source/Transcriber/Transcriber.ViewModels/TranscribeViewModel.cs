@@ -50,6 +50,7 @@ public partial class TranscribeViewModel : ObservableObject
         _selectedLanguage = Languages[0];
         _selectedModelOption = Models.First(m => m.Model == WhisperModel.Small);
         _selectedFormat = Formats[0];
+        _selectedSpeakerCount = SpeakerCounts[0];
     }
 
     // ---- Options -------------------------------------------------------------------------
@@ -74,6 +75,25 @@ public partial class TranscribeViewModel : ObservableObject
     [ObservableProperty] private FormatOption _selectedFormat;
     [ObservableProperty] private string? _prompt;
     [ObservableProperty] private bool _useGpu = true;
+
+    // ---- Speakers -------------------------------------------------------------------------
+
+    /// <summary>False where speaker detection cannot run, so the option is hidden instead of failing.</summary>
+    public bool CanIdentifySpeakers => _whisper.CanIdentifySpeakers;
+
+    [ObservableProperty] private bool _identifySpeakers;
+
+    public IReadOnlyList<SpeakerCountOption> SpeakerCounts { get; } =
+    [
+        new("Detect automatically", null),
+        new("2 speakers", 2),
+        new("3 speakers", 3),
+        new("4 speakers", 4),
+        new("5 speakers", 5),
+        new("6 speakers", 6),
+    ];
+
+    [ObservableProperty] private SpeakerCountOption _selectedSpeakerCount = null!;
 
     // ---- Input files ---------------------------------------------------------------------
 
@@ -305,6 +325,8 @@ public partial class TranscribeViewModel : ObservableObject
             Model = SelectedModel,
             Prompt = Prompt,
             UseGpu = UseGpu,
+            IdentifySpeakers = IdentifySpeakers && CanIdentifySpeakers,
+            SpeakerCount = SelectedSpeakerCount.Count,
         };
         // A model that is not on this computer yet is a large one-time download: ask first.
         var chosen = SelectedModelOption;
@@ -352,7 +374,7 @@ public partial class TranscribeViewModel : ObservableObject
                     saved.Add(await TranscriptExporter.WriteAsync(segments, file, SelectedFormat.Format));
 
                     var source = files.Count > 1 ? Path.GetFileName(file) : string.Empty;
-                    rows.AddRange(segments.Select(s => new SegmentItem(s.Start, s.End, s.Text.Trim(), source, file)));
+                    rows.AddRange(segments.Select(s => new SegmentItem(s.Start, s.End, s.Text.Trim(), source, file, s.Speaker)));
 
                     // The converted audio is what plays when a line is clicked; it is removed with the next run.
                     newPlayback[file] = audioPath;
@@ -514,6 +536,6 @@ public partial class TranscribeViewModel : ObservableObject
     private async Task CopyAllAsync()
     {
         if (_allSegments.Count == 0) return;
-        await _clipboard.SetTextAsync(string.Join(Environment.NewLine, _allSegments.Select(s => s.Text)));
+        await _clipboard.SetTextAsync(string.Join(Environment.NewLine, _allSegments.Select(s => s.HasSpeaker ? $"{s.SpeakerLabel}: {s.Text}" : s.Text)));
     }
 }
