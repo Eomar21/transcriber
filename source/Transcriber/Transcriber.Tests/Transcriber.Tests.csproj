@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
     <ProjectReference Include="..\Transcriber.ViewModels\Transcriber.ViewModels.csproj" />
+    <ProjectReference Include="..\Transcriber.Coach\Transcriber.Coach.csproj" />
   </ItemGroup>
 
   <ItemGroup>
