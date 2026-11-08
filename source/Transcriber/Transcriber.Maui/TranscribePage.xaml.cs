@@ -55,7 +55,8 @@ public partial class TranscribePage : ContentPage
         page.AllowDrop = true;
         page.DragOver += (_, e) =>
         {
-            var accept = !_viewModel.IsBusy && DroppedFiles.HasFiles(e.DataView);
+            // Accept any drag while idle; the drop itself keeps only supported media files.
+            var accept = !_viewModel.IsBusy;
             e.AcceptedOperation = accept ? Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy
                                          : Windows.ApplicationModel.DataTransfer.DataPackageOperation.None;
             if (accept) e.DragUIOverride.Caption = "Add to transcribe";
