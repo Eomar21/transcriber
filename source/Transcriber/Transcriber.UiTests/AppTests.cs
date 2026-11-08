@@ -72,11 +72,11 @@ public class AppTests
             var box = app.Window.BoundingRectangle;
             var target = new Point(box.Left + box.Width / 2, box.Top + 280);
 
-            DragSource.DropFiles(target, TimeSpan.FromSeconds(60),
+            var report = DragSource.DropFiles(target, TimeSpan.FromSeconds(60),
                 whileOverTarget: () => { app.SaveScreenshot("drag-over"); AppDriver.SaveScreen("drag-over-screen"); },
                 audio, notes);
 
-            AppDriver.Wait(() => app.TextOf("FilesSummary").Contains("en-02.mp3"), TimeSpan.FromSeconds(15), "the dropped file to appear");
+            AppDriver.Wait(() => app.TextOf("FilesSummary").Contains("en-02.mp3"), TimeSpan.FromSeconds(15), $"the dropped file to appear ({report}, window={box})");
             Assert.True(app.Get("TranscribeButton").IsEnabled);
             AppDriver.Wait(() => app.TextOf("DropMessage").Contains("Added 1 of 2 files"), TimeSpan.FromSeconds(5), "the drop hint");
         }

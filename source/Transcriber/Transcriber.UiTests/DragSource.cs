@@ -10,14 +10,15 @@ using Point = System.Drawing.Point;
 /// </summary>
 public static class DragSource
 {
-    public static void DropFiles(Point target, TimeSpan timeout, Action? whileOverTarget, params string[] files)
+    public static string DropFiles(Point target, TimeSpan timeout, Action? whileOverTarget, params string[] files)
     {
         Exception? failure = null;
+        var report = "";
         var finished = new ManualResetEventSlim();
 
         var thread = new Thread(() =>
         {
-            try { Run(target, whileOverTarget, files); }
+            try { report = Run(target, whileOverTarget, files); }
             catch (Exception ex) { failure = ex; }
             finally { finished.Set(); }
         }) { IsBackground = true };
@@ -30,12 +31,15 @@ public static class DragSource
             throw new TimeoutException("The drag did not finish. The mouse may be in use by something else.");
         }
         if (failure is not null) throw failure;
+        return report;
     }
 
-    private static void Run(Point target, Action? whileOverTarget, string[] files)
+    private static string Run(Point target, Action? whileOverTarget, string[] files)
     {
         const int startX = 120, startY = 90;
         var step = 0;
+        var effect = (DragDropEffects)(-1);
+        var overAt = "";
         const int steps = 15;
 
         using var form = new Form
@@ -60,7 +64,7 @@ public static class DragSource
                 var y = startY + (target.Y - startY) * step / steps;
                 Mouse.Position = new Point(x, y);
             }
-            else if (step == steps + 8) whileOverTarget?.Invoke();
+            else if (step == steps + 8) { overAt = $"cursor at {Mouse.Position}"; whileOverTarget?.Invoke(); }
             else if (step == steps + 12) Mouse.Up(MouseButton.Left);
         };
 
@@ -71,7 +75,7 @@ public static class DragSource
             var list = new StringCollection();
             list.AddRange(files);
             data.SetFileDropList(list);
-            label.DoDragDrop(data, DragDropEffects.Copy);
+            effect = label.DoDragDrop(data, DragDropEffects.Copy);
             timer.Stop();
             form.Close();
         };
@@ -92,5 +96,6 @@ public static class DragSource
         };
 
         Application.Run(form);
+        return $"effect={effect}, target={target}, {overAt}";
     }
 }
