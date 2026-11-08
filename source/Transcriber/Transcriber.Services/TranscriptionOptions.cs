@@ -18,6 +18,12 @@ public record TranscriptionOptions
     /// <summary>Find the speech first and transcribe only that, skipping silence and noise.</summary>
     public bool UseVad { get; init; } = true;
 
+    /// <summary>Work out who is speaking and label each line. Takes extra time on long recordings.</summary>
+    public bool IdentifySpeakers { get; init; }
+
+    /// <summary>How many people speak, when known (improves accuracy). Null lets the app work it out.</summary>
+    public int? SpeakerCount { get; init; }
+
     /// <summary>Segments whose no-speech probability exceeds this are treated as silence.</summary>
     public float NoSpeechThreshold { get; init; } = 0.6f;
 }

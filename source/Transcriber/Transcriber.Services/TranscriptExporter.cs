@@ -34,11 +34,15 @@ public static class TranscriptExporter
         return path;
     }
 
+    /// <summary>The line text, led by "Speaker N: " when speakers were identified.</summary>
+    private static string Labelled(TranscriptSegment s) =>
+        s.Speaker is { } speaker ? SpeakerAssigner.Label(speaker) + ": " + s.Text : s.Text;
+
     public static string ToText(IReadOnlyList<TranscriptSegment> segments)
     {
         var sb = new StringBuilder();
         foreach (var s in segments)
-            sb.Append('[').Append(Stamp(s.Start, ',', false)).Append(" -> ").Append(Stamp(s.End, ',', false)).Append("] ").AppendLine(s.Text);
+            sb.Append('[').Append(Stamp(s.Start, ',', false)).Append(" -> ").Append(Stamp(s.End, ',', false)).Append("] ").AppendLine(Labelled(s));
         return sb.ToString();
     }
 
@@ -49,7 +53,7 @@ public static class TranscriptExporter
         {
             sb.AppendLine((i + 1).ToString(CultureInfo.InvariantCulture));
             sb.Append(Stamp(segments[i].Start, ',')).Append(" --> ").AppendLine(Stamp(segments[i].End, ','));
-            sb.AppendLine(segments[i].Text).AppendLine();
+            sb.AppendLine(Labelled(segments[i])).AppendLine();
         }
         return sb.ToString();
     }
@@ -60,7 +64,7 @@ public static class TranscriptExporter
         foreach (var s in segments)
         {
             sb.Append(Stamp(s.Start, '.')).Append(" --> ").AppendLine(Stamp(s.End, '.'));
-            sb.AppendLine(s.Text).AppendLine();
+            sb.AppendLine(s.Speaker is { } speaker ? $"<v {SpeakerAssigner.Label(speaker)}>{s.Text}" : s.Text).AppendLine();
         }
         return sb.ToString();
     }
@@ -71,6 +75,7 @@ public static class TranscriptExporter
         {
             start = Math.Round(s.Start.TotalSeconds, 3),
             end = Math.Round(s.End.TotalSeconds, 3),
+            speaker = s.Speaker is { } n ? SpeakerAssigner.Label(n) : null,
             text = s.Text,
         });
         // Relaxed escaping keeps Arabic and accented text readable instead of \uXXXX sequences.

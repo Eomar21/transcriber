@@ -32,7 +32,11 @@ public class SherpaSpeakerDiarizer : ISpeakerDiarizer
         _embeddingPath = Path.Combine(dir, EmbeddingModelFileName);
     }
 
-    public bool IsAvailable => File.Exists(_segmentationPath) && File.Exists(_embeddingPath);
+    public bool IsAvailable => File.Exists(_segmentationPath) && File.Exists(_embeddingPath) && NativeLibraryLoads.Value;
+
+    // Where the native library cannot be loaded (for example a platform it was not built for) the feature switches itself off.
+    private static readonly Lazy<bool> NativeLibraryLoads = new(() =>
+        System.Runtime.InteropServices.NativeLibrary.TryLoad("sherpa-onnx-c-api", typeof(OfflineSpeakerDiarization).Assembly, null, out _));
 
     public Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, CancellationToken ct = default) =>
         Task.Run(() =>

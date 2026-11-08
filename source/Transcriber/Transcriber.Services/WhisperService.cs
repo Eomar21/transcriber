@@ -5,15 +5,19 @@ public class WhisperService : IWhisperService
 {
     private readonly IModelManager _modelManager;
     private readonly ISpeechDetector? _speechDetector;
+    private readonly ISpeakerDiarizer? _speakerDiarizer;
 
-    public WhisperService(IModelManager modelManager, ISpeechDetector? speechDetector = null)
+    public WhisperService(IModelManager modelManager, ISpeechDetector? speechDetector = null, ISpeakerDiarizer? speakerDiarizer = null)
     {
         _modelManager = modelManager;
         _speechDetector = speechDetector;
+        _speakerDiarizer = speakerDiarizer;
     }
 
     /// <summary>The native runtime that was actually loaded for the last run, e.g. "Vulkan" or "Cpu".</summary>
     public string? LastRuntime { get; private set; }
+
+    public bool CanIdentifySpeakers => _speakerDiarizer is { IsAvailable: true };
 
     public async Task<List<TranscriptSegment>> TranscribeAsync(
         string audioFilePath,
@@ -95,8 +99,18 @@ public class WhisperService : IWhisperService
             }
         }
 
+        var cleaned = options.FilterHallucinations ? TranscriptFilter.Clean(segments) : segments;
+
+        // Speaker labels: who talks when is worked out from the audio, then matched to each line by time.
+        if (options.IdentifySpeakers && cleaned.Count > 0 && _speakerDiarizer is { IsAvailable: true })
+        {
+            progress?.Report(new TranscriptionProgress("Identifying speakers", 1));
+            var turns = await _speakerDiarizer.DiarizeAsync(audioFilePath, options.SpeakerCount, ct);
+            cleaned = SpeakerAssigner.Assign(cleaned, turns);
+        }
+
         progress?.Report(new TranscriptionProgress("Done", 1));
-        return options.FilterHallucinations ? TranscriptFilter.Clean(segments) : segments;
+        return cleaned;
     }
 
     private static TimeSpan WavDuration(string path)
