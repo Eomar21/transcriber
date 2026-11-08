@@ -119,6 +119,63 @@ public class TranscriptionTests(ITestOutputHelper output)
         Assert.Equal(2, segments.Select(s => s.Speaker).Distinct().Count());
     }
 
+    [Fact]
+    public async Task The_practice_tab_analyses_real_speech_end_to_end()
+    {
+        var dir = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var sample = Path.Combine(dir, "talk.wav");
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav"), sample);
+            var historyFile = Path.Combine(dir, "history.json");
+            var whisper = new WhisperService(Models, new SileroSpeechDetector());
+            var vm = new Transcriber.ViewModels.PracticeViewModel(
+                new FileReaderService(new AudioService(), new VideoReaderService()),
+                new CpuOnly(whisper),
+                new NoPicker(),
+                new Transcriber.Coach.JsonPracticeHistory(historyFile),
+                new NoFeedback());
+            vm.SetFile(sample);
+
+            await vm.AnalyzeCommand.ExecuteAsync(null);
+
+            output.WriteLine(string.Join(" | ", vm.Metrics.Select(m => $"{m.Label}={m.Value}")) + "\n" + vm.Transcript);
+            Assert.True(vm.HasResult, vm.ErrorMessage);
+            Assert.Contains("wpm", vm.Metrics[0].Value);
+            var wpm = int.Parse(vm.Metrics[0].Value.Split(' ')[0]);
+            Assert.InRange(wpm, 100, 300); // fast conversational speech, but never absurd
+            Assert.NotEmpty(vm.Tips);
+            Assert.Single(vm.Sessions);
+            Assert.True(File.Exists(sample), "the user's own wav must be left alone");
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    // The practice tab asks for the GPU like the app does; CI runners have none, so force the CPU there.
+    private sealed class CpuOnly(IWhisperService inner) : IWhisperService
+    {
+        public string? LastRuntime => inner.LastRuntime;
+
+        public Task<List<TranscriptSegment>> TranscribeAsync(string audioFilePath, TranscriptionOptions? options = null,
+            IProgress<TranscriptionProgress>? progress = null, CancellationToken ct = default) =>
+            inner.TranscribeAsync(audioFilePath,
+                (options ?? new TranscriptionOptions()) with { UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1" },
+                progress, ct);
+    }
+
+    private sealed class NoPicker : Transcriber.ViewModels.IFilePickerService
+    {
+        public Task<IReadOnlyList<string>> PickMediaFilesAsync() => Task.FromResult<IReadOnlyList<string>>([]);
+    }
+
+    private sealed class NoFeedback : Transcriber.Coach.ICoachFeedback
+    {
+        public Task<IReadOnlyList<string>> ListModelsAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<string>>([]);
+
+        public Task<string> GetFeedbackAsync(string model, string transcript, Transcriber.Coach.SpeechReport report, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+    }
+
     [Theory]
     [MemberData(nameof(Samples))]
     public async Task Transcript_matches_reference(string file, string language, string reference)

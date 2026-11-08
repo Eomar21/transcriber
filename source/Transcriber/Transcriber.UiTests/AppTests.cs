@@ -83,6 +83,38 @@ public class AppTests
     }
 
     [UiFact]
+    public void The_practice_tab_starts_empty_and_cannot_analyse_until_a_recording_is_chosen()
+    {
+        using var app = new AppDriver();
+
+        app.SelectTab("Practice");
+
+        AppDriver.Wait(() => app.Find("PracticeFileName") is not null, TimeSpan.FromSeconds(10), "the practice tab");
+        Assert.Equal("No recording chosen", app.TextOf("PracticeFileName"));
+        Assert.False(app.Get("AnalyzeButton").IsEnabled);
+        Assert.True(app.Get("PracticeChooseButton").IsEnabled);
+        Assert.Null(app.Find("PracticeTips")); // no results are shown before an analysis
+    }
+
+    [UiFact]
+    public void Switching_tabs_keeps_the_files_chosen_on_the_transcribe_tab()
+    {
+        var file = CopyToTemp("en-01.mp3", out var dir);
+        try
+        {
+            using var app = new AppDriver(file);
+            AppDriver.Wait(() => app.TextOf("FilesSummary").Contains("en-01.mp3"), TimeSpan.FromSeconds(10), "the file to appear");
+
+            app.SelectTab("Practice");
+            app.SelectTab("Transcribe");
+
+            AppDriver.Wait(() => app.TextOf("FilesSummary").Contains("en-01.mp3"), TimeSpan.FromSeconds(10), "the file to still be listed");
+            Assert.True(app.Get("TranscribeButton").IsEnabled);
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [UiFact]
     public void Clicking_a_transcript_line_starts_playback_and_the_player_bar_can_stop_it()
     {
         var file = CopyToTemp("en-01.mp3", out var dir);

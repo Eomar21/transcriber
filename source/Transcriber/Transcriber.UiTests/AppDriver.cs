@@ -74,6 +74,15 @@ public sealed class AppDriver : IDisposable
         Thread.Sleep(500);
     }
 
+    /// <summary>Switches to a tab such as "Practice" without touching the mouse.</summary>
+    public void SelectTab(string title)
+    {
+        var tab = Window.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem).And(cf.ByName(title)))
+                  ?? throw new InvalidOperationException($"No tab named {title}");
+        tab.Patterns.SelectionItem.Pattern.Select();
+        Thread.Sleep(400);
+    }
+
     public AutomationElement? Find(string automationId) =>
         Window.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
 
