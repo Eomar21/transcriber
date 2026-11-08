@@ -28,9 +28,20 @@ public sealed partial class PracticeViewModel : ObservableObject
     private readonly IFilePickerService _filePicker;
     private readonly IPracticeHistory _history;
     private readonly ICoachFeedback _feedback;
+    private readonly IAudioRecorder _recorder;
     private readonly Func<DateTimeOffset> _now;
+    private readonly string _recordingsDirectory;
+
+    /// <summary>A recording stops by itself after this long, so a forgotten recording cannot fill the disk.</summary>
+    public static readonly TimeSpan MaxRecording = TimeSpan.FromMinutes(30);
+
+    /// <summary>Anything shorter than this is treated as an accidental click.</summary>
+    public static readonly TimeSpan MinRecording = TimeSpan.FromSeconds(1);
+
+    private const string RecordingPrefix = "transcriber_practice_";
 
     private string? _filePath;
+    private string? _ownedRecording;
     private string _transcript = "";
     private SpeechReport? _report;
 
@@ -40,14 +51,20 @@ public sealed partial class PracticeViewModel : ObservableObject
         IFilePickerService filePicker,
         IPracticeHistory history,
         ICoachFeedback feedback,
-        Func<DateTimeOffset>? now = null)
+        IAudioRecorder recorder,
+        Func<DateTimeOffset>? now = null,
+        string? recordingsDirectory = null)
     {
         _fileReader = fileReader;
         _whisper = whisper;
         _filePicker = filePicker;
         _history = history;
         _feedback = feedback;
+        _recorder = recorder;
         _now = now ?? (() => DateTimeOffset.Now);
+        _recordingsDirectory = recordingsDirectory ?? Path.GetTempPath();
+        _recorder.Progress += OnRecordingProgress;
+        DeleteOldRecordings();
 
         // Only languages with their own filler words and a verbatim prompt are offered.
         Languages = SupportedLanguages.All
@@ -75,7 +92,7 @@ public sealed partial class PracticeViewModel : ObservableObject
     [RelayCommand]
     private async Task ChooseFileAsync()
     {
-        if (IsBusy) return;
+        if (!IsIdle) return;
         var picked = await _filePicker.PickMediaFilesAsync();
         if (picked.Count > 0) SetFile(picked[0]);
     }
@@ -83,10 +100,121 @@ public sealed partial class PracticeViewModel : ObservableObject
     /// <summary>Uses a file chosen elsewhere, for example dropped on the window or opened from the command line.</summary>
     public void SetFile(string path)
     {
-        if (IsBusy || !File.Exists(path)) return;
+        if (!IsIdle || !File.Exists(path)) return;
+        UseFile(path, Path.GetFileName(path));
+    }
+
+    private void UseFile(string path, string displayName)
+    {
+        // A recording of ours is replaced by the next choice; a file the user picked is never touched.
+        if (_ownedRecording is not null && !string.Equals(_ownedRecording, path, StringComparison.OrdinalIgnoreCase))
+            DeleteQuietly(_ownedRecording);
+        if (!string.Equals(_ownedRecording, path, StringComparison.OrdinalIgnoreCase)) _ownedRecording = null;
+
         _filePath = path;
-        FileName = Path.GetFileName(path);
+        FileName = displayName;
         ClearResult();
+    }
+
+    private static void DeleteQuietly(string path)
+    {
+        try { File.Delete(path); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+
+    // ---- Microphone ----------------------------------------------------------------------
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsIdle))]
+    [NotifyCanExecuteChangedFor(nameof(AnalyzeCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartRecordingCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StopRecordingCommand))]
+    private bool _isRecording;
+
+    [ObservableProperty] private string _recordingText = "";
+
+    /// <summary>Loudness from 0 to 1, so it is obvious the microphone is picking something up.</summary>
+    [ObservableProperty] private double _recordingLevel;
+
+    private bool CanStartRecording() => !IsBusy && !IsRecording;
+
+    [RelayCommand(CanExecute = nameof(CanStartRecording))]
+    private async Task StartRecordingAsync()
+    {
+        ErrorMessage = "";
+        var path = Path.Combine(_recordingsDirectory, $"{RecordingPrefix}{Guid.NewGuid():N}.wav");
+        try
+        {
+            await _recorder.StartAsync(path);
+        }
+        catch (RecordingException e)
+        {
+            DeleteQuietly(path);
+            ErrorMessage = e.Message;
+            return;
+        }
+
+        _recordingPath = path;
+        RecordingLevel = 0;
+        RecordingText = "Recording 0:00";
+        IsRecording = true;
+    }
+
+    private string? _recordingPath;
+
+    private bool CanStopRecording() => IsRecording;
+
+    [RelayCommand(CanExecute = nameof(CanStopRecording))]
+    private void StopRecording()
+    {
+        var path = _recordingPath;
+        _recordingPath = null;
+        _recorder.Stop();
+        IsRecording = false;
+        RecordingLevel = 0;
+        if (path is null) return;
+
+        var length = TryGetLength(path);
+        // 16 kHz mono 16-bit is 32,000 bytes per second, plus a 44 byte header.
+        if (length < 44 + (long)(MinRecording.TotalSeconds * 32_000))
+        {
+            DeleteQuietly(path);
+            ErrorMessage = "That recording was too short. Hold on a little longer and try again.";
+            return;
+        }
+
+        // The previous recording is only dropped once its replacement has turned out well.
+        if (_ownedRecording is not null) DeleteQuietly(_ownedRecording);
+        _ownedRecording = path;
+        UseFile(path, $"Recording {_now().LocalDateTime.ToString("d MMM HH:mm", CultureInfo.InvariantCulture)}");
+    }
+
+    private static long TryGetLength(string path)
+    {
+        try { return File.Exists(path) ? new FileInfo(path).Length : 0; }
+        catch (IOException) { return 0; }
+    }
+
+    private void OnRecordingProgress(object? sender, RecordingProgress p)
+    {
+        if (!IsRecording) return;
+        RecordingLevel = Math.Clamp(p.Level, 0, 1);
+        RecordingText = $"Recording {(int)p.Elapsed.TotalMinutes}:{p.Elapsed.Seconds:00}";
+        if (p.Elapsed >= MaxRecording)
+        {
+            StopRecording();
+            ErrorMessage = $"Stopped after {(int)MaxRecording.TotalMinutes} minutes, the longest a single recording can be.";
+        }
+    }
+
+    // Recordings the app made in an earlier session and never cleaned up (for example after a crash).
+    private void DeleteOldRecordings()
+    {
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(_recordingsDirectory, RecordingPrefix + "*.wav"))
+                if (File.GetLastWriteTimeUtc(file) < DateTime.UtcNow.AddDays(-1)) DeleteQuietly(file);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }
 
     // ---- Analysis ------------------------------------------------------------------------
@@ -94,10 +222,12 @@ public sealed partial class PracticeViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AnalyzeCommand))]
     [NotifyCanExecuteChangedFor(nameof(GetFeedbackCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartRecordingCommand))]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     private bool _isBusy;
 
-    public bool IsIdle => !IsBusy;
+    /// <summary>Nothing is being analysed or recorded, so the recording and language can be changed.</summary>
+    public bool IsIdle => !IsBusy && !IsRecording;
 
     [ObservableProperty] private double _progress;
     [ObservableProperty] private string _statusText = "";
@@ -113,7 +243,7 @@ public sealed partial class PracticeViewModel : ObservableObject
     /// <summary>What was heard, so the numbers can be checked against the words.</summary>
     public string Transcript => _transcript;
 
-    private bool CanAnalyze() => !IsBusy && HasFile;
+    private bool CanAnalyze() => IsIdle && HasFile;
 
     [RelayCommand(CanExecute = nameof(CanAnalyze), IncludeCancelCommand = true)]
     private async Task AnalyzeAsync(CancellationToken ct)
