@@ -7,11 +7,13 @@ Private, offline speech-to-text for your desktop. Drop in an audio or video file
 ## Features
 
 - **Fully offline.** Your audio never leaves your computer.
-- **Nothing to install.** ffmpeg, the default Whisper model and the voice detection model are bundled with the app. It works on first launch with no downloads.
+- **Nothing to install.** ffmpeg, the default Whisper model and the voice and speaker models are bundled with the app. It works on first launch with no downloads.
 - **Many formats.** mp3, wav, mp4, mov, avi, mkv, webm, m4a, flac, ogg and aac. Video files have their audio extracted automatically.
 - **Many languages.** Automatic language detection, or pick one. Tested with English, Dutch, Arabic and Spanish.
 - **Several output formats.** Save as plain text (.txt), subtitles (.srt, .vtt) or JSON with timestamps.
 - **Batch.** Select several files and transcribe them in one run.
+- **Speaker labels.** Optionally marks each line as Speaker 1, Speaker 2 and so on, in the list and in every export. Tell it how many people speak, or let it work that out.
+- **Click to listen.** Click any line to hear the recording from that moment.
 - **Better names and terms.** Optional hint field for names or jargon, which improves recognition.
 - **GPU acceleration.** Uses your graphics card through Vulkan when available and falls back to the processor automatically.
 - **Search and copy.** Search inside the transcript, copy it all, or open the saved file and reveal it in Explorer or Finder with one click.
@@ -35,7 +37,8 @@ The builds are not code signed yet. On Windows, SmartScreen may show a warning: 
 1. **Read.** MP3 and WAV are decoded in-process. Other formats go through the bundled ffmpeg, which extracts a 16 kHz mono track.
 2. **Find the speech.** A bundled Silero voice activity model locates where people are talking, so silence and background noise never reach Whisper.
 3. **Transcribe.** Whisper (the `small` model by default) runs locally on those stretches, producing segments with start and end times. Obvious Whisper hallucinations are filtered out.
-4. **Save.** The transcript is written next to the source file as `<name>_transcript.<ext>`.
+4. **Label speakers (optional).** Bundled segmentation and voice-embedding models work out who speaks when, and each line gets the speaker who talks for most of it.
+5. **Save.** The transcript is written next to the source file as `<name>_transcript.<ext>`.
 
 Other models (larger and more accurate, or smaller and faster) can be downloaded on demand and are stored in `%LOCALAPPDATA%\Transcriber\models`.
 
@@ -74,4 +77,5 @@ Continuous integration runs the tests and builds the app on every push. Pushing 
 
 - Transcriber source: MIT, see [LICENSE](LICENSE).
 - Whisper and the ggml models: MIT, by OpenAI and the whisper.cpp project.
+- Voice activity detection uses the [Silero VAD](https://github.com/snakers4/silero-vad) model (MIT). Speaker labels use [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (Apache 2.0) with the pyannote segmentation 3.0 model (MIT) and the 3D-Speaker CAM++ embedding model (Apache 2.0).
 - **ffmpeg** is bundled unmodified as a separate executable from [eugeneware/ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) (release b6.1.1). The Windows build is licensed under the GPL. Its licence text ships in the app's `licenses` folder, and the source is available from [ffmpeg.org](https://ffmpeg.org/download.html#get-sources).

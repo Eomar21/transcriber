@@ -125,10 +125,11 @@ jobs:
       - name: Build app
         run: dotnet build ${{ env.SOLUTION_DIR }}/Transcriber.Maui/Transcriber.Maui.csproj -c Release
 
+      # The drag and drop test needs a real mouse on an interactive desktop, which the hosted runner does not give it,
+      # so it only runs locally (set TRANSCRIBER_UI_DRAG=1).
       - name: UI tests
         env:
           TRANSCRIBER_UI_TESTS: '1'
-          TRANSCRIBER_UI_DRAG: '1'
           TRANSCRIBER_APP_EXE: ${{ github.workspace }}\source\Transcriber\Transcriber.Maui\bin\Release\net10.0-windows10.0.19041.0\win-x64\Transcriber.Maui.exe
         run: dotnet test ${{ env.SOLUTION_DIR }}/Transcriber.UiTests -c Release --logger "console;verbosity=normal"
 
