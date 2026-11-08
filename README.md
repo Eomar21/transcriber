@@ -33,6 +33,8 @@ The downloads are large (about 550 MB) because they include the Whisper model, s
 
 The builds are not code signed yet. On Windows, SmartScreen may show a warning: choose **More info**, then **Run anyway**. On macOS, right-click the app and choose **Open** the first time.
 
+Intel Macs are not supported: the macOS build is for Apple Silicon (M1 and later) only.
+
 ## How it works
 
 1. **Read.** MP3 and WAV are decoded in-process. Other formats go through the bundled ffmpeg, which extracts a 16 kHz mono track.
