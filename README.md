@@ -71,5 +71,6 @@ Continuous integration runs the tests and builds the app on every push. Pushing 
 
 ## Licences and notices
 
+- Transcriber source: MIT, see [LICENSE](LICENSE).
 - Whisper and the ggml models: MIT, by OpenAI and the whisper.cpp project.
 - **ffmpeg** is bundled unmodified as a separate executable from [eugeneware/ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) (release b6.1.1). The Windows build is licensed under the GPL. Its licence text ships in the app's `licenses` folder, and the source is available from [ffmpeg.org](https://ffmpeg.org/download.html#get-sources).
