@@ -50,10 +50,24 @@ jobs:
           -p:CreatePackage=false -p:EnableCodeSigning=false -p:EnablePackageSigning=false
          
 
+      - name: Check the app bundle
+        run: |
+          APP=source/Transcriber/Transcriber.Maui/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Transcriber.Maui.app
+          RES="$APP/Contents/Resources"
+          echo "App size:"; du -sh "$APP"
+          for f in ffmpeg-arm64 models/ggml-small.bin models/ggml-silero-v5.1.2.bin models/pyannote-segmentation-3.0.int8.onnx models/3dspeaker-campplus-zh-en-16k.onnx; do
+            test -s "$RES/$f" || { echo "::error::Missing from the app bundle: $f"; exit 1; }
+          done
+          # An Apple Silicon build must not carry the Intel ffmpeg.
+          test ! -e "$RES/ffmpeg-x64" || { echo "::error::The arm64 app contains the Intel ffmpeg"; exit 1; }
+          # The bundled ffmpeg has to be an arm64 executable.
+          file "$RES/ffmpeg-arm64" | grep -q arm64 || { echo "::error::ffmpeg-arm64 is not an arm64 binary"; file "$RES/ffmpeg-arm64"; exit 1; }
+          # Speaker labelling needs the sherpa-onnx native library; report whether it made it in.
+          find "$APP" -iname '*sherpa-onnx-c-api*' -o -iname 'libonnxruntime*' | grep . || echo "::warning::No sherpa-onnx native library in the app, so speaker labels are unavailable on this build"
+
       - name: Zip the app
         run: |
           APP=source/Transcriber/Transcriber.Maui/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Transcriber.Maui.app
-          echo "App size:"; du -sh "$APP"; find "$APP" -name 'ggml-small.bin' -o -name 'ffmpeg-arm64' | head
           ditto -c -k --keepParent "$APP" Transcriber-mac-arm64.zip
 
       - uses: actions/upload-artifact@v4
