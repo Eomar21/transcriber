@@ -147,4 +147,42 @@
     </ItemGroup>
   </Target>
 
+  <!--
+    Speaker diarization models, pinned and verified like the others (about 30 MB together):
+    pyannote segmentation 3.0 (int8, MIT) from a pinned commit of its Hugging Face mirror, and the 3D-Speaker
+    CAM++ speaker embedding model (Apache 2.0) from the sherpa-onnx release assets, pinned by checksum.
+  -->
+  <PropertyGroup>
+    <SegmentationModelUrl>https://huggingface.co/csukuangfj/sherpa-onnx-pyannote-segmentation-3-0/resolve/9403a6902bb58e3d5ae8c7e77c3422de279db2e0/model.int8.onnx</SegmentationModelUrl>
+    <SegmentationModelFile>pyannote-segmentation-3.0.int8.onnx</SegmentationModelFile>
+    <SegmentationModelSha>d582f4b4c6b48205de7e0643c57df0df5615a3c176189be3fc461e9d18827b5d</SegmentationModelSha>
+    <SpeakerEmbeddingUrl>https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx</SpeakerEmbeddingUrl>
+    <SpeakerEmbeddingFile>3dspeaker-campplus-zh-en-16k.onnx</SpeakerEmbeddingFile>
+    <SpeakerEmbeddingSha>aa3cfc16963a10586a9393f5035d6d6b57e98d358b347f80c2a30bf4f00ceba2</SpeakerEmbeddingSha>
+    <DiarizationCacheDir>$(MSBuildProjectDirectory)\obj\diarization\</DiarizationCacheDir>
+  </PropertyGroup>
+
+  <Target Name="FetchDiarizationModels" BeforeTargets="AssignTargetPaths">
+    <MakeDir Directories="$(DiarizationCacheDir)downloads" />
+
+    <DownloadFile Condition="!Exists('$(DiarizationCacheDir)$(SegmentationModelFile)')"
+                  SourceUrl="$(SegmentationModelUrl)" DestinationFileName="$(SegmentationModelFile)"
+                  DestinationFolder="$(DiarizationCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
+    <VerifyAndUnpack Condition="!Exists('$(DiarizationCacheDir)$(SegmentationModelFile)')"
+                     Source="$(DiarizationCacheDir)downloads\$(SegmentationModelFile)" ExpectedSha256="$(SegmentationModelSha)"
+                     Destination="$(DiarizationCacheDir)$(SegmentationModelFile)" Gunzip="false" />
+
+    <DownloadFile Condition="!Exists('$(DiarizationCacheDir)$(SpeakerEmbeddingFile)')"
+                  SourceUrl="$(SpeakerEmbeddingUrl)" DestinationFileName="$(SpeakerEmbeddingFile)"
+                  DestinationFolder="$(DiarizationCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
+    <VerifyAndUnpack Condition="!Exists('$(DiarizationCacheDir)$(SpeakerEmbeddingFile)')"
+                     Source="$(DiarizationCacheDir)downloads\$(SpeakerEmbeddingFile)" ExpectedSha256="$(SpeakerEmbeddingSha)"
+                     Destination="$(DiarizationCacheDir)$(SpeakerEmbeddingFile)" Gunzip="false" />
+
+    <ItemGroup>
+      <Content Include="$(DiarizationCacheDir)$(SegmentationModelFile)" Link="models\$(SegmentationModelFile)" CopyToOutputDirectory="PreserveNewest" />
+      <Content Include="$(DiarizationCacheDir)$(SpeakerEmbeddingFile)" Link="models\$(SpeakerEmbeddingFile)" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
 </Project>
