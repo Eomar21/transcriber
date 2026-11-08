@@ -25,7 +25,7 @@
 
   <ItemGroup>
     <!-- Audio samples + manifest.json (reference transcripts), copied next to the test assembly. -->
-    <Content Include="TestData\**\*.mp3;TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="TestData\**\*.mp3;TestData\**\*.wav;TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- Gives the tests the same bundled ffmpeg the app ships with (see build\BundledAssets.targets). -->
