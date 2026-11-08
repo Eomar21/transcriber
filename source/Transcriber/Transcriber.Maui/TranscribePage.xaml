@@ -168,7 +168,8 @@
                                 Command="{Binding StopPlaybackCommand}" />
                     </Grid>
                     <Label Text="Click a line to play it from there." Style="{StaticResource Caption}" IsVisible="{Binding ShowPlayHint}" />
-                    <CollectionView AutomationId="Segments" ItemsSource="{Binding VisibleSegments}" HeightRequest="340">
+                    <CollectionView AutomationId="Segments" ItemsSource="{Binding VisibleSegments}" HeightRequest="340"
+                                    SelectionMode="Single" SelectionChanged="OnSegmentSelected">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:SegmentItem">
                                 <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
@@ -178,11 +179,6 @@
                                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActiveRowLight}, Dark={StaticResource ActiveRowDark}}" />
                                         </DataTrigger>
                                     </Grid.Triggers>
-                                    <Grid.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TranscribeViewModel}}, Path=PlaySegmentCommand, x:DataType=vm:TranscribeViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                    </Grid.GestureRecognizers>
                                     <Label Text="{Binding Time}" Style="{StaticResource Caption}" VerticalOptions="Start" />
                                     <Label Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Body}" />
                                 </Grid>

@@ -36,6 +36,15 @@ public partial class TranscribePage : ContentPage
 #endif
     }
 
+    // Clicking a transcript line plays it. Selection is cleared straight away so the same line can be clicked again.
+    private void OnSegmentSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is SegmentItem segment)
+            _viewModel.PlaySegmentCommand.Execute(segment);
+        if (sender is CollectionView list && list.SelectedItem is not null)
+            list.SelectedItem = null;
+    }
+
     // Layout only: keep the content column centred, at most 912 wide, and shrinking with the window.
     protected override void OnSizeAllocated(double width, double height)
     {
