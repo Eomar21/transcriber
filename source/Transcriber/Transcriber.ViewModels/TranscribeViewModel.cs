@@ -70,17 +70,45 @@ public partial class TranscribeViewModel : ObservableObject
         var n => $"{n} files selected",
     };
 
-    /// <summary>Adds files (for example from drag and drop), ignoring unsupported types.</summary>
-    public void AddFiles(IEnumerable<string> paths)
+    /// <summary>True while files are being dragged over the window, so the view can highlight the drop target.</summary>
+    [ObservableProperty] private bool _isDragOver;
+
+    /// <summary>Inline hint shown when a drop contained nothing usable.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDropMessage))]
+    private string _dropMessage = string.Empty;
+
+    public bool HasDropMessage => DropMessage.Length > 0;
+
+    /// <summary>
+    /// Adds files (for example from drag and drop). Unsupported types, folders and files that are already
+    /// in the list are skipped. Returns how many files were actually added.
+    /// </summary>
+    public int AddFiles(IEnumerable<string> paths)
     {
-        if (IsBusy) return;
-        var supported = paths
+        IsDragOver = false;
+        DropMessage = string.Empty;
+        if (IsBusy) return 0;
+
+        var dropped = paths.ToList();
+        var supported = dropped
             .Where(p => FileReaderService.SupportedExtensions.Contains(Path.GetExtension(p).ToLowerInvariant()))
+            .Where(p => !SelectedFiles.Contains(p, StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        if (supported.Count == 0) return;
+
+        if (supported.Count == 0)
+        {
+            if (dropped.Count > 0)
+                DropMessage = "Those files can't be transcribed. Try mp3, wav, mp4, mov, m4a or another audio or video file.";
+            return 0;
+        }
 
         SelectedFiles = [.. SelectedFiles, .. supported];
         ClearResult();
+        if (supported.Count < dropped.Count)
+            DropMessage = $"Added {supported.Count} of {dropped.Count} files. The rest were unsupported or already in the list.";
+        return supported.Count;
     }
 
     [RelayCommand]
@@ -136,6 +164,7 @@ public partial class TranscribeViewModel : ObservableObject
 
     private void ClearResult()
     {
+        DropMessage = string.Empty;
         ResultMessage = string.Empty;
         ResultDetail = string.Empty;
         RuntimeNote = string.Empty;
