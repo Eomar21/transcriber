@@ -124,4 +124,27 @@
     </ItemGroup>
   </Target>
 
+  <!-- Silero voice activity detection model (ggml-silero-v5.1.2.bin, under 1 MB), pinned like the Whisper model. -->
+  <PropertyGroup>
+    <VadModelCommit>9ffd54a1e1ee413ddf265af9913beaf518d1639b</VadModelCommit>
+    <VadModelFile>ggml-silero-v5.1.2.bin</VadModelFile>
+    <VadModelSha>29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf</VadModelSha>
+    <VadModelCacheDir>$(MSBuildProjectDirectory)\obj\vad\</VadModelCacheDir>
+  </PropertyGroup>
+
+  <Target Name="FetchVadModel" BeforeTargets="AssignTargetPaths">
+    <MakeDir Directories="$(VadModelCacheDir)downloads" />
+
+    <DownloadFile Condition="!Exists('$(VadModelCacheDir)$(VadModelFile)')"
+                  SourceUrl="https://huggingface.co/ggml-org/whisper-vad/resolve/$(VadModelCommit)/$(VadModelFile)"
+                  DestinationFolder="$(VadModelCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
+    <VerifyAndUnpack Condition="!Exists('$(VadModelCacheDir)$(VadModelFile)')"
+                     Source="$(VadModelCacheDir)downloads\$(VadModelFile)" ExpectedSha256="$(VadModelSha)"
+                     Destination="$(VadModelCacheDir)$(VadModelFile)" Gunzip="false" />
+
+    <ItemGroup>
+      <Content Include="$(VadModelCacheDir)$(VadModelFile)" Link="models\$(VadModelFile)" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
 </Project>
