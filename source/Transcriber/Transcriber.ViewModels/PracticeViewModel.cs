@@ -154,6 +154,8 @@ public sealed partial class PracticeViewModel : ObservableObject
         }
 
         _recordingPath = path;
+        _loudestLevel = 0;
+        MicrophoneSilent = false;
         RecordingLevel = 0;
         RecordingText = "Recording 0:00";
         IsRecording = true;
@@ -170,6 +172,7 @@ public sealed partial class PracticeViewModel : ObservableObject
         _recordingPath = null;
         _recorder.Stop();
         IsRecording = false;
+        MicrophoneSilent = false;
         RecordingLevel = 0;
         if (path is null) return;
 
@@ -194,9 +197,22 @@ public sealed partial class PracticeViewModel : ObservableObject
         catch (IOException) { return 0; }
     }
 
+    /// <summary>
+    /// True when nothing at all has come in for a few seconds. A blocked microphone usually records pure silence
+    /// instead of failing, so this is the only sign the user gets.
+    /// </summary>
+    [ObservableProperty] private bool _microphoneSilent;
+
+    private double _loudestLevel;
+
+    private static readonly TimeSpan SilenceCheckAfter = TimeSpan.FromSeconds(3);
+    private const double SilentLevel = 0.001;
+
     private void OnRecordingProgress(object? sender, RecordingProgress p)
     {
         if (!IsRecording) return;
+        _loudestLevel = Math.Max(_loudestLevel, p.Level);
+        MicrophoneSilent = p.Elapsed >= SilenceCheckAfter && _loudestLevel < SilentLevel;
         RecordingLevel = Math.Clamp(p.Level, 0, 1);
         RecordingText = $"Recording {(int)p.Elapsed.TotalMinutes}:{p.Elapsed.Seconds:00}";
         if (p.Elapsed >= MaxRecording)
