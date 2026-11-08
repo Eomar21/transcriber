@@ -8,6 +8,9 @@
     Title="Transcribe">
 
     <ScrollView>
+      <ScrollView.GestureRecognizers>
+        <DropGestureRecognizer AllowDrop="True" DragOver="OnDragOver" DragLeave="OnDragLeave" Drop="OnDrop" />
+      </ScrollView.GestureRecognizers>
       <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
       <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="16">
 
@@ -19,11 +22,27 @@
 
             <!-- 1. Files -->
             <Border Style="{StaticResource Card}">
+                <Border.Triggers>
+                    <!-- Highlight the card while files are dragged over the window. -->
+                    <DataTrigger TargetType="Border" Binding="{Binding IsDragOver}" Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                        <Setter Property="StrokeThickness" Value="2" />
+                    </DataTrigger>
+                </Border.Triggers>
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                     <VerticalStackLayout VerticalOptions="Center" Spacing="2">
                         <Label Text="Files" Style="{StaticResource SectionTitle}" />
                         <Label Text="{Binding FilesSummary}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
-                        <Label Text="mp3, wav, mp4, mov, m4a and more" Style="{StaticResource Caption}" />
+                        <Label Text="Drop files here, or choose them. mp3, wav, mp4, mov, m4a and more" Style="{StaticResource Caption}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsDragOver}" Value="True">
+                                    <Setter Property="Text" Value="Release to add these files" />
+                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Label Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
+                               FontSize="13" IsVisible="{Binding HasDropMessage}" />
                     </VerticalStackLayout>
                     <Button Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}"
                             Command="{Binding ClearFilesCommand}" IsVisible="{Binding HasFiles}" />
