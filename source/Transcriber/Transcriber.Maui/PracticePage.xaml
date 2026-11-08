@@ -30,11 +30,31 @@
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>
-                            <Label Text="An audio or video file of you speaking, for example a presentation rehearsal." Style="{StaticResource Caption}" />
+                            <Label Text="Record yourself with the microphone, or choose an audio or video file, for example a presentation rehearsal." Style="{StaticResource Caption}" />
                         </VerticalStackLayout>
-                        <Button AutomationId="PracticeChooseButton" Grid.Column="1" Text="Choose recording" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding ChooseFileCommand}" IsEnabled="{Binding IsIdle}" />
+                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Start">
+                            <Button AutomationId="RecordButton" Text="&#x25CF;  Record" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding StartRecordingCommand}" />
+                            <Button AutomationId="PracticeChooseButton" Text="Choose file" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding ChooseFileCommand}" IsEnabled="{Binding IsIdle}" />
+                        </HorizontalStackLayout>
                     </Grid>
+
+                    <!-- Shown while the microphone is recording. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsRecording}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                                <Label AutomationId="RecordingText" Text="{Binding RecordingText}" TextColor="{StaticResource ErrorColor}"
+                                       FontAttributes="Bold" Style="{StaticResource Body}" />
+                                <ProgressBar AutomationId="RecordingLevel" Progress="{Binding RecordingLevel}" ProgressColor="{StaticResource SuccessColor}"
+                                             SemanticProperties.Description="Microphone level" />
+                            </VerticalStackLayout>
+                            <Button AutomationId="StopRecordingButton" Grid.Column="1" Text="Stop" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding StopRecordingCommand}" />
+                        </Grid>
+                        <Label AutomationId="MicrophoneSilentWarning" IsVisible="{Binding MicrophoneSilent}" TextColor="{StaticResource WarningColor}" FontSize="13"
+                               Text="&#x26A0;  No sound is coming in. Check the microphone is connected, not muted, and allowed in your system's privacy settings." />
+                    </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="4">
                         <Label Text="Language spoken" Style="{StaticResource Caption}" />

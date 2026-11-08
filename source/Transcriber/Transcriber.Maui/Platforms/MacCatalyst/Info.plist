@@ -11,6 +11,9 @@
     <!-- Please consult https://developer.apple.com/documentation/bundleresources/information_property_list/lsapplicationcategorytype -->
     <!-- <key>LSApplicationCategoryType</key> -->
     <!-- <string>public.app-category.YOUR-CATEGORY-HERE</string> -->
+	<!-- Shown in the system's microphone permission prompt. The Practice tab records you speaking; the audio stays on this Mac. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Transcriber records your voice on the Practice tab so it can analyse your speaking. The recording never leaves this Mac.</string>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>2</integer>
