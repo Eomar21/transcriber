@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
+    <ProjectReference Include="..\Transcriber.Coach\Transcriber.Coach.csproj" />
   </ItemGroup>
 
   <ItemGroup>
