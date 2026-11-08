@@ -61,6 +61,38 @@ public class AppTests
     }
 
     [UiDragFact]
+    public void Clicking_a_transcript_line_starts_playback_and_the_player_bar_can_stop_it()
+    {
+        var file = CopyToTemp("en-01.mp3", out var dir);
+        using var app = new AppDriver(file);
+        try
+        {
+            app.Click("TranscribeButton");
+            AppDriver.Wait(() => app.TextOf("ResultMessage") == "Transcript saved", TimeSpan.FromMinutes(5), "the transcript to be saved");
+
+            // Rows are named by their text (accessibility description), so find one by a word from the sample.
+            var row = AppDriver_FindRow(app, "human beings");
+            Assert.Null(app.Find("PlaybackText"));
+            row.Click();
+
+            AppDriver.Wait(() => app.TextOf("PlaybackText").StartsWith("en-01.mp3"), TimeSpan.FromSeconds(10), "the player bar to appear");
+            app.Click("StopButton");
+            AppDriver.Wait(() => app.Find("PlaybackText") is null, TimeSpan.FromSeconds(10), "the player bar to disappear");
+        }
+        catch { app.SaveScreenshot(nameof(Clicking_a_transcript_line_starts_playback_and_the_player_bar_can_stop_it)); throw; }
+        finally { app.Dispose(); Directory.Delete(dir, true); }
+    }
+
+    private static FlaUI.Core.AutomationElements.AutomationElement AppDriver_FindRow(AppDriver app, string text)
+    {
+        FlaUI.Core.AutomationElements.AutomationElement? row = null;
+        AppDriver.Wait(() => (row = app.Window.FindFirstDescendant(cf => cf.ByName("Article 1. All human beings", FlaUI.Core.Definitions.PropertyConditionFlags.MatchSubstring))
+                                    ?? app.Window.FindFirstDescendant(cf => cf.ByName(text, FlaUI.Core.Definitions.PropertyConditionFlags.MatchSubstring))) is not null,
+            TimeSpan.FromSeconds(15), "a transcript row");
+        return row!;
+    }
+
+    [UiDragFact]
     public void Dropping_files_on_the_window_adds_the_supported_ones_and_reports_the_rest()
     {
         var audio = CopyToTemp("en-02.mp3", out var dir);

@@ -153,10 +153,36 @@
                         <SearchBar Placeholder="Search the transcript" Text="{Binding SearchText}" />
                         <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SecondaryButton}" Command="{Binding CopyAllCommand}" />
                     </Grid>
-                    <CollectionView ItemsSource="{Binding VisibleSegments}" HeightRequest="340">
+                    <!-- Player bar: appears once a line has been clicked. -->
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasPlayback}">
+                        <Label AutomationId="PlaybackText" Text="{Binding PlaybackText}" Style="{StaticResource Body}" VerticalOptions="Center" LineBreakMode="MiddleTruncation" />
+                        <Button AutomationId="PlayPauseButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" Padding="14,8"
+                                Command="{Binding TogglePlaybackCommand}" Text="Resume">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsPlaying}" Value="True">
+                                    <Setter Property="Text" Value="Pause" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button AutomationId="StopButton" Grid.Column="2" Text="Stop" Style="{StaticResource SecondaryButton}" Padding="14,8"
+                                Command="{Binding StopPlaybackCommand}" />
+                    </Grid>
+                    <Label Text="Click a line to play it from there." Style="{StaticResource Caption}" IsVisible="{Binding ShowPlayHint}" />
+                    <CollectionView AutomationId="Segments" ItemsSource="{Binding VisibleSegments}" HeightRequest="340">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:SegmentItem">
-                                <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="0,5">
+                                <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
+                                    <Grid.Triggers>
+                                        <!-- The line being played right now. -->
+                                        <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActiveRowLight}, Dark={StaticResource ActiveRowDark}}" />
+                                        </DataTrigger>
+                                    </Grid.Triggers>
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TranscribeViewModel}}, Path=PlaySegmentCommand, x:DataType=vm:TranscribeViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
                                     <Label Text="{Binding Time}" Style="{StaticResource Caption}" VerticalOptions="Start" />
                                     <Label Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Body}" />
                                 </Grid>

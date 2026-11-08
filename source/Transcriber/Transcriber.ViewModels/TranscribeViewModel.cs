@@ -409,7 +409,12 @@ public partial class TranscribeViewModel : ObservableObject
     [ObservableProperty] private bool _isPlaying;
 
     /// <summary>True once something has been played, so the small player bar is shown.</summary>
-    [ObservableProperty] private bool _hasPlayback;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowPlayHint))]
+    private bool _hasPlayback;
+
+    /// <summary>Shows the "click a line" tip until something has been played.</summary>
+    public bool ShowPlayHint => !HasPlayback;
 
     /// <summary>Player bar text, for example "talk.mp3  00:12".</summary>
     [ObservableProperty] private string _playbackText = string.Empty;
