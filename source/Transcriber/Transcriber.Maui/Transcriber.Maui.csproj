@@ -63,6 +63,11 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
 
+	<!-- Microphone capture on Windows (the macOS build uses AVFoundation instead). -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+		<PackageReference Include="NAudio.WinMM" Version="3.3.0" />
+	</ItemGroup>
+
 	<ItemGroup>
 	  <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
 	  <ProjectReference Include="..\Transcriber.ViewModels\Transcriber.ViewModels.csproj" />

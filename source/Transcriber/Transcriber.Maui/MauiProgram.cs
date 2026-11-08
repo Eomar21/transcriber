@@ -33,6 +33,7 @@ namespace Transcriber.Maui
             builder.Services.AddSingleton<IClipboardService, MauiClipboardService>();
             builder.Services.AddSingleton<IDialogService, MauiDialogService>();
             builder.Services.AddSingleton<IAudioPlayer, MauiAudioPlayer>();
+            builder.Services.AddSingleton<IAudioRecorder, MauiAudioRecorder>();
 
             // View models are singletons so a screen keeps its state while you switch tabs.
             builder.Services.AddSingleton<TranscribeViewModel>();
