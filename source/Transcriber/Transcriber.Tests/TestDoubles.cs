@@ -22,3 +22,21 @@ public sealed class FakeDialogs : IDialogService
         return Task.FromResult(Answer);
     }
 }
+
+/// <summary>Audio player for view model tests: records what was played and lets a test move the clock.</summary>
+public sealed class FakePlayer : IAudioPlayer
+{
+    public string? PlayedPath { get; private set; }
+    public TimeSpan PlayedFrom { get; private set; }
+    public bool IsPlaying { get; private set; }
+    public TimeSpan Position { get; set; }
+    public event EventHandler? StateChanged;
+
+    public void Play(string path, TimeSpan from) { PlayedPath = path; PlayedFrom = from; Position = from; IsPlaying = true; }
+    public void Pause() => IsPlaying = false;
+    public void Resume() => IsPlaying = true;
+    public void Stop() { IsPlaying = false; PlayedPath = null; }
+
+    /// <summary>Simulates the player's periodic update while playing.</summary>
+    public void Tick(TimeSpan position) { Position = position; StateChanged?.Invoke(this, EventArgs.Empty); }
+}

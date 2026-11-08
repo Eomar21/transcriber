@@ -62,6 +62,7 @@ public class TranscribeViewModelTests : IDisposable
     private readonly FakeLauncher Launcher = new();
     private readonly FakeModels Models = new();
     private readonly FakeDialogs Dialogs = new();
+    private readonly FakePlayer Player = new();
 
     private (TranscribeViewModel Vm, FakeFileReader Reader, FakeWhisper Whisper, FakePicker Picker, FakeClipboard Clipboard) Create()
     {
@@ -69,7 +70,7 @@ public class TranscribeViewModelTests : IDisposable
         var whisper = new FakeWhisper();
         var picker = new FakePicker();
         var clipboard = new FakeClipboard();
-        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher, Models, Dialogs), reader, whisper, picker, clipboard);
+        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher, Models, Dialogs, Player), reader, whisper, picker, clipboard);
     }
 
     private string MakeInput(string name = "talk.mp3")
@@ -130,7 +131,7 @@ public class TranscribeViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Transcribe_produces_segments_saves_file_and_cleans_temp_audio()
+    public async Task Transcribe_produces_segments_saves_file_and_keeps_converted_audio_for_playback()
     {
         var (vm, reader, _, _, _) = Create();
         var input = MakeInput();
@@ -146,7 +147,7 @@ public class TranscribeViewModelTests : IDisposable
         Assert.Equal(["Hello world", "Goodbye moon"], vm.VisibleSegments.Select(s => s.Text));
         Assert.True(vm.HasResults);
         Assert.False(vm.IsBusy);
-        Assert.All(reader.TempFiles, t => Assert.False(File.Exists(t)));
+        Assert.All(reader.TempFiles, t => Assert.True(File.Exists(t), "kept so a clicked line can play it"));
         Assert.True(File.Exists(input), "the user's own input file must never be deleted");
     }
 

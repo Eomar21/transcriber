@@ -13,6 +13,7 @@ public partial class TranscribeViewModel : ObservableObject
     private readonly IFileLauncher _launcher;
     private readonly IModelManager _modelManager;
     private readonly IDialogService _dialogs;
+    private readonly IAudioPlayer _player;
 
     private List<SegmentItem> _allSegments = [];
 
@@ -23,7 +24,8 @@ public partial class TranscribeViewModel : ObservableObject
         IClipboardService clipboard,
         IFileLauncher launcher,
         IModelManager modelManager,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IAudioPlayer player)
     {
         _fileReader = fileReader;
         _whisper = whisper;
@@ -32,6 +34,8 @@ public partial class TranscribeViewModel : ObservableObject
         _launcher = launcher;
         _modelManager = modelManager;
         _dialogs = dialogs;
+        _player = player;
+        _player.StateChanged += (_, _) => UpdatePlaybackState();
 
         Languages = SupportedLanguages.All.Select(l => new LanguageOption(l.Code, l.Name)).ToList();
         Models = WhisperModel.All.Select(m => new ModelOption(m, modelManager)).ToList();
@@ -321,10 +325,12 @@ public partial class TranscribeViewModel : ObservableObject
         var files = SelectedFiles;
         var rows = new List<SegmentItem>();
         var saved = new List<string>();
+        var newPlayback = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         IsBusy = true;
         Progress = 0;
         ClearResult();
+        ReleasePlayback();
         try
         {
             for (var i = 0; i < files.Count; i++)
@@ -339,22 +345,29 @@ public partial class TranscribeViewModel : ObservableObject
 
                 StatusText = prefix + "Preparing audio";
                 var audioPath = await _fileReader.GetAudioFileFromFileAsync(file);
+                var keepForPlayback = false;
                 try
                 {
                     var segments = await _whisper.TranscribeAsync(audioPath, options, progress, ct);
                     saved.Add(await TranscriptExporter.WriteAsync(segments, file, SelectedFormat.Format));
 
                     var source = files.Count > 1 ? Path.GetFileName(file) : string.Empty;
-                    rows.AddRange(segments.Select(s => new SegmentItem(s.Start, s.End, s.Text.Trim(), source)));
+                    rows.AddRange(segments.Select(s => new SegmentItem(s.Start, s.End, s.Text.Trim(), source, file)));
+
+                    // The converted audio is what plays when a line is clicked; it is removed with the next run.
+                    newPlayback[file] = audioPath;
+                    keepForPlayback = true;
                 }
                 finally
                 {
                     // Converted audio is a temp file; never delete the user's own input.
-                    if (!string.Equals(audioPath, file, StringComparison.OrdinalIgnoreCase))
+                    if (!keepForPlayback && !string.Equals(audioPath, file, StringComparison.OrdinalIgnoreCase))
                         try { File.Delete(audioPath); } catch { /* best effort */ }
                 }
             }
 
+            _playbackFiles = newPlayback;
+            newPlayback = [];
             _allSegments = rows;
             SearchText = string.Empty;
             RefreshVisibleSegments();
@@ -376,12 +389,103 @@ public partial class TranscribeViewModel : ObservableObject
         }
         finally
         {
+            // A cancelled or failed run leaves converted files that will never be played.
+            DeleteTempAudio(ConvertedCopies(newPlayback));
             foreach (var m in Models) m.Refresh();
             OnPropertyChanged(nameof(ModelHint));
             OnPropertyChanged(nameof(HasModelHint));
             IsBusy = false;
             StatusText = string.Empty;
         }
+    }
+
+    // ---- Playback: click a line to hear it -----------------------------------------------
+
+    // Original file -> the converted audio that is played for it.
+    private Dictionary<string, string> _playbackFiles = new(StringComparer.OrdinalIgnoreCase);
+    private string? _playingFile;
+    private SegmentItem? _activeSegment;
+
+    [ObservableProperty] private bool _isPlaying;
+
+    /// <summary>True once something has been played, so the small player bar is shown.</summary>
+    [ObservableProperty] private bool _hasPlayback;
+
+    /// <summary>Player bar text, for example "talk.mp3  00:12".</summary>
+    [ObservableProperty] private string _playbackText = string.Empty;
+
+    [RelayCommand]
+    private void PlaySegment(SegmentItem? segment)
+    {
+        if (segment is null) return;
+
+        // Prefer the converted audio, fall back to the original file for formats the platform can play.
+        if (!_playbackFiles.TryGetValue(segment.FilePath, out var path) || !File.Exists(path))
+            path = segment.FilePath;
+        if (!File.Exists(path))
+        {
+            ActionMessage = $"Couldn't find {Path.GetFileName(segment.FilePath)} to play it.";
+            return;
+        }
+
+        _playingFile = segment.FilePath;
+        HasPlayback = true;
+        _player.Play(path, segment.Start);
+        UpdatePlaybackState();
+    }
+
+    [RelayCommand]
+    private void TogglePlayback()
+    {
+        if (_player.IsPlaying) _player.Pause(); else _player.Resume();
+        UpdatePlaybackState();
+    }
+
+    [RelayCommand]
+    private void StopPlayback()
+    {
+        _player.Stop();
+        HasPlayback = false;
+        UpdatePlaybackState();
+    }
+
+    private void UpdatePlaybackState()
+    {
+        IsPlaying = _player.IsPlaying;
+        var position = _player.Position;
+        PlaybackText = HasPlayback && _playingFile is not null
+            ? $"{Path.GetFileName(_playingFile)}  {position:hh\\:mm\\:ss}"
+            : string.Empty;
+
+        // Highlight the line being spoken right now.
+        var current = HasPlayback && _playingFile is not null
+            ? _allSegments.FirstOrDefault(s =>
+                string.Equals(s.FilePath, _playingFile, StringComparison.OrdinalIgnoreCase) &&
+                position >= s.Start && position < s.End)
+            : null;
+        if (ReferenceEquals(current, _activeSegment)) return;
+        if (_activeSegment is not null) _activeSegment.IsActive = false;
+        _activeSegment = current;
+        if (current is not null) current.IsActive = true;
+    }
+
+    private static IEnumerable<string> ConvertedCopies(Dictionary<string, string> files) =>
+        files.Where(kv => !string.Equals(kv.Key, kv.Value, StringComparison.OrdinalIgnoreCase)).Select(kv => kv.Value).ToList();
+
+    private static void DeleteTempAudio(IEnumerable<string> paths)
+    {
+        foreach (var p in paths)
+            try { File.Delete(p); } catch { /* best effort */ }
+    }
+
+    private void ReleasePlayback()
+    {
+        _player.Stop();
+        HasPlayback = false;
+        UpdatePlaybackState();
+        // Only converted copies are temp files; the user's own wav is used in place and must stay.
+        DeleteTempAudio(ConvertedCopies(_playbackFiles));
+        _playbackFiles.Clear();
     }
 
     // ---- Results -------------------------------------------------------------------------

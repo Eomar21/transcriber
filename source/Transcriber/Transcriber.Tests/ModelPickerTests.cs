@@ -44,7 +44,7 @@ public class ModelPickerTests
 
     private TranscribeViewModel Create()
     {
-        var vm = new TranscribeViewModel(new Reader(), _whisper, new Picker(), new Clipboard(), new Launcher(), _models, _dialogs);
+        var vm = new TranscribeViewModel(new Reader(), _whisper, new Picker(), new Clipboard(), new Launcher(), _models, _dialogs, new FakePlayer());
         var file = Path.Combine(_dir, "talk.mp3");
         File.WriteAllText(file, "x");
         vm.AddFiles([file]);

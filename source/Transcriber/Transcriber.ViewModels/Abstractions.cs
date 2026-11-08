@@ -13,10 +13,47 @@ public interface IClipboardService
     Task SetTextAsync(string text);
 }
 
-/// <summary>One row of the transcript list.</summary>
-public sealed record SegmentItem(TimeSpan Start, TimeSpan End, string Text, string Source = "")
+/// <summary>Plays audio so a transcript line can be clicked to hear it. Implemented per platform, faked in tests.</summary>
+public interface IAudioPlayer
 {
+    /// <summary>Starts playing the file from the given position, replacing anything already playing.</summary>
+    void Play(string path, TimeSpan from);
+    void Pause();
+    void Resume();
+    void Stop();
+    bool IsPlaying { get; }
+    TimeSpan Position { get; }
+
+    /// <summary>Raised on the UI thread when playback starts, pauses, ends, and a few times a second while playing.</summary>
+    event EventHandler? StateChanged;
+}
+
+/// <summary>One row of the transcript list.</summary>
+public sealed partial class SegmentItem : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+{
+    public SegmentItem(TimeSpan start, TimeSpan end, string text, string source = "", string filePath = "")
+    {
+        Start = start;
+        End = end;
+        Text = text;
+        Source = source;
+        FilePath = filePath;
+    }
+
+    public TimeSpan Start { get; }
+    public TimeSpan End { get; }
+    public string Text { get; }
+
+    /// <summary>File name shown in front of the time when several files were transcribed together.</summary>
+    public string Source { get; }
+
+    /// <summary>The media file this line came from, used to find the audio to play.</summary>
+    public string FilePath { get; }
+
     public string Time => (string.IsNullOrEmpty(Source) ? "" : Source + "  ") + Start.ToString(@"hh\:mm\:ss");
+
+    /// <summary>True while this line is the one being played.</summary>
+    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private bool _isActive;
 }
 
 public sealed record LanguageOption(string Code, string Name);
