@@ -30,5 +30,10 @@ public static class ProgressLooks
         Id: "volcano", Sprite: "cowboy.png", Cell: 32, Frames: 8, FramesPerSecond: 12,
         Fill: "#FF6A1A", FillDark: "#FF8A4C", Decoration: TrackDecoration.Volcano);
 
-    public static IReadOnlyList<ProgressLook> All { get; } = [Runner, Surfer, Marathoner, Volcano];
+    /// <summary>The hero and the princess on a magic carpet that floats on a wave.</summary>
+    public static ProgressLook Carpet { get; } = new(
+        Id: "carpet", Sprite: "carpet.png", Cell: 48, Frames: 8, FramesPerSecond: 8,
+        Fill: "#7A3FD1", FillDark: "#B794F4", Decoration: TrackDecoration.Wave);
+
+    public static IReadOnlyList<ProgressLook> All { get; } = [Runner, Surfer, Marathoner, Volcano, Carpet];
 }
