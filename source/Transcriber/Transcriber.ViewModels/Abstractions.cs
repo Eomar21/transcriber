@@ -1,3 +1,6 @@
+using Transcriber.Services.Interfaces;
+using Transcriber.Services.Models;
+
 namespace Transcriber.ViewModels;
 
 /// <summary>Lets the user pick media files. Implemented per platform by the app, faked in tests.</summary>
@@ -59,7 +62,7 @@ public sealed partial class SegmentItem : CommunityToolkit.Mvvm.ComponentModel.O
 
     public bool HasSpeaker => Speaker is not null;
 
-    public string SpeakerLabel => Speaker is { } s ? SpeakerAssigner.Label(s) : "";
+    public string SpeakerLabel => Speaker is { } s ? Transcriber.Services.Speakers.SpeakerLabel.Format(s) : "";
 
     public string Time => (string.IsNullOrEmpty(Source) ? "" : Source + "  ") + Start.ToString(@"hh\:mm\:ss");
 

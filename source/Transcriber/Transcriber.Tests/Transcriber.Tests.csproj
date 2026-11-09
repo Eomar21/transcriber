@@ -17,6 +17,17 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Transcriber.Services.Exceptions" />
+    <Using Include="Transcriber.Services.Interfaces" />
+    <Using Include="Transcriber.Services.Models" />
+    <Using Include="Transcriber.Services.Speakers" />
+    <Using Include="Transcriber.Services.Catalog" />
+    <Using Include="Transcriber.Services.Configuration" />
+    <Using Include="Transcriber.Services.Export" />
+    <Using Include="Transcriber.Services.Media" />
+    <Using Include="Transcriber.Services.Platform" />
+    <Using Include="Transcriber.Services.Text" />
+    <Using Include="Transcriber.Services.Transcription" />
   </ItemGroup>
 
   <ItemGroup>

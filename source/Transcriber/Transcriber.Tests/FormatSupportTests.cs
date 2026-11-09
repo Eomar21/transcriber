@@ -15,11 +15,11 @@ public class FormatSupportTests : IDisposable
 
     private static string Sample(string name) => Path.Combine(AppContext.BaseDirectory, "TestData", name);
 
-    private static FileReaderService Reader() => new(new AudioService(), new VideoReaderService());
+    private static IFileReaderService Reader() => ServicesFixture.FileReader();
 
     private static async Task RunFfmpegAsync(params string[] args)
     {
-        var psi = new ProcessStartInfo(FfmpegLocator.Locate()!)
+        var psi = new ProcessStartInfo(ServicesFixture.FfmpegLocator.Locate()!)
         {
             RedirectStandardError = true,
             RedirectStandardOutput = true,
@@ -58,7 +58,7 @@ public class FormatSupportTests : IDisposable
     [Fact]
     public void Extension_lists_are_clean_and_cover_the_new_formats()
     {
-        var all = FileReaderService.SupportedExtensions;
+        var all = ServicesFixture.Formats.SupportedExtensions;
 
         Assert.Equal(all.Count, all.Distinct().Count());
         Assert.All(all, e => Assert.Matches(@"^\.[a-z0-9]+$", e));
@@ -75,7 +75,7 @@ public class FormatSupportTests : IDisposable
         var path = Path.Combine(_dir, "notes.txt");
         File.WriteAllText(path, "hello");
 
-        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => Reader().GetAudioFileFromFileAsync(path));
+        var e = await Assert.ThrowsAsync<MediaReadException>(() => Reader().GetAudioFileFromFileAsync(path));
 
         Assert.StartsWith("This file could not be read.", e.Message);
     }
@@ -91,7 +91,7 @@ public class FormatSupportTests : IDisposable
     [Fact]
     public async Task A_missing_file_says_it_was_not_found()
     {
-        var e = await Assert.ThrowsAsync<InvalidOperationException>(
+        var e = await Assert.ThrowsAsync<MediaReadException>(
             () => Reader().GetAudioFileFromFileAsync(Path.Combine(_dir, "gone.mp4")));
 
         Assert.Equal("This file was not found. It may have been moved or deleted.", e.Message);
@@ -103,7 +103,7 @@ public class FormatSupportTests : IDisposable
         var path = Path.Combine(_dir, "empty.dat");
         File.WriteAllBytes(path, []);
 
-        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => Reader().GetAudioFileFromFileAsync(path));
+        var e = await Assert.ThrowsAsync<MediaReadException>(() => Reader().GetAudioFileFromFileAsync(path));
 
         Assert.StartsWith("This file could not be read.", e.Message);
     }
@@ -147,7 +147,7 @@ public class FormatSupportTests : IDisposable
         var path = await EncodeAsync(name, codecArgs);
 
         // Prove the premise: the in-process decoder alone cannot read this file.
-        await Assert.ThrowsAnyAsync<Exception>(() => new AudioService().GetAudioFilePathAsync(path));
+        await Assert.ThrowsAnyAsync<Exception>(() => ServicesFixture.AudioService.GetAudioFilePathAsync(path));
 
         await AssertConvertsAsync(path);
     }
@@ -181,7 +181,7 @@ public class FormatSupportTests : IDisposable
         var audio = new Audio(() => Task.FromResult("in-process.wav"));
         var video = new Video();
 
-        var result = await new FileReaderService(audio, video).GetAudioFileFromFileAsync("a.mp3");
+        var result = await ServicesFixture.FileReader(audio, video).GetAudioFileFromFileAsync("a.mp3");
 
         Assert.Equal("in-process.wav", result);
         Assert.Equal(0, video.Calls);
@@ -193,7 +193,7 @@ public class FormatSupportTests : IDisposable
         var audio = new Audio(() => throw new ArgumentException("Unsupported source encoding"));
         var video = new Video();
 
-        var result = await new FileReaderService(audio, video).GetAudioFileFromFileAsync("a.wav");
+        var result = await ServicesFixture.FileReader(audio, video).GetAudioFileFromFileAsync("a.wav");
 
         Assert.Equal("from-ffmpeg.wav", result);
         Assert.Equal(1, audio.Calls);
@@ -207,7 +207,7 @@ public class FormatSupportTests : IDisposable
         var video = new Video();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => new FileReaderService(audio, video).GetAudioFileFromFileAsync("a.mp3"));
+            () => ServicesFixture.FileReader(audio, video).GetAudioFileFromFileAsync("a.mp3"));
         Assert.Equal(0, video.Calls);
     }
 
@@ -219,7 +219,7 @@ public class FormatSupportTests : IDisposable
         var path = Path.Combine(_dir, "silent.mp4");
         await RunFfmpegAsync("-f", "lavfi", "-i", "color=c=black:s=64x64:r=5:d=2", "-c:v", "mpeg4", path);
 
-        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => Reader().GetAudioFileFromFileAsync(path));
+        var e = await Assert.ThrowsAsync<MediaReadException>(() => Reader().GetAudioFileFromFileAsync(path));
 
         Assert.Equal("This file has no audio track, so there is nothing to transcribe.", e.Message);
     }
@@ -234,7 +234,7 @@ public class FormatSupportTests : IDisposable
         var path = Path.Combine(_dir, name);
         File.WriteAllBytes(path, Enumerable.Range(0, 4096).Select(i => (byte)(i * 31 % 251)).ToArray());
 
-        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => Reader().GetAudioFileFromFileAsync(path));
+        var e = await Assert.ThrowsAsync<MediaReadException>(() => Reader().GetAudioFileFromFileAsync(path));
 
         Assert.StartsWith("This file could not be read.", e.Message);
     }

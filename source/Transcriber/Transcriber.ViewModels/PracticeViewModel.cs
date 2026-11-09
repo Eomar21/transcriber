@@ -4,6 +4,9 @@ using CommunityToolkit.Mvvm.Input;
 using Transcriber.Coach.Exceptions;
 using Transcriber.Coach.Interfaces;
 using Transcriber.Coach.Models;
+using Transcriber.Services.Exceptions;
+using Transcriber.Services.Interfaces;
+using Transcriber.Services.Models;
 
 namespace Transcriber.ViewModels;
 
@@ -27,6 +30,7 @@ public sealed partial class PracticeViewModel : ObservableObject
 {
     private readonly IFileReaderService _fileReader;
     private readonly IWhisperService _whisper;
+    private readonly IModelCatalog _modelCatalog;
     private readonly IFilePickerService _filePicker;
     private readonly IPracticeHistory _history;
     private readonly ISpeechAnalyzer _analyzer;
@@ -53,6 +57,8 @@ public sealed partial class PracticeViewModel : ObservableObject
     public PracticeViewModel(
         IFileReaderService fileReader,
         IWhisperService whisper,
+        IModelCatalog modelCatalog,
+        ILanguageCatalog languageCatalog,
         IFilePickerService filePicker,
         IPracticeHistory history,
         ISpeechAnalyzer analyzer,
@@ -65,6 +71,7 @@ public sealed partial class PracticeViewModel : ObservableObject
     {
         _fileReader = fileReader;
         _whisper = whisper;
+        _modelCatalog = modelCatalog;
         _filePicker = filePicker;
         _history = history;
         _analyzer = analyzer;
@@ -77,11 +84,11 @@ public sealed partial class PracticeViewModel : ObservableObject
         _recorder.Progress += OnRecordingProgress;
         DeleteOldRecordings();
 
-        // Practice runs the Small model, so it offers the languages that model handles well. Dutch carries a hint.
-        Languages = LanguageSupport.Practice
+        // Practice offers the languages that its model handles well. A language that is less accurate with it carries a hint.
+        Languages = languageCatalog.Practice
             .Select(l =>
             {
-                var advice = LanguageSupport.PracticeAdvice(l.Code);
+                var advice = languageCatalog.PracticeAdvice(l.Code);
                 return new LanguageOption(l.Code, l.Name, advice, advice is null ? null : "less accurate");
             })
             .ToList();
@@ -306,7 +313,7 @@ public sealed partial class PracticeViewModel : ObservableObject
             var segments = await _whisper.TranscribeAsync(audio, new TranscriptionOptions
             {
                 Language = language,
-                Model = WhisperModel.Small,
+                Model = _modelCatalog.Practice,
                 // Without this Whisper tidies away the very um's and stutters being measured.
                 Prompt = _verbatimPrompts.For(language),
             }, progress, ct);
@@ -331,7 +338,7 @@ public sealed partial class PracticeViewModel : ObservableObject
         {
             ErrorMessage = "Stopped.";
         }
-        catch (Exception e) when (e is IOException or InvalidOperationException or NotSupportedException or UnauthorizedAccessException)
+        catch (Exception e) when (e is IOException or MediaReadException or InvalidOperationException or NotSupportedException or UnauthorizedAccessException)
         {
             ErrorMessage = $"Couldn't analyse this recording: {e.Message}";
         }

@@ -11,7 +11,7 @@ public class SpeakerDiarizationTests
     [Fact]
     public void A_segment_gets_the_speaker_who_talks_during_it()
     {
-        var result = SpeakerAssigner.Assign([Seg(0, 4), Seg(5, 9)], [Turn(0, 4.5, 0), Turn(4.5, 10, 1)]);
+        var result = ServicesFixture.Assigner.Assign([Seg(0, 4), Seg(5, 9)], [Turn(0, 4.5, 0), Turn(4.5, 10, 1)]);
 
         Assert.Equal([0, 1], result.Select(s => s.Speaker));
     }
@@ -19,7 +19,7 @@ public class SpeakerDiarizationTests
     [Fact]
     public void When_two_speakers_overlap_a_segment_the_one_talking_longest_wins()
     {
-        var result = SpeakerAssigner.Assign([Seg(0, 10)], [Turn(0, 3, 0), Turn(3, 10, 1)]);
+        var result = ServicesFixture.Assigner.Assign([Seg(0, 10)], [Turn(0, 3, 0), Turn(3, 10, 1)]);
 
         Assert.Equal(1, result[0].Speaker);
     }
@@ -27,7 +27,7 @@ public class SpeakerDiarizationTests
     [Fact]
     public void A_speaker_with_several_short_turns_in_one_segment_adds_them_up()
     {
-        var result = SpeakerAssigner.Assign([Seg(0, 10)], [Turn(0, 2, 0), Turn(2, 5, 1), Turn(5, 9, 0)]);
+        var result = ServicesFixture.Assigner.Assign([Seg(0, 10)], [Turn(0, 2, 0), Turn(2, 5, 1), Turn(5, 9, 0)]);
 
         Assert.Equal(0, result[0].Speaker);
     }
@@ -35,7 +35,7 @@ public class SpeakerDiarizationTests
     [Fact]
     public void A_segment_with_no_overlapping_speaker_stays_unlabelled()
     {
-        var result = SpeakerAssigner.Assign([Seg(20, 25)], [Turn(0, 5, 0)]);
+        var result = ServicesFixture.Assigner.Assign([Seg(20, 25)], [Turn(0, 5, 0)]);
 
         Assert.Null(result[0].Speaker);
     }
@@ -45,7 +45,7 @@ public class SpeakerDiarizationTests
     {
         var original = new[] { new TranscriptSegment { Start = S(1), End = S(2), Text = "hello" } };
 
-        var result = SpeakerAssigner.Assign(original, [Turn(0, 5, 0)]);
+        var result = ServicesFixture.Assigner.Assign(original, [Turn(0, 5, 0)]);
 
         Assert.Null(original[0].Speaker);
         Assert.Equal(("hello", S(1), S(2)), (result[0].Text, result[0].Start, result[0].End));
@@ -54,8 +54,8 @@ public class SpeakerDiarizationTests
     [Fact]
     public void Speakers_are_numbered_from_one_for_people()
     {
-        Assert.Equal("Speaker 1", SpeakerAssigner.Label(0));
-        Assert.Equal("Speaker 3", SpeakerAssigner.Label(2));
+        Assert.Equal("Speaker 1", SpeakerLabel.Format(0));
+        Assert.Equal("Speaker 3", SpeakerLabel.Format(2));
     }
 
     private static readonly string Sample = Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav");
@@ -63,13 +63,13 @@ public class SpeakerDiarizationTests
     [Fact]
     public void The_speaker_models_ship_next_to_the_app()
     {
-        Assert.True(new SherpaSpeakerDiarizer().IsAvailable);
+        Assert.True(ServicesFixture.Diarizer().IsAvailable);
     }
 
     [Fact]
     public async Task Two_people_talking_are_told_apart()
     {
-        var turns = await new SherpaSpeakerDiarizer().DiarizeAsync(Sample);
+        var turns = await ServicesFixture.Diarizer().DiarizeAsync(Sample);
 
         Assert.Equal([0, 1], turns.Select(t => t.Speaker).Distinct().Order());
         Assert.All(turns, t => Assert.True(t.End > t.Start));
@@ -81,7 +81,7 @@ public class SpeakerDiarizationTests
     [Fact]
     public async Task Naming_the_number_of_speakers_is_respected()
     {
-        var turns = await new SherpaSpeakerDiarizer().DiarizeAsync(Sample, speakerCount: 1);
+        var turns = await ServicesFixture.Diarizer().DiarizeAsync(Sample, speakerCount: 1);
 
         Assert.Single(turns.Select(t => t.Speaker).Distinct());
     }

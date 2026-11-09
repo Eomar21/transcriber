@@ -30,7 +30,7 @@ public class DragAndDropTests
         public LaunchResult Reveal(string path) => LaunchResult.Opened;
     }
 
-    private static TranscribeViewModel Create() => new(new Reader(), new Whisper(), new Picker(), new Clipboard(), new Launcher(), new FakeModels(), new FakeDialogs(), new FakePlayer());
+    private static TranscribeViewModel Create() => new(new Reader(), new Whisper(), new Picker(), new Clipboard(), new Launcher(), new FakeModels(), ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, new FakeDialogs(), new FakePlayer());
 
     [Fact]
     public void Dropped_media_files_are_added()

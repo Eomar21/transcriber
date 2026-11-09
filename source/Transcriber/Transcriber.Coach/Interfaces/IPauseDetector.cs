@@ -1,3 +1,4 @@
+using Transcriber.Services.Models;
 using Transcriber.Coach.Models;
 
 namespace Transcriber.Coach.Interfaces;

@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Transcriber.Services.Interfaces;
+using Transcriber.Services.Models;
 
 namespace Transcriber.ViewModels;
 
@@ -12,6 +14,10 @@ public partial class TranscribeViewModel : ObservableObject
     private readonly IClipboardService _clipboard;
     private readonly IFileLauncher _launcher;
     private readonly IModelManager _modelManager;
+    private readonly IModelCatalog _modelCatalog;
+    private readonly ILanguageCatalog _languageCatalog;
+    private readonly IMediaFormatCatalog _mediaFormats;
+    private readonly ITranscriptExporter _exporter;
     private readonly IDialogService _dialogs;
     private readonly IAudioPlayer _player;
 
@@ -24,6 +30,10 @@ public partial class TranscribeViewModel : ObservableObject
         IClipboardService clipboard,
         IFileLauncher launcher,
         IModelManager modelManager,
+        IModelCatalog modelCatalog,
+        ILanguageCatalog languageCatalog,
+        IMediaFormatCatalog mediaFormats,
+        ITranscriptExporter exporter,
         IDialogService dialogs,
         IAudioPlayer player)
     {
@@ -33,11 +43,15 @@ public partial class TranscribeViewModel : ObservableObject
         _clipboard = clipboard;
         _launcher = launcher;
         _modelManager = modelManager;
+        _modelCatalog = modelCatalog;
+        _languageCatalog = languageCatalog;
+        _mediaFormats = mediaFormats;
+        _exporter = exporter;
         _dialogs = dialogs;
         _player = player;
         _player.StateChanged += (_, _) => UpdatePlaybackState();
 
-        Models = WhisperModel.All.Select(m => new ModelOption(m, modelManager)).ToList();
+        Models = modelCatalog.All.Select(m => new ModelOption(m, modelManager)).ToList();
         Formats =
         [
             new(TranscriptFormat.Txt, "Text (.txt)"),
@@ -46,7 +60,7 @@ public partial class TranscribeViewModel : ObservableObject
             new(TranscriptFormat.Json, "Data (.json)"),
         ];
 
-        _selectedModelOption = Models.First(m => m.Model == WhisperModel.Small);
+        _selectedModelOption = Models.First(m => m.Model == modelCatalog.Default);
         RebuildLanguages();
         _selectedFormat = Formats[0];
         _selectedSpeakerCount = SpeakerCounts[0];
@@ -87,12 +101,12 @@ public partial class TranscribeViewModel : ObservableObject
     private void RebuildLanguages()
     {
         var model = SelectedModel;
-        var previous = _selectedLanguage?.Code ?? "auto";
-        var items = LanguageSupport.For(model)
+        var previous = _selectedLanguage?.Code ?? _languageCatalog.AutoCode;
+        var items = _languageCatalog.For(model)
             .Select(l =>
             {
-                var advice = LanguageSupport.Advice(l.Code, model);
-                return new LanguageOption(l.Code, l.Name, advice, advice is null ? null : "better with Medium");
+                var advice = _languageCatalog.Advice(l.Code, model);
+                return new LanguageOption(l.Code, l.Name, advice, advice is null ? null : $"better with {_modelCatalog.Suggested.Tier}");
             })
             .ToList();
 
@@ -106,12 +120,15 @@ public partial class TranscribeViewModel : ObservableObject
 
     partial void OnSelectedModelOptionChanged(ModelOption value) => RebuildLanguages();
 
+    /// <summary>The label of the button that switches to the suggested model, for example "Use the Medium model".</summary>
+    public string UseSuggestedModelText => $"Use the {_modelCatalog.Suggested.Tier} model";
+
     private bool CanUseSuggestedModel() => IsIdle;
 
     /// <summary>Switches to the model that is more accurate for the selected language.</summary>
     [RelayCommand(CanExecute = nameof(CanUseSuggestedModel))]
     private void UseSuggestedModel() =>
-        SelectedModelOption = Models.First(m => m.Model == LanguageSupport.SuggestedModel);
+        SelectedModelOption = Models.First(m => m.Model == _modelCatalog.Suggested);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedModel), nameof(ModelHint), nameof(HasModelHint))]
@@ -186,7 +203,7 @@ public partial class TranscribeViewModel : ObservableObject
 
         var dropped = paths.ToList();
         var supported = dropped
-            .Where(p => FileReaderService.SupportedExtensions.Contains(Path.GetExtension(p).ToLowerInvariant()))
+            .Where(_mediaFormats.IsSupported)
             .Where(p => !SelectedFiles.Contains(p, StringComparer.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -491,7 +508,7 @@ public partial class TranscribeViewModel : ObservableObject
                 try
                 {
                     var segments = await _whisper.TranscribeAsync(audioPath, options, progress, ct);
-                    saved.Add(await TranscriptExporter.WriteAsync(segments, file, SelectedFormat.Format));
+                    saved.Add(await _exporter.WriteAsync(segments, file, SelectedFormat.Format));
                     if (_whisper.LastCoverage is { LooksIncomplete: true } coverage) incomplete.Add((Path.GetFileName(file), coverage));
 
                     var source = files.Count > 1 ? Path.GetFileName(file) : string.Empty;
@@ -532,7 +549,7 @@ public partial class TranscribeViewModel : ObservableObject
             SetSavedFiles(saved);
             ResultDetail = saved.Count == 1 ? saved[0] : Path.GetDirectoryName(saved[0]) ?? string.Empty;
             RuntimeNote = _whisper.LastRuntime is { } r ? $"Processed with {r}" : string.Empty;
-            AccuracyNote = LanguageSupport.ResultNote(options.Language, options.Model) ?? string.Empty;
+            AccuracyNote = _languageCatalog.ResultNote(options.Language, options.Model) ?? string.Empty;
             CompletenessNote = CompletenessMessage(incomplete, options.Language);
             SetResult(ResultKind.Success, saved.Count == 1
                 ? "Transcript saved"

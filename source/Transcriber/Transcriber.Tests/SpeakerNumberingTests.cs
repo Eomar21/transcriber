@@ -16,7 +16,7 @@ public class SpeakerNumberingTests
     [Fact]
     public void Numbers_start_at_the_first_voice_and_have_no_gaps()
     {
-        var result = SpeakerAssigner.RenumberByAppearance([Seg(0, 1, 4), Seg(1, 2, 14), Seg(2, 3, 4), Seg(3, 4, 47)]);
+        var result = ServicesFixture.Assigner.RenumberByAppearance([Seg(0, 1, 4), Seg(1, 2, 14), Seg(2, 3, 4), Seg(3, 4, 47)]);
 
         Assert.Equal([0, 1, 0, 2], Speakers(result));
     }
@@ -24,16 +24,16 @@ public class SpeakerNumberingTests
     [Fact]
     public void Labels_follow_the_order_people_first_speak_not_the_models_numbers()
     {
-        var result = SpeakerAssigner.RenumberByAppearance([Seg(0, 1, 9), Seg(1, 2, 2)]);
+        var result = ServicesFixture.Assigner.RenumberByAppearance([Seg(0, 1, 9), Seg(1, 2, 2)]);
 
-        Assert.Equal("Speaker 1", SpeakerAssigner.Label(result[0].Speaker!.Value));
-        Assert.Equal("Speaker 2", SpeakerAssigner.Label(result[1].Speaker!.Value));
+        Assert.Equal("Speaker 1", SpeakerLabel.Format(result[0].Speaker!.Value));
+        Assert.Equal("Speaker 2", SpeakerLabel.Format(result[1].Speaker!.Value));
     }
 
     [Fact]
     public void Lines_without_a_speaker_stay_without_one_and_do_not_use_up_a_number()
     {
-        var result = SpeakerAssigner.RenumberByAppearance([Seg(0, 1), Seg(1, 2, 7), Seg(2, 3)]);
+        var result = ServicesFixture.Assigner.RenumberByAppearance([Seg(0, 1), Seg(1, 2, 7), Seg(2, 3)]);
 
         Assert.Equal([null, 0, null], Speakers(result));
     }
@@ -43,7 +43,7 @@ public class SpeakerNumberingTests
     {
         var input = new[] { new TranscriptSegment { Start = S(1), End = S(2), Text = "hello", Speaker = 5 } };
 
-        var result = SpeakerAssigner.RenumberByAppearance(input);
+        var result = ServicesFixture.Assigner.RenumberByAppearance(input);
 
         Assert.Equal("hello", result[0].Text);
         Assert.Equal(S(1), result[0].Start);
@@ -63,7 +63,7 @@ public class SpeakerNumberingTests
     [Fact]
     public void Short_fragments_are_folded_into_the_real_speakers()
     {
-        var merged = SpeakerAssigner.MergeMinorSpeakers(OverSplit());
+        var merged = ServicesFixture.Assigner.MergeMinorSpeakers(OverSplit());
 
         Assert.Equal([4, 5], merged.Select(t => t.Speaker).Distinct().Order());
     }
@@ -71,7 +71,7 @@ public class SpeakerNumberingTests
     [Fact]
     public void A_fragment_goes_to_the_speaker_it_is_closest_to_in_time()
     {
-        var merged = SpeakerAssigner.MergeMinorSpeakers(OverSplit());
+        var merged = ServicesFixture.Assigner.MergeMinorSpeakers(OverSplit());
 
         Assert.Equal(5, merged.Single(t => t.Speaker == 5 && t.Start == S(135)).Speaker);
         // 135 to 138 sits right after speaker 5's turn, 138.3 to 142 right before speaker 4's.
@@ -84,8 +84,8 @@ public class SpeakerNumberingTests
     {
         var segments = new[] { Seg(56, 100), Seg(121, 130), Seg(140, 200), Seg(261, 270), Seg(280, 320) };
 
-        var turns = SpeakerAssigner.MergeMinorSpeakers(OverSplit());
-        var result = SpeakerAssigner.RenumberByAppearance(SpeakerAssigner.Assign(segments, turns));
+        var turns = ServicesFixture.Assigner.MergeMinorSpeakers(OverSplit());
+        var result = ServicesFixture.Assigner.RenumberByAppearance(ServicesFixture.Assigner.Assign(segments, turns));
 
         Assert.Equal([0, 1, 0, 1, 0], Speakers(result));
     }
@@ -93,17 +93,17 @@ public class SpeakerNumberingTests
     [Fact]
     public void The_first_line_is_speaker_1_even_when_it_is_spoken_by_a_fragment_cluster()
     {
-        var turns = SpeakerAssigner.MergeMinorSpeakers(OverSplit());
-        var result = SpeakerAssigner.RenumberByAppearance(SpeakerAssigner.Assign([Seg(51.5, 52.5)], turns));
+        var turns = ServicesFixture.Assigner.MergeMinorSpeakers(OverSplit());
+        var result = ServicesFixture.Assigner.RenumberByAppearance(ServicesFixture.Assigner.Assign([Seg(51.5, 52.5)], turns));
 
-        Assert.Equal("Speaker 1", SpeakerAssigner.Label(result[0].Speaker!.Value));
+        Assert.Equal("Speaker 1", SpeakerLabel.Format(result[0].Speaker!.Value));
     }
 
     [Fact]
     public void A_short_but_genuine_second_voice_is_kept()
     {
         // 90 seconds of one voice and 25 of another is a real conversation, whatever the ids.
-        var merged = SpeakerAssigner.MergeMinorSpeakers([Turn(0, 90, 3), Turn(90, 115, 11)]);
+        var merged = ServicesFixture.Assigner.MergeMinorSpeakers([Turn(0, 90, 3), Turn(90, 115, 11)]);
 
         Assert.Equal([3, 11], merged.Select(t => t.Speaker).Distinct().Order());
     }
@@ -113,7 +113,7 @@ public class SpeakerNumberingTests
     {
         var turns = new[] { Turn(0, 5, 0), Turn(5, 9, 1), Turn(9, 12, 0) };
 
-        Assert.Equal(turns, SpeakerAssigner.MergeMinorSpeakers(turns));
+        Assert.Equal(turns, ServicesFixture.Assigner.MergeMinorSpeakers(turns));
     }
 
     [Fact]
@@ -121,12 +121,12 @@ public class SpeakerNumberingTests
     {
         var turns = Enumerable.Range(0, 30).Select(i => Turn(i, i + 0.9, i)).ToArray();
 
-        var merged = SpeakerAssigner.MergeMinorSpeakers(turns);
+        var merged = ServicesFixture.Assigner.MergeMinorSpeakers(turns);
 
         Assert.Equal(30, merged.Count);
         Assert.Single(merged.Select(t => t.Speaker).Distinct());
     }
 
     [Fact]
-    public void No_turns_give_no_turns() => Assert.Empty(SpeakerAssigner.MergeMinorSpeakers([]));
+    public void No_turns_give_no_turns() => Assert.Empty(ServicesFixture.Assigner.MergeMinorSpeakers([]));
 }

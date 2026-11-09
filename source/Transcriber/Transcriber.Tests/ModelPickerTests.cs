@@ -44,7 +44,7 @@ public class ModelPickerTests
 
     private TranscribeViewModel Create()
     {
-        var vm = new TranscribeViewModel(new Reader(), _whisper, new Picker(), new Clipboard(), new Launcher(), _models, _dialogs, new FakePlayer());
+        var vm = new TranscribeViewModel(new Reader(), _whisper, new Picker(), new Clipboard(), new Launcher(), _models, ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, _dialogs, new FakePlayer());
         var file = Path.Combine(_dir, "talk.mp3");
         File.WriteAllText(file, "x");
         vm.AddFiles([file]);
@@ -56,11 +56,11 @@ public class ModelPickerTests
     [Fact]
     public void Installed_models_are_labelled_installed_and_others_show_their_download_size()
     {
-        _models.Missing.Add(WhisperModel.MediumQ5.Id);
+        _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
 
-        Assert.Contains("installed", Option(vm, WhisperModel.Small).Label);
-        Assert.Contains("539 MB download", Option(vm, WhisperModel.MediumQ5).Label);
+        Assert.Contains("installed", Option(vm, TestModels.Small).Label);
+        Assert.Contains("539 MB download", Option(vm, TestModels.MediumQ5).Label);
     }
 
     [Fact]
@@ -68,17 +68,17 @@ public class ModelPickerTests
     {
         var vm = Create();
 
-        Assert.Equal(WhisperModel.Small, vm.SelectedModel);
+        Assert.Equal(TestModels.Small, vm.SelectedModel);
         Assert.False(vm.HasModelHint);
     }
 
     [Fact]
     public void Picking_a_model_that_is_not_installed_shows_a_download_hint()
     {
-        _models.Missing.Add(WhisperModel.MediumQ5.Id);
+        _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
 
-        vm.SelectedModelOption = Option(vm, WhisperModel.MediumQ5);
+        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
 
         Assert.True(vm.HasModelHint);
         Assert.Contains("one-time download of 539 MB", vm.ModelHint);
@@ -87,10 +87,10 @@ public class ModelPickerTests
     [Fact]
     public async Task Declining_the_download_stops_before_anything_runs()
     {
-        _models.Missing.Add(WhisperModel.MediumQ5.Id);
+        _models.Missing.Add(TestModels.MediumQ5.Id);
         _dialogs.Answer = false;
         var vm = Create();
-        vm.SelectedModelOption = Option(vm, WhisperModel.MediumQ5);
+        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
@@ -103,14 +103,14 @@ public class ModelPickerTests
     [Fact]
     public async Task Accepting_the_download_runs_the_transcription_with_that_model()
     {
-        _models.Missing.Add(WhisperModel.MediumQ5.Id);
+        _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
-        vm.SelectedModelOption = Option(vm, WhisperModel.MediumQ5);
+        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
         Assert.Equal(1, _whisper.Calls);
-        Assert.Equal(WhisperModel.MediumQ5, _whisper.LastModel);
+        Assert.Equal(TestModels.MediumQ5, _whisper.LastModel);
     }
 
     [Fact]
@@ -127,16 +127,16 @@ public class ModelPickerTests
     [Fact]
     public async Task After_a_download_the_model_is_labelled_installed_and_the_hint_disappears()
     {
-        _models.Missing.Add(WhisperModel.MediumQ5.Id);
+        _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
-        vm.SelectedModelOption = Option(vm, WhisperModel.MediumQ5);
+        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
         Assert.True(vm.HasModelHint);
 
         // The download finishes while transcribing.
-        _models.Missing.Remove(WhisperModel.MediumQ5.Id);
+        _models.Missing.Remove(TestModels.MediumQ5.Id);
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Contains("installed", Option(vm, WhisperModel.MediumQ5).Label);
+        Assert.Contains("installed", Option(vm, TestModels.MediumQ5).Label);
         Assert.False(vm.HasModelHint);
     }
 }

@@ -1,13 +1,14 @@
+using Transcriber.Services.Interfaces;
 using Transcriber.ViewModels;
 
 namespace Transcriber.Maui.Services;
 
 /// <summary>Native file dialog on Windows and macOS.</summary>
-public class MauiFilePickerService : IFilePickerService
+public class MauiFilePickerService(IMediaFormatCatalog formats) : IFilePickerService
 {
     public async Task<IReadOnlyList<string>> PickMediaFilesAsync()
     {
-        var extensions = FileReaderService.SupportedExtensions.ToArray();
+        var extensions = formats.SupportedExtensions.ToArray();
         var fileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
         {
             // WinUI wants ".mp3"; macOS wants bare extensions or UTIs.

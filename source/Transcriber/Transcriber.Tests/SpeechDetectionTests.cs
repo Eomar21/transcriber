@@ -14,7 +14,7 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void Regions_are_padded_on_both_sides()
     {
-        var plan = SpeechPlanner.Plan([Span(10, 12)], Hour, padding: TimeSpan.FromSeconds(0.5));
+        var plan = ServicesFixture.Planner.Plan([Span(10, 12)], Hour, padding: TimeSpan.FromSeconds(0.5));
 
         Assert.Equal([Span(9.5, 12.5)], plan);
     }
@@ -22,7 +22,7 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void Padding_never_leaves_the_recording()
     {
-        var plan = SpeechPlanner.Plan([Span(0.1, 9.9)], TimeSpan.FromSeconds(10), padding: TimeSpan.FromSeconds(0.5));
+        var plan = ServicesFixture.Planner.Plan([Span(0.1, 9.9)], TimeSpan.FromSeconds(10), padding: TimeSpan.FromSeconds(0.5));
 
         Assert.Equal([Span(0, 10)], plan);
     }
@@ -30,7 +30,7 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void Regions_separated_by_a_short_pause_are_merged_so_a_sentence_is_not_cut()
     {
-        var plan = SpeechPlanner.Plan([Span(0, 4), Span(5, 8)], Hour, padding: TimeSpan.Zero, mergeGap: TimeSpan.FromSeconds(1.5));
+        var plan = ServicesFixture.Planner.Plan([Span(0, 4), Span(5, 8)], Hour, padding: TimeSpan.Zero, mergeGap: TimeSpan.FromSeconds(1.5));
 
         Assert.Equal([Span(0, 8)], plan);
     }
@@ -38,7 +38,7 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void Regions_separated_by_a_long_pause_stay_separate()
     {
-        var plan = SpeechPlanner.Plan([Span(0, 4), Span(20, 25)], Hour, padding: TimeSpan.Zero, mergeGap: TimeSpan.FromSeconds(1.5));
+        var plan = ServicesFixture.Planner.Plan([Span(0, 4), Span(20, 25)], Hour, padding: TimeSpan.Zero, mergeGap: TimeSpan.FromSeconds(1.5));
 
         Assert.Equal([Span(0, 4), Span(20, 25)], plan);
     }
@@ -46,7 +46,7 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void Unordered_and_overlapping_regions_are_handled()
     {
-        var plan = SpeechPlanner.Plan([Span(6, 9), Span(0, 7)], Hour, padding: TimeSpan.Zero);
+        var plan = ServicesFixture.Planner.Plan([Span(6, 9), Span(0, 7)], Hour, padding: TimeSpan.Zero);
 
         Assert.Equal([Span(0, 9)], plan);
     }
@@ -54,7 +54,7 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void Very_long_speech_is_split_into_chunks_of_at_most_the_limit()
     {
-        var plan = SpeechPlanner.Plan([Span(0, 25)], Hour, padding: TimeSpan.Zero, maxChunk: TimeSpan.FromSeconds(10));
+        var plan = ServicesFixture.Planner.Plan([Span(0, 25)], Hour, padding: TimeSpan.Zero, maxChunk: TimeSpan.FromSeconds(10));
 
         Assert.Equal([Span(0, 10), Span(10, 20), Span(20, 25)], plan);
     }
@@ -62,13 +62,13 @@ public class SpeechDetectionTests : IDisposable
     [Fact]
     public void No_regions_means_nothing_to_transcribe()
     {
-        Assert.Empty(SpeechPlanner.Plan([], Hour));
+        Assert.Empty(ServicesFixture.Planner.Plan([], Hour));
     }
 
     /// <summary>Silence, then the sample, then silence, as one 16 kHz mono wav.</summary>
     private async Task<string> SpeechBetweenSilenceAsync(double silenceSeconds)
     {
-        var sample = await new AudioService().GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
+        var sample = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
         var path = Path.Combine(_dir, "padded.wav");
         var format = new WaveFormat(16000, 16, 1);
         var silence = new byte[(int)(silenceSeconds * format.AverageBytesPerSecond)];
@@ -83,7 +83,7 @@ public class SpeechDetectionTests : IDisposable
         return path;
     }
 
-    private static SileroSpeechDetector Detector() => new();
+    private static ISpeechDetector Detector() => ServicesFixture.SpeechDetector();
 
     [Fact]
     public void The_detection_model_ships_next_to_the_app()

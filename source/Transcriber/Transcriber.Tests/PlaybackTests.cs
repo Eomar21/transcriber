@@ -57,7 +57,7 @@ public class PlaybackTests : IDisposable
     }
 
     private TranscribeViewModel Create(IFileReaderService reader) =>
-        new(reader, new Whisper(), new Picker(), new Clipboard(), new Launcher(), new FakeModels(), new FakeDialogs(), _player);
+        new(reader, new Whisper(), new Picker(), new Clipboard(), new Launcher(), new FakeModels(), ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, new FakeDialogs(), _player);
 
     private async Task<(TranscribeViewModel Vm, Reader Reader)> RunAsync(params string[] names)
     {

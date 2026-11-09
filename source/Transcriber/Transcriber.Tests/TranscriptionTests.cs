@@ -11,9 +11,9 @@ public class TranscriptionTests(ITestOutputHelper output)
 
     // TRANSCRIBER_TEST_MODEL=<model id> runs the whole suite against another model (default: small).
     private static readonly WhisperModel TestModel =
-        WhisperModel.All.FirstOrDefault(m => m.Id == Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_MODEL")) ?? WhisperModel.Small;
+        ServicesFixture.Models.All.FirstOrDefault(m => m.Id == Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_MODEL")) ?? TestModels.Small;
 
-    private static readonly ModelManager Models = new(Path.Combine(
+    private static readonly IModelManager Models = ServicesFixture.ModelManager(Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TranscriberTests"));
 
     // Max accepted word error rate per language, set from measured results (en/es/ar score ~0%, nl 9-17%).
@@ -34,10 +34,10 @@ public class TranscriptionTests(ITestOutputHelper output)
     private async Task<(double Wer, string Actual, string? Runtime)> RunAsync(
         string file, string language, string reference, bool useGpu = true)
     {
-        var wav = await new AudioService().GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", file));
+        var wav = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", file));
         try
         {
-            var whisper = new WhisperService(Models);
+            var whisper = ServicesFixture.Whisper(Models);
             var segments = await whisper.TranscribeAsync(wav, new TranscriptionOptions
             {
                 Language = language,
@@ -60,7 +60,7 @@ public class TranscriptionTests(ITestOutputHelper output)
     public async Task With_speech_detection_text_keeps_its_place_in_the_recording_and_silence_gives_nothing()
     {
         const int lead = 6; // seconds of silence in front of the speech
-        var sample = await new AudioService().GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
+        var sample = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
         var padded = Path.Combine(Path.GetTempPath(), $"vad_{Guid.NewGuid():N}.wav");
         var silent = Path.Combine(Path.GetTempPath(), $"vad_{Guid.NewGuid():N}.wav");
         try
@@ -75,7 +75,7 @@ public class TranscriptionTests(ITestOutputHelper output)
             using (var writer = new NAudio.Wave.WaveFileWriter(silent, format))
                 writer.Write(new byte[10 * format.AverageBytesPerSecond], 0, 10 * format.AverageBytesPerSecond);
 
-            var whisper = new WhisperService(Models, new SileroSpeechDetector());
+            var whisper = ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector());
             var options = new TranscriptionOptions
             {
                 Language = "en",
@@ -102,7 +102,7 @@ public class TranscriptionTests(ITestOutputHelper output)
     public async Task Speakers_are_identified_in_a_two_person_conversation()
     {
         var wav = Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav");
-        var whisper = new WhisperService(Models, new SileroSpeechDetector(), new SherpaSpeakerDiarizer());
+        var whisper = ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector(), ServicesFixture.Diarizer());
 
         var segments = await whisper.TranscribeAsync(wav, new TranscriptionOptions
         {
@@ -128,10 +128,10 @@ public class TranscriptionTests(ITestOutputHelper output)
             var sample = Path.Combine(dir, "talk.wav");
             File.Copy(Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav"), sample);
             var historyFile = Path.Combine(dir, "history.json");
-            var whisper = new WhisperService(Models, new SileroSpeechDetector());
+            var whisper = ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector());
             var vm = new Transcriber.ViewModels.PracticeViewModel(
-                new FileReaderService(new AudioService(), new VideoReaderService()),
-                new CpuOnly(whisper),
+                ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader()),
+                new CpuOnly(whisper), ServicesFixture.Models, ServicesFixture.Languages,
                 new NoPicker(),
                 new Transcriber.Coach.History.JsonPracticeHistory(historyFile),
                 CoachFixture.Analyzer,
@@ -225,10 +225,10 @@ public class TranscriptionTests(ITestOutputHelper output)
         try
         {
             var video = await VideoConversionTests.MakeVideoAsync(dir, Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"), extension);
-            var wav = await new FileReaderService(new AudioService(), new VideoReaderService()).GetAudioFileFromFileAsync(video);
+            var wav = await ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader()).GetAudioFileFromFileAsync(video);
             try
             {
-                var segments = await new WhisperService(Models).TranscribeAsync(wav, new TranscriptionOptions
+                var segments = await ServicesFixture.Whisper(Models).TranscribeAsync(wav, new TranscriptionOptions
                 {
                     Language = "en",
                     Model = TestModel,
@@ -247,13 +247,13 @@ public class TranscriptionTests(ITestOutputHelper output)
     [Fact]
     public async Task Cancellation_stops_transcription()
     {
-        var wav = await new AudioService().GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
+        var wav = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
         try
         {
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-                new WhisperService(Models).TranscribeAsync(wav, new TranscriptionOptions { Model = WhisperModel.Small, UseGpu = false }, null, cts.Token));
+                ServicesFixture.Whisper(Models).TranscribeAsync(wav, new TranscriptionOptions { Model = TestModels.Small, UseGpu = false }, null, cts.Token));
         }
         finally
         {

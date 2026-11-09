@@ -75,7 +75,7 @@ public class TranscribeViewModelTests : IDisposable
         var whisper = new FakeWhisper();
         var picker = new FakePicker();
         var clipboard = new FakeClipboard();
-        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher, Models, Dialogs, Player), reader, whisper, picker, clipboard);
+        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher, Models, ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, Dialogs, Player), reader, whisper, picker, clipboard);
     }
 
     private string MakeInput(string name = "talk.mp3")
@@ -98,10 +98,10 @@ public class TranscribeViewModelTests : IDisposable
         var (vm, _, _, _, _) = Create();
         Assert.DoesNotContain(vm.Languages, l => l.Code == "fr");
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.MediumQ5);
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.MediumQ5);
         Assert.Contains(vm.Languages, l => l.Code == "fr");
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.Small);
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.Small);
         Assert.DoesNotContain(vm.Languages, l => l.Code == "fr");
     }
 
@@ -109,13 +109,13 @@ public class TranscribeViewModelTests : IDisposable
     public void Language_choice_is_kept_when_the_new_model_still_offers_it_and_resets_when_not()
     {
         var (vm, _, _, _, _) = Create();
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.MediumQ5);
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.MediumQ5);
         vm.SelectedLanguage = Pick(vm, "fr");
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.LargeV3TurboQ5);
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.LargeV3TurboQ5);
         Assert.Equal("fr", vm.SelectedLanguage.Code);
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.Small);
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.Small);
         Assert.Equal("auto", vm.SelectedLanguage.Code);
     }
 
@@ -132,7 +132,7 @@ public class TranscribeViewModelTests : IDisposable
 
         vm.UseSuggestedModelCommand.Execute(null);
 
-        Assert.Equal(WhisperModel.MediumQ5, vm.SelectedModel);
+        Assert.Equal(TestModels.MediumQ5, vm.SelectedModel);
         Assert.Equal("nl", vm.SelectedLanguage.Code);
         Assert.False(vm.HasLanguageAdvice);
     }
@@ -157,7 +157,7 @@ public class TranscribeViewModelTests : IDisposable
     public async Task Incomplete_transcript_shows_a_note_that_suggests_the_main_language_for_auto()
     {
         var (vm, _, whisper, picker, _) = Create();
-        whisper.Coverage = new SpeechCoverage(SpeechSeconds: 30, TextSeconds: 12);
+        whisper.Coverage = new SpeechCoverage(SpeechSeconds: 30, TextSeconds: 12) { LooksIncomplete = true };
         picker.Result = [MakeInput()];
         await vm.BrowseCommand.ExecuteAsync(null);
 
@@ -186,7 +186,7 @@ public class TranscribeViewModelTests : IDisposable
         var (vm, _, _, _, _) = Create();
 
         Assert.Equal("auto", vm.SelectedLanguage.Code);
-        Assert.Equal(WhisperModel.Small, vm.SelectedModel);
+        Assert.Equal(TestModels.Small, vm.SelectedModel);
         Assert.Equal(TranscriptFormat.Txt, vm.SelectedFormat.Format);
         Assert.False(vm.HasFiles);
         Assert.False(vm.TranscribeCommand.CanExecute(null));

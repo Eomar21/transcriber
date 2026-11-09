@@ -18,7 +18,7 @@ public class SpeakerLabelTests : IDisposable
     [Fact]
     public void Text_export_leads_each_labelled_line_with_the_speaker()
     {
-        var text = TranscriptExporter.ToText(Labelled());
+        var text = ServicesFixture.Exporter.Render(Labelled(), TranscriptFormat.Txt);
 
         Assert.Contains("] Speaker 1: Hello there", text);
         Assert.Contains("] Speaker 2: Hi", text);
@@ -28,13 +28,13 @@ public class SpeakerLabelTests : IDisposable
     [Fact]
     public void Srt_export_leads_each_labelled_line_with_the_speaker()
     {
-        Assert.Contains("Speaker 2: Hi", TranscriptExporter.ToSrt(Labelled()));
+        Assert.Contains("Speaker 2: Hi", ServicesFixture.Exporter.Render(Labelled(), TranscriptFormat.Srt));
     }
 
     [Fact]
     public void Vtt_export_uses_voice_tags()
     {
-        var vtt = TranscriptExporter.ToVtt(Labelled());
+        var vtt = ServicesFixture.Exporter.Render(Labelled(), TranscriptFormat.Vtt);
 
         Assert.Contains("<v Speaker 1>Hello there", vtt);
         Assert.DoesNotContain("<v >", vtt);
@@ -43,7 +43,7 @@ public class SpeakerLabelTests : IDisposable
     [Fact]
     public void Json_export_has_a_speaker_field_only_for_labelled_lines()
     {
-        var rows = JsonDocument.Parse(TranscriptExporter.ToJson(Labelled())).RootElement;
+        var rows = JsonDocument.Parse(ServicesFixture.Exporter.Render(Labelled(), TranscriptFormat.Json)).RootElement;
 
         Assert.Equal("Speaker 1", rows[0].GetProperty("speaker").GetString());
         Assert.Equal(JsonValueKind.Null, rows[2].GetProperty("speaker").ValueKind);
@@ -54,7 +54,7 @@ public class SpeakerLabelTests : IDisposable
     {
         var plain = new List<TranscriptSegment> { new() { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(1), Text = "Hi" } };
 
-        Assert.Equal("[00:00:00 -> 00:00:01] Hi" + Environment.NewLine, TranscriptExporter.ToText(plain));
+        Assert.Equal("[00:00:00 -> 00:00:01] Hi" + Environment.NewLine, ServicesFixture.Exporter.Render(plain, TranscriptFormat.Txt));
     }
 
     // ---- view model ----
@@ -103,7 +103,7 @@ public class SpeakerLabelTests : IDisposable
     {
         var whisper = new Whisper(canIdentify);
         var clip = new Clip();
-        var vm = new TranscribeViewModel(new Reader(), whisper, new Picker(), clip, new Launcher(), new FakeModels(), new FakeDialogs(), new FakePlayer());
+        var vm = new TranscribeViewModel(new Reader(), whisper, new Picker(), clip, new Launcher(), new FakeModels(), ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, new FakeDialogs(), new FakePlayer());
         var file = Path.Combine(_dir, "talk.mp3");
         File.WriteAllText(file, "x");
         vm.AddFiles([file]);

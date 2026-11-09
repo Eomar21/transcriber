@@ -71,7 +71,7 @@ public class SherpaCliDiarizerTests
     [Fact]
     public void Arguments_pass_models_the_speaker_count_and_the_wav_last()
     {
-        var args = SherpaCliSpeakerDiarizer.BuildArguments("seg.onnx", "emb.onnx", "talk.wav", 3, 4);
+        var args = ServicesFixture.CliDiarizer().BuildArguments("seg.onnx", "emb.onnx", "talk.wav", 3, 4);
 
         Assert.Contains("--segmentation.pyannote-model=seg.onnx", args);
         Assert.Contains("--embedding.model=emb.onnx", args);
@@ -83,7 +83,7 @@ public class SherpaCliDiarizerTests
     [Fact]
     public void An_unknown_speaker_count_asks_the_tool_to_work_it_out()
     {
-        var args = SherpaCliSpeakerDiarizer.BuildArguments("s", "e", "w.wav", null, 2);
+        var args = ServicesFixture.CliDiarizer().BuildArguments("s", "e", "w.wav", null, 2);
 
         Assert.Contains("--clustering.num-clusters=-1", args);
         Assert.Contains("--clustering.cluster-threshold=0.5", args);
@@ -96,7 +96,7 @@ public class SherpaCliDiarizerTests
         try
         {
             System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("nl-NL");
-            Assert.Contains("--clustering.cluster-threshold=0.5", SherpaCliSpeakerDiarizer.BuildArguments("s", "e", "w.wav", null, 2));
+            Assert.Contains("--clustering.cluster-threshold=0.5", ServicesFixture.CliDiarizer().BuildArguments("s", "e", "w.wav", null, 2));
         }
         finally { System.Globalization.CultureInfo.CurrentCulture = old; }
     }
@@ -107,15 +107,15 @@ public class SherpaCliDiarizerTests
         var dir = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            Assert.False(new SherpaCliSpeakerDiarizer(Path.Combine(dir, "missing"), dir).IsAvailable);
+            Assert.False(ServicesFixture.CliDiarizer(Path.Combine(dir, "missing"), dir).IsAvailable);
 
             var tool = Path.Combine(dir, "tool");
             File.WriteAllText(tool, "x");
-            Assert.False(new SherpaCliSpeakerDiarizer(tool, dir).IsAvailable); // models still missing
+            Assert.False(ServicesFixture.CliDiarizer(tool, dir).IsAvailable); // models still missing
 
-            File.WriteAllText(Path.Combine(dir, SherpaSpeakerDiarizer.SegmentationModelFileName), "x");
-            File.WriteAllText(Path.Combine(dir, SherpaSpeakerDiarizer.EmbeddingModelFileName), "x");
-            Assert.True(new SherpaCliSpeakerDiarizer(tool, dir).IsAvailable);
+            File.WriteAllText(Path.Combine(dir, ServicesFixture.Settings.Speakers.SegmentationModelFile), "x");
+            File.WriteAllText(Path.Combine(dir, ServicesFixture.Settings.Speakers.EmbeddingModelFile), "x");
+            Assert.True(ServicesFixture.CliDiarizer(tool, dir).IsAvailable);
         }
         finally { Directory.Delete(dir, true); }
     }
@@ -123,9 +123,9 @@ public class SherpaCliDiarizerTests
     [Fact]
     public async Task Asking_for_speakers_without_the_tool_is_a_clear_error()
     {
-        var diarizer = new SherpaCliSpeakerDiarizer(Path.Combine(Path.GetTempPath(), "no-such-tool"), Path.GetTempPath());
+        var diarizer = ServicesFixture.CliDiarizer(Path.Combine(Path.GetTempPath(), "no-such-tool"), Path.GetTempPath());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => diarizer.DiarizeAsync("x.wav"));
+        await Assert.ThrowsAsync<SpeakerDetectionException>(() => diarizer.DiarizeAsync("x.wav"));
     }
 
     // Captured from the tool bundled in the Mac app, running on the two-speaker sample: progress lines and the

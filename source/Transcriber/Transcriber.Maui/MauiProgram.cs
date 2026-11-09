@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Transcriber.Coach.Extensions;
+using Transcriber.Services.Extensions;
 using Transcriber.Maui.Services;
 using Transcriber.ViewModels;
 
@@ -9,7 +10,7 @@ namespace Transcriber.Maui
     public static partial class MauiProgram
     {
         // Speaker detection runs differently on each platform: see Platforms/Windows and Platforms/MacCatalyst.
-        private static partial void RegisterSpeakerDiarizer(IServiceCollection services);
+        private static partial void RegisterSpeakerDetection(IServiceCollection services);
 
         public static MauiApp CreateMauiApp()
         {
@@ -22,15 +23,9 @@ namespace Transcriber.Maui
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            // Core services (platform independent).
-            builder.Services.AddSingleton<IModelManager, ModelManager>();
-            builder.Services.AddSingleton<ISpeechDetector, SileroSpeechDetector>();
-            RegisterSpeakerDiarizer(builder.Services);
-            builder.Services.AddSingleton<IWhisperService, WhisperService>();
-            builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
-            builder.Services.AddSingleton<IAudioService, AudioService>();
-            builder.Services.AddSingleton<IFileReaderService, FileReaderService>();
-            builder.Services.AddSingleton<IFileLauncher, ShellFileLauncher>();
+            // Core services: reading media, transcribing, saving transcripts. The settings are in the services project.
+            builder.Services.AddTranscriberServices();
+            RegisterSpeakerDetection(builder.Services);
 
             // Platform services the view models depend on through interfaces.
             builder.Services.AddSingleton<IFilePickerService, MauiFilePickerService>();

@@ -128,7 +128,7 @@ public class PracticeViewModelTests : IDisposable
     private PracticeViewModel Create(bool convert = true)
     {
         _reader = new Reader(_dir, convert);
-        return new PracticeViewModel(_reader, _whisper, _picker, _history, CoachFixture.Analyzer, CoachFixture.Advisor, CoachFixture.VerbatimPrompts, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
+        return new PracticeViewModel(_reader, _whisper, ServicesFixture.Models, ServicesFixture.Languages, _picker, _history, CoachFixture.Analyzer, CoachFixture.Advisor, CoachFixture.VerbatimPrompts, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
     }
 
     private string MakeFile(string name = "talk.mp3")

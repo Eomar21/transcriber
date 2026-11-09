@@ -66,7 +66,7 @@
                             <!-- Only shown when a bigger model would be clearly more accurate for the chosen language. -->
                             <VerticalStackLayout IsVisible="{Binding HasLanguageAdvice}" Spacing="6" Margin="0,4,0,0">
                                 <Label AutomationId="LanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
-                                <Button AutomationId="UseMediumButton" Text="Use the Medium model" Style="{StaticResource SecondaryButton}" Padding="12,6"
+                                <Button AutomationId="UseMediumButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SecondaryButton}" Padding="12,6"
                                         HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
                             </VerticalStackLayout>
                         </VerticalStackLayout>
@@ -157,7 +157,7 @@
                        TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasCompletenessNote}" />
                 <VerticalStackLayout IsVisible="{Binding HasAccuracyNote}" Spacing="6">
                     <Label AutomationId="AccuracyNote" Text="{Binding AccuracyNote}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
-                    <Button AutomationId="UseMediumResultButton" Text="Use the Medium model" Style="{StaticResource SecondaryButton}" Padding="12,6"
+                    <Button AutomationId="UseMediumResultButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SecondaryButton}" Padding="12,6"
                             HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
                 </VerticalStackLayout>
 

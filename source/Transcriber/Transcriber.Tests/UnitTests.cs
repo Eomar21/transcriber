@@ -29,7 +29,7 @@ public class AudioServiceTests
     {
         var input = Path.Combine(AppContext.BaseDirectory, "TestData", file);
 
-        var output = await new AudioService().GetAudioFilePathAsync(input);
+        var output = await ServicesFixture.AudioService.GetAudioFilePathAsync(input);
         try
         {
             Assert.EndsWith(".wav", output);
@@ -48,7 +48,7 @@ public class AudioServiceTests
     [Fact]
     public async Task Unsupported_extension_throws()
     {
-        await Assert.ThrowsAsync<NotSupportedException>(() => new AudioService().GetAudioFilePathAsync("x.flac"));
+        await Assert.ThrowsAsync<NotSupportedException>(() => ServicesFixture.AudioService.GetAudioFilePathAsync("x.flac"));
     }
 }
 
@@ -60,7 +60,7 @@ public class TranscriptFilterTests
     [Fact]
     public void Drops_empty_and_placeholder_segments()
     {
-        var cleaned = TranscriptFilter.Clean([Seg(0, 1, "  "), Seg(1, 2, "[BLANK_AUDIO]"), Seg(2, 3, "Hello there")]);
+        var cleaned = ServicesFixture.Filter.Clean([Seg(0, 1, "  "), Seg(1, 2, "[BLANK_AUDIO]"), Seg(2, 3, "Hello there")]);
         Assert.Single(cleaned);
         Assert.Equal("Hello there", cleaned[0].Text);
     }
@@ -68,7 +68,7 @@ public class TranscriptFilterTests
     [Fact]
     public void Drops_stock_silence_hallucinations_in_several_languages()
     {
-        var cleaned = TranscriptFilter.Clean([
+        var cleaned = ServicesFixture.Filter.Clean([
             Seg(0, 1, "Thanks for watching!"),
             Seg(1, 2, "Ondertiteld door de Amara.org gemeenschap"),
             Seg(2, 3, "اشتركوا في القناة"),
@@ -79,14 +79,14 @@ public class TranscriptFilterTests
     [Fact]
     public void Keeps_real_speech_that_merely_contains_a_stock_phrase()
     {
-        var cleaned = TranscriptFilter.Clean([Seg(0, 1, "Thanks for watching the kids while I was out")]);
+        var cleaned = ServicesFixture.Filter.Clean([Seg(0, 1, "Thanks for watching the kids while I was out")]);
         Assert.Single(cleaned);
     }
 
     [Fact]
     public void Collapses_repetition_loops_and_extends_the_end_time()
     {
-        var cleaned = TranscriptFilter.Clean([Seg(0, 2, "Go home."), Seg(2, 4, "Go home!"), Seg(4, 6, "go home"), Seg(6, 8, "Different")]);
+        var cleaned = ServicesFixture.Filter.Clean([Seg(0, 2, "Go home."), Seg(2, 4, "Go home!"), Seg(4, 6, "go home"), Seg(6, 8, "Different")]);
         Assert.Equal(2, cleaned.Count);
         Assert.Equal(TimeSpan.FromSeconds(6), cleaned[0].End);
     }
@@ -103,12 +103,12 @@ public class TranscriptExporterTests
     [Fact]
     public void Srt_uses_numbered_cues_and_comma_milliseconds() =>
         Assert.Equal("1\r\n00:00:00,000 --> 00:00:02,500\r\nHello\r\n\r\n2\r\n01:01:01,500 --> 01:01:05,000\r\nمرحبا\r\n\r\n".Replace("\r\n", Environment.NewLine),
-            TranscriptExporter.ToSrt(Segments));
+            ServicesFixture.Exporter.Render(Segments, TranscriptFormat.Srt));
 
     [Fact]
     public void Vtt_has_header_and_dot_milliseconds()
     {
-        var vtt = TranscriptExporter.ToVtt(Segments);
+        var vtt = ServicesFixture.Exporter.Render(Segments, TranscriptFormat.Vtt);
         Assert.StartsWith("WEBVTT", vtt);
         Assert.Contains("00:00:00.000 --> 00:00:02.500", vtt);
     }
@@ -116,7 +116,7 @@ public class TranscriptExporterTests
     [Fact]
     public void Json_keeps_arabic_readable_and_round_trips()
     {
-        var json = TranscriptExporter.ToJson(Segments);
+        var json = ServicesFixture.Exporter.Render(Segments, TranscriptFormat.Json);
         Assert.Contains("مرحبا", json);
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(2, doc.RootElement.GetArrayLength());
@@ -129,7 +129,7 @@ public class TranscriptExporterTests
         var dir = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            var path = await TranscriptExporter.WriteAsync(Segments, Path.Combine(dir, "talk.mp3"), TranscriptFormat.Srt);
+            var path = await ServicesFixture.Exporter.WriteAsync(Segments, Path.Combine(dir, "talk.mp3"), TranscriptFormat.Srt);
             Assert.Equal(Path.Combine(dir, "talk_transcript.srt"), path);
             Assert.True(File.Exists(path));
         }
@@ -146,8 +146,8 @@ public class VideoReaderServiceTests
         await File.WriteAllTextAsync(input, "not empty");
         try
         {
-            var service = new VideoReaderService(Path.Combine(Path.GetTempPath(), "definitely-not-ffmpeg.exe"));
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ConvertVideoToAudioAsync(input));
+            var service = ServicesFixture.VideoReader(Path.Combine(Path.GetTempPath(), "definitely-not-ffmpeg.exe"));
+            var ex = await Assert.ThrowsAsync<MediaReadException>(() => service.ConvertVideoToAudioAsync(input));
             Assert.Contains("ffmpeg was not found", ex.Message);
         }
         finally { File.Delete(input); }
@@ -159,8 +159,8 @@ public class ModelManagerTests
     [Fact]
     public void Catalog_has_unique_ids_and_matching_file_names()
     {
-        Assert.Equal(WhisperModel.All.Count, WhisperModel.All.Select(m => m.Id).Distinct().Count());
-        Assert.All(WhisperModel.All, m => Assert.Equal($"ggml-{m.Id}.bin", m.FileName));
+        Assert.Equal(ServicesFixture.Models.All.Count, ServicesFixture.Models.All.Select(m => m.Id).Distinct().Count());
+        Assert.All(ServicesFixture.Models.All, m => Assert.Equal($"ggml-{m.Id}.bin", m.FileName));
     }
 
     [Fact]
@@ -169,14 +169,14 @@ public class ModelManagerTests
         var dir = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            var manager = new ModelManager(dir);
+            var manager = ServicesFixture.ModelManager(dir);
             // A half-finished download must not count as an installed model.
-            File.WriteAllText(Path.Combine(dir, WhisperModel.Base.FileName + ".part"), "partial");
-            Assert.False(manager.IsDownloaded(WhisperModel.Base));
+            File.WriteAllText(Path.Combine(dir, TestModels.Base.FileName + ".part"), "partial");
+            Assert.False(manager.IsDownloaded(TestModels.Base));
 
-            File.WriteAllText(Path.Combine(dir, WhisperModel.Base.FileName), "fake");
-            Assert.True(manager.IsDownloaded(WhisperModel.Base));
-            Assert.Equal(Path.Combine(dir, WhisperModel.Base.FileName), await manager.EnsureModelAsync(WhisperModel.Base));
+            File.WriteAllText(Path.Combine(dir, TestModels.Base.FileName), "fake");
+            Assert.True(manager.IsDownloaded(TestModels.Base));
+            Assert.Equal(Path.Combine(dir, TestModels.Base.FileName), await manager.EnsureModelAsync(TestModels.Base));
         }
         finally { Directory.Delete(dir, true); }
     }
@@ -190,7 +190,7 @@ public class ModelManagerTests
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-                new ModelManager(dir).EnsureModelAsync(WhisperModel.Base, null, cts.Token));
+                ServicesFixture.ModelManager(dir).EnsureModelAsync(TestModels.Base, null, cts.Token));
             Assert.Empty(Directory.GetFiles(dir));
         }
         finally { Directory.Delete(dir, true); }

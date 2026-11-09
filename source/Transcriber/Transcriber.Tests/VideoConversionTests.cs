@@ -9,7 +9,7 @@ public class FfmpegLocatorTests : IDisposable
 
     [Fact]
     public void Returns_null_when_nothing_is_bundled() =>
-        Assert.Null(FfmpegLocator.Locate(_dir));
+        Assert.Null(ServicesFixture.FfmpegLocator.Locate(_dir));
 
     [Fact]
     public void Finds_the_bundled_binary_next_to_the_app()
@@ -17,14 +17,14 @@ public class FfmpegLocatorTests : IDisposable
         var name = OperatingSystem.IsWindows() ? "ffmpeg.exe" : (System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.Arm64 ? "ffmpeg-arm64" : "ffmpeg-x64");
         File.WriteAllText(Path.Combine(_dir, name), "fake");
 
-        Assert.Equal(Path.Combine(_dir, name), FfmpegLocator.Locate(_dir));
+        Assert.Equal(Path.Combine(_dir, name), ServicesFixture.FfmpegLocator.Locate(_dir));
     }
 
     [Fact]
     public void The_app_build_actually_contains_ffmpeg()
     {
         // Proves the build step bundled it: this runs from the test output folder.
-        var path = FfmpegLocator.Locate();
+        var path = ServicesFixture.FfmpegLocator.Locate();
         Assert.NotNull(path);
         Assert.True(new FileInfo(path!).Length > 10_000_000, "bundled ffmpeg looks truncated");
     }
@@ -43,7 +43,7 @@ public class VideoConversionTests : IDisposable
     internal static async Task<string> MakeVideoAsync(string dir, string audioPath, string extension)
     {
         var output = Path.Combine(dir, "clip" + extension);
-        var psi = new ProcessStartInfo(FfmpegLocator.Locate()!)
+        var psi = new ProcessStartInfo(ServicesFixture.FfmpegLocator.Locate()!)
         {
             RedirectStandardError = true,
             RedirectStandardOutput = true,
@@ -67,7 +67,7 @@ public class VideoConversionTests : IDisposable
     public async Task Video_audio_is_extracted_as_16khz_mono_wav(string extension)
     {
         var video = await MakeVideoAsync(_dir, Sample("en-01.mp3"), extension);
-        var reader = new FileReaderService(new AudioService(), new VideoReaderService());
+        var reader = ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader());
 
         var wav = await reader.GetAudioFileFromFileAsync(video);
         try
@@ -91,8 +91,8 @@ public class VideoConversionTests : IDisposable
         // A private temp folder, so other tests running in parallel cannot affect the count.
         var tempDir = Directory.CreateDirectory(Path.Combine(_dir, "tmp")).FullName;
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new VideoReaderService(tempDirectory: tempDir).ConvertVideoToAudioAsync(bad));
+        var ex = await Assert.ThrowsAsync<MediaReadException>(
+            () => ServicesFixture.VideoReader(tempDirectory: tempDir).ConvertVideoToAudioAsync(bad));
 
         Assert.StartsWith("This file could not be read.", ex.Message);
         Assert.Empty(Directory.GetFiles(tempDir));
