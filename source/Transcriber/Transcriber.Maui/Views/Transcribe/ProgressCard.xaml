@@ -10,7 +10,7 @@
     <!-- Progress. The page shows this view while a run is in progress, and for a moment after it, so the finish can be seen. -->
     <Border Style="{StaticResource Card}">
         <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
-            <controls:RunnerProgress Progress="{Binding Progress}" FillColor="{StaticResource Primary}"
+            <controls:RunnerProgress Progress="{Binding Progress}" Look="{Binding Look}" FillColor="{StaticResource Primary}"
                                      TrackColor="{AppThemeBinding Light={StaticResource CardStrokeLight}, Dark={StaticResource CardStrokeDark}}" />
             <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
         </VerticalStackLayout>

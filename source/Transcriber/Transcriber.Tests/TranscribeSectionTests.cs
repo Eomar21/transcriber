@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Transcriber.Services.Extensions;
 using Transcriber.ViewModels;
 using Transcriber.ViewModels.Extensions;
+using Transcriber.ViewModels.Progress;
 using Transcriber.ViewModels.Transcribe;
 
 /// <summary>Each section of the Transcribe screen works alone. It knows the run state and nothing else.</summary>
@@ -46,7 +47,7 @@ public class TranscribeSectionTests
     {
         var run = new RunState();
         var files = new FilesViewModel(new NoPicker(), ServicesFixture.Formats, run);
-        var status = new RunStatusViewModel(new NoSuggestion(), run);
+        var status = new RunStatusViewModel(new NoSuggestion(), new ProgressLookPicker(ProgressLooks.All), run);
         var seen = new List<string>();
         status.PropertyChanged += (_, e) => seen.Add(e.PropertyName!);
 
@@ -106,7 +107,7 @@ public class TranscribeSectionTests
     [Fact]
     public void The_status_section_clears_the_outcome_of_an_earlier_run()
     {
-        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        var status = new RunStatusViewModel(new NoSuggestion(), new ProgressLookPicker(ProgressLooks.All), new RunState());
         status.SetResult(ResultKind.Success, "Transcript saved");
         status.FailureNote = "x";
 
@@ -166,7 +167,7 @@ public class ProgressVisibilityTests
     [Fact]
     public async Task A_run_that_did_not_finish_hides_the_bar_at_once()
     {
-        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        var status = new RunStatusViewModel(new NoSuggestion(), new ProgressLookPicker(ProgressLooks.All), new RunState());
         status.BeginProgress();
         status.Progress = 0.4;
 
@@ -178,7 +179,7 @@ public class ProgressVisibilityTests
     [Fact]
     public async Task A_run_that_finished_keeps_the_bar_for_the_linger_time_and_then_hides_it()
     {
-        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        var status = new RunStatusViewModel(new NoSuggestion(), new ProgressLookPicker(ProgressLooks.All), new RunState());
         status.BeginProgress();
         status.Progress = 1;
 
@@ -192,7 +193,7 @@ public class ProgressVisibilityTests
     [Fact]
     public async Task A_new_run_during_the_linger_keeps_the_bar_visible()
     {
-        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        var status = new RunStatusViewModel(new NoSuggestion(), new ProgressLookPicker(ProgressLooks.All), new RunState());
         status.BeginProgress();
         status.Progress = 1;
 

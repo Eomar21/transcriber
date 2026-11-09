@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Transcriber.ViewModels.Practice;
+using Transcriber.ViewModels.Progress;
 using Transcriber.ViewModels.Transcribe;
 
 namespace Transcriber.ViewModels.Extensions;
@@ -12,6 +13,7 @@ public static class ViewModelServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddTranscribeScreen(this IServiceCollection services)
     {
+        services.AddSingleton<IProgressLookPicker>(_ => new ProgressLookPicker(ProgressLooks.All));
         services.AddSingleton<RunState>();
         services.AddSingleton<FilesViewModel>();
         services.AddSingleton<OptionsViewModel>();

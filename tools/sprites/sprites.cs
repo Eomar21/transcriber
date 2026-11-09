@@ -1,38 +1,46 @@
 #:package System.Drawing.Common@10.0.0
 using System.Drawing;
 
-// Draws the runner and the spark as pixel art. Usage: dotnet run sprites.cs <output folder>
+// Draws the progress bar sprites as pixel art. Usage: dotnet run sprites.cs <output folder>
+// Every sprite sheet is one line in the table below: file name, size of one frame, number of frames, the drawing
+// code, and whether the frames get a dark outline. To add a sprite, write a Draw function and add a line.
+// The app side is in source/Transcriber/Transcriber.ViewModels/Progress/ProgressLooks.cs.
 var outDir = args.Length > 0 ? args[0] : ".";
 Directory.CreateDirectory(outDir);
 
-const int RunnerCell = 32, RunnerFrames = 8;
 const int SparkCell = 48, SparkFrames = 6;
+SpriteSheet[] sheets =
+[
+    new("runner.png", 32, 8, DrawRunner, Outline: true),
+    new("surfer.png", 32, 8, DrawSurfer, Outline: true),
+    new("spark.png", SparkCell, SparkFrames, DrawSpark, Outline: false),
+];
 
-var runner = new Canvas(RunnerCell * RunnerFrames, RunnerCell);
-for (var f = 0; f < RunnerFrames; f++)
+var built = new List<Canvas>();
+foreach (var sheet in sheets)
 {
-    var cell = new Canvas(RunnerCell, RunnerCell);
-    DrawRunner(cell, f);
-    cell.Outline(Palette.Outline);
-    runner.Paste(cell, f * RunnerCell, 0);
+    var strip = new Canvas(sheet.Cell * sheet.Frames, sheet.Cell);
+    for (var f = 0; f < sheet.Frames; f++)
+    {
+        var cell = new Canvas(sheet.Cell, sheet.Cell);
+        sheet.Draw(cell, f);
+        if (sheet.Outline) cell.Outline(Palette.Outline);
+        strip.Paste(cell, f * sheet.Cell, 0);
+    }
+    strip.Save(Path.Combine(outDir, sheet.File), 1);
+    built.Add(strip);
 }
-
-var spark = new Canvas(SparkCell * SparkFrames, SparkCell);
-for (var f = 0; f < SparkFrames; f++)
-{
-    var cell = new Canvas(SparkCell, SparkCell);
-    DrawSpark(cell, f);
-    spark.Paste(cell, f * SparkCell, 0);
-}
-
-runner.Save(Path.Combine(outDir, "runner.png"), 1);
-spark.Save(Path.Combine(outDir, "spark.png"), 1);
 
 // A magnified picture for looking at the frames. Not used by the app.
-var preview = new Canvas(spark.W * 5 + 20, 32 * 5 + SparkCell * 5 + 30, new Color[0, 0]);
+const int Zoom = 5;
+var preview = new Canvas(built.Max(b => b.W) * Zoom + 20, built.Sum(b => b.H * Zoom + 10) + 10);
 preview.FillBackground(Color.FromArgb(70, 90, 140));
-preview.PasteScaled(runner, 10, 10, 5);
-preview.PasteScaled(spark, 10, 32 * 5 + 20, 5);
+var top = 10;
+foreach (var strip in built)
+{
+    preview.PasteScaled(strip, 10, top, Zoom);
+    top += strip.H * Zoom + 10;
+}
 preview.Save(Path.Combine(outDir, "preview.png"), 1);
 Console.WriteLine("Done: " + outDir);
 
@@ -100,6 +108,62 @@ static void DrawArm(Canvas c, (double x, double y) shoulder, double ph, bool bac
     c.Line(elbow.x, elbow.y, hand.x, hand.y, 0.9, skin);
 }
 
+static void DrawSurfer(Canvas c, int f)
+{
+    var t = 2 * Math.PI * f / 8;
+    var crouch = 1.1 * Math.Sin(t);                 // the knees bend and straighten as the surfer rides
+    var tilt = 0.9 * Math.Sin(t + 0.8);             // the nose of the board rises and falls a little
+    double BoardY(double x) => 29.5 - tilt * (x - 15.5) / 12.5;
+
+    // Board: a dark rail under a light deck with a stripe, and a round nose.
+    c.Line(4, BoardY(4), 27, BoardY(27), 1.35, Palette.BoardRail);
+    c.Line(4, BoardY(4) - 0.2, 27, BoardY(27) - 0.2, 0.8, Palette.Board);
+    c.Line(8, BoardY(8) - 0.2, 24, BoardY(24) - 0.2, 0.3, Palette.BoardStripe);
+    c.Circle(28, BoardY(28), 0.9, Palette.BoardRail);
+
+    var hip = (x: 15.5, y: 19.0 + crouch);
+    var shoulder = (x: 17.5, y: 11.0 + crouch * 0.6);
+    var head = (x: 19.0, y: 6.4 + crouch * 0.5);
+
+    // The back arm (darker) reaches behind for balance. The back leg follows.
+    var backHand = (x: 8.5, y: 12.0 + 2.2 * Math.Sin(t + 1.2));
+    var backElbow = (x: (shoulder.x + backHand.x) / 2, y: (shoulder.y + backHand.y) / 2 + 0.8);
+    c.Line(shoulder.x, shoulder.y, backElbow.x, backElbow.y, 0.95, Palette.SkinShade);
+    c.Line(backElbow.x, backElbow.y, backHand.x, backHand.y, 0.85, Palette.SkinShade);
+    DrawSurfLeg(c, hip, (x: 12.3, y: 24.2 + crouch * 0.3), (x: 10.5, y: BoardY(10.5) - 1.6), Palette.SkinShade);
+
+    // Torso, and swim shorts with a stripe.
+    c.Line(hip.x, hip.y, shoulder.x, shoulder.y, 2.0, Palette.Skin);
+    c.Circle(hip.x, hip.y + 0.4, 3.1, Palette.Shorts);
+    c.Line(hip.x - 2.6, hip.y - 1.4, hip.x + 2.6, hip.y - 1.4, 0.45, Palette.ShortsStripe);
+
+    DrawSurfLeg(c, hip, (x: 20.3, y: 24.0 + crouch * 0.3), (x: 21.5, y: BoardY(21.5) - 1.6), Palette.Skin);
+
+    // Head: sun-bleached hair that streams back in the wind, a face and an eye.
+    for (var i = 0; i < 4; i++)
+    {
+        var tx = head.x - 3.0 - i * 1.7;
+        var ty = head.y - 1.0 + 0.5 * i + 1.0 * Math.Sin(t * 2 - i * 0.9);
+        c.Line(head.x - 2.0, head.y - 1.2, tx, ty, 0.9 - i * 0.12, Palette.SurfHair);
+    }
+    c.Circle(head.x - 0.8, head.y - 0.9, 3.3, Palette.SurfHair);
+    c.Circle(head.x + 1.0, head.y + 0.8, 2.9, Palette.Skin);
+    c.Set((int)Math.Round(head.x + 2.0), (int)Math.Round(head.y + 0.4), Palette.Outline);
+
+    // The front arm reaches ahead.
+    var frontHand = (x: 26.0, y: 12.5 + 2.2 * Math.Sin(t));
+    var elbow = (x: (shoulder.x + frontHand.x) / 2, y: (shoulder.y + frontHand.y) / 2 + 0.8);
+    c.Line(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.0, Palette.Skin);
+    c.Line(elbow.x, elbow.y, frontHand.x, frontHand.y, 0.9, Palette.Skin);
+}
+
+static void DrawSurfLeg(Canvas c, (double x, double y) hip, (double x, double y) knee, (double x, double y) foot, Color skin)
+{
+    c.Line(hip.x, hip.y, knee.x, knee.y, 1.6, skin);
+    c.Line(knee.x, knee.y, foot.x, foot.y, 1.35, skin);
+    c.Circle(foot.x, foot.y + 0.9, 1.1, skin);
+}
+
 static void DrawSpark(Canvas c, int f)
 {
     var prog = f / (double)(SparkFrames - 1);
@@ -126,6 +190,8 @@ static void DrawSpark(Canvas c, int f)
     }
 }
 
+record SpriteSheet(string File, int Cell, int Frames, Action<Canvas, int> Draw, bool Outline);
+
 static class Palette
 {
     public static readonly Color Skin = Color.FromArgb(234, 172, 120), SkinShade = Color.FromArgb(190, 130, 90);
@@ -135,6 +201,9 @@ static class Palette
     public static readonly Color Sash = Color.FromArgb(232, 182, 52);
     public static readonly Color Scarf = Color.FromArgb(226, 92, 42), ScarfDark = Color.FromArgb(170, 60, 32);
     public static readonly Color Shoe = Color.FromArgb(128, 74, 42), ShoeShade = Color.FromArgb(90, 52, 32);
+    public static readonly Color SurfHair = Color.FromArgb(236, 200, 96);
+    public static readonly Color Board = Color.FromArgb(250, 244, 226), BoardRail = Color.FromArgb(24, 110, 140), BoardStripe = Color.FromArgb(240, 112, 52);
+    public static readonly Color Shorts = Color.FromArgb(232, 70, 96), ShortsStripe = Color.FromArgb(255, 226, 120);
     public static readonly Color Outline = Color.FromArgb(34, 22, 34);
     public static readonly Color White = Color.FromArgb(255, 255, 240), Yellow = Color.FromArgb(255, 232, 90);
     public static readonly Color Gold = Color.FromArgb(255, 196, 40), Orange = Color.FromArgb(255, 130, 30), Ember = Color.FromArgb(200, 70, 30);

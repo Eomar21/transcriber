@@ -2,18 +2,21 @@ using System.Diagnostics;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using SkiaSharp.Views.Maui.Controls;
+using Transcriber.ViewModels.Progress;
 
 namespace Transcriber.Maui.Controls;
 
 /// <summary>
-/// A progress bar with a small pixel-art runner on it. The runner runs along the bar as the work advances.
+/// A progress bar with a small pixel-art character on it. The character moves along the bar as the work advances.
 /// When the work ends, a burst of sparks plays at the end of the bar.
-/// The pictures are the sprite sheets in Resources/Raw: eight frames of the run and six frames of the burst.
+/// The <see cref="Look"/> says which sprite sheet, which colours and which decoration (for example a wave) the bar has.
+/// The pictures are the sprite sheets in Resources/Raw. All looks share the burst: six frames.
 /// </summary>
 public sealed class RunnerProgress : ContentView
 {
-    private const int RunnerCell = 32, RunnerFrames = 8, SparkCell = 48, SparkFrames = 6;
-    private const double RunFramesPerSecond = 12, SparkSeconds = 0.7;
+    private const int SparkCell = 48, SparkFrames = 6;
+    private const double SparkSeconds = 0.7;
+    private const string SparkSprite = "spark.png";
 
     public static readonly BindableProperty ProgressProperty = BindableProperty.Create(
         nameof(Progress), typeof(double), typeof(RunnerProgress), 0.0,
@@ -25,10 +28,16 @@ public sealed class RunnerProgress : ContentView
     public static readonly BindableProperty FillColorProperty = BindableProperty.Create(
         nameof(FillColor), typeof(Color), typeof(RunnerProgress), Colors.SlateBlue);
 
-    private static SKImage? s_runner, s_spark;
-    private static bool s_loading;
+    /// <summary>The look of the bar. When it is not set, the bar has the runner and uses <see cref="FillColor"/>.</summary>
+    public static readonly BindableProperty LookProperty = BindableProperty.Create(
+        nameof(Look), typeof(ProgressLook), typeof(RunnerProgress), null,
+        propertyChanged: (bindable, _, _) => ((RunnerProgress)bindable).OnLookChanged());
 
-    private readonly SKCanvasView _canvas = new() { HeightRequest = 72 };
+    // Sprite sheets by file name. They are shared by all bars and are used only on the UI thread.
+    private static readonly Dictionary<string, SKImage> s_sprites = new();
+    private static readonly HashSet<string> s_loading = new();
+
+    private readonly SKCanvasView _canvas = new() { HeightRequest = 84 };
     private readonly IDispatcherTimer? _timer;
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly bool _animate = AnimationsAreOn();
@@ -58,6 +67,8 @@ public sealed class RunnerProgress : ContentView
 
     public Color FillColor { get => (Color)GetValue(FillColorProperty); set => SetValue(FillColorProperty, value); }
 
+    public ProgressLook? Look { get => (ProgressLook?)GetValue(LookProperty); set => SetValue(LookProperty, value); }
+
     private bool Running => Handler is not null && IsVisible && _animate && !(_finished && SparkIsOver);
 
     private bool SparkIsOver => _sparkStart is { } start && _clock.Elapsed.TotalSeconds - start > SparkSeconds;
@@ -79,6 +90,12 @@ public sealed class RunnerProgress : ContentView
             _shown = progress;
             _finished = progress >= 1;
         }
+        UpdateTimer();
+        _canvas.InvalidateSurface();
+    }
+
+    private void OnLookChanged()
+    {
         UpdateTimer();
         _canvas.InvalidateSurface();
     }
@@ -127,12 +144,15 @@ public sealed class RunnerProgress : ContentView
         canvas.Clear();
         if (Width <= 0) return;
 
+        var look = Look ?? ProgressLooks.Runner;
         var density = e.Info.Width / (float)Width;
         var pad = 24 * density;
         var trackHeight = 10 * density;
         var trackTop = e.Info.Height - 16 * density - trackHeight / 2;
         var trackWidth = e.Info.Width - 2 * pad;
         var shown = (float)Math.Clamp(_shown, 0, 1);
+        var seconds = (float)_clock.Elapsed.TotalSeconds;
+        var fill = Look is null ? FillColor.ToSKColor() : ParseColor(IsDark() ? look.FillDark : look.Fill);
 
         using var paint = new SKPaint { IsAntialias = true };
         var track = new SKRect(pad, trackTop, pad + trackWidth, trackTop + trackHeight);
@@ -140,54 +160,113 @@ public sealed class RunnerProgress : ContentView
         canvas.DrawRoundRect(track, trackHeight / 2, trackHeight / 2, paint);
 
         var fillRight = Math.Max(pad + trackHeight, pad + shown * trackWidth);
-        paint.Color = FillColor.ToSKColor();
+        paint.Color = fill;
         canvas.DrawRoundRect(new SKRect(pad, trackTop, fillRight, trackTop + trackHeight), trackHeight / 2, trackHeight / 2, paint);
 
-        if (s_runner is null) return;
-
-        // Whole-number scaling keeps the pixels square. The runner stands on the bar.
+        // Whole-number scaling keeps the pixels square. The character stands on the bar, or on the wave.
         var scale = Math.Max(1, (int)Math.Round(density * 1.6));
-        var sampling = new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None);
         var x = pad + shown * trackWidth;
+        var lift = 0f;
+        if (look.Decoration == TrackDecoration.Wave)
+        {
+            var wave = new Wave(density, seconds, RiderX: x);
+            DrawWave(canvas, paint, wave, pad + trackHeight / 2, fillRight, trackTop, trackHeight, fill);
+            lift = wave.Height(x - Wave.RiderOffset * density, pad + trackHeight / 2, fillRight);
+        }
 
-        var frame = _finished ? 0 : (int)(_clock.Elapsed.TotalSeconds * RunFramesPerSecond) % RunnerFrames;
-        if (!_animate) frame = 0;
-        var runnerBox = SKRect.Create(x - RunnerCell * scale / 2f, trackTop - (RunnerCell - 1) * scale, RunnerCell * scale, RunnerCell * scale);
-        canvas.DrawImage(s_runner, SKRect.Create(frame * RunnerCell, 0, RunnerCell, RunnerCell), runnerBox, sampling);
+        if (!s_sprites.TryGetValue(look.Sprite, out var sprite)) return;
 
-        if (s_spark is not null && _sparkStart is { } start && _animate)
+        var sampling = new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None);
+        var frame = _finished || !_animate ? 0 : (int)(_clock.Elapsed.TotalSeconds * look.FramesPerSecond) % look.Frames;
+        var box = SKRect.Create(x - look.Cell * scale / 2f, trackTop - lift - (look.Cell - 1) * scale, look.Cell * scale, look.Cell * scale);
+        canvas.DrawImage(sprite, SKRect.Create(frame * look.Cell, 0, look.Cell, look.Cell), box, sampling);
+
+        if (s_sprites.TryGetValue(SparkSprite, out var spark) && _sparkStart is { } start && _animate)
         {
             var sparkFrame = (int)((_clock.Elapsed.TotalSeconds - start) / (SparkSeconds / SparkFrames));
             if (sparkFrame < SparkFrames)
             {
                 var size = SparkCell * scale;
-                var top = Math.Max(0, trackTop - size * 0.55f);
-                canvas.DrawImage(s_spark, SKRect.Create(sparkFrame * SparkCell, 0, SparkCell, SparkCell),
+                var top = Math.Max(0, trackTop - lift - size * 0.55f);
+                canvas.DrawImage(spark, SKRect.Create(sparkFrame * SparkCell, 0, SparkCell, SparkCell),
                     SKRect.Create(x - size / 2f + 8 * scale, top, size, size), sampling);
             }
         }
     }
 
+    /// <summary>The wave on the filled part of the bar: a moving surface that swells under the rider and is flat at both ends.</summary>
+    private readonly record struct Wave(float Density, float Seconds, float RiderX)
+    {
+        /// <summary>How far behind the front of the bar the rider stands, in density-independent units.</summary>
+        public const float RiderOffset = 8;
+
+        public float Height(float x, float left, float right)
+        {
+            var d = Density;
+            var surface = 0.55f + 0.45f * MathF.Sin(2 * MathF.PI * x / (64 * d) - Seconds * 3.2f);
+            var swell = 1 + 0.7f * MathF.Exp(-MathF.Pow((x - (RiderX - RiderOffset * d)) / (34 * d), 2));
+            var start = Math.Clamp((x - left) / (28 * d), 0, 1);       // flat where the bar starts
+            var end = Math.Clamp((right - x) / (RiderOffset * d), 0, 1);   // flat at the front of the bar
+            return 3.4f * d * surface * swell * start * end;
+        }
+    }
+
+    private static void DrawWave(SKCanvas canvas, SKPaint paint, Wave wave, float left, float right, float trackTop, float trackHeight, SKColor fill)
+    {
+        if (right - left < 4) return;
+        var bottom = trackTop + trackHeight / 2;
+        var step = Math.Max(2f, wave.Density * 2);
+
+        using var path = new SKPath();
+        path.MoveTo(left, bottom);
+        var xs = new List<float>();
+        for (var x = left; x < right; x += step) xs.Add(x);
+        xs.Add(right);
+        foreach (var x in xs) path.LineTo(x, trackTop - wave.Height(x, left, right));
+        path.LineTo(right, bottom);
+        path.Close();
+
+        paint.Style = SKPaintStyle.Fill;
+        paint.Color = fill;
+        canvas.DrawPath(path, paint);
+
+        // A light line on the crest looks like foam.
+        using var crest = new SKPath();
+        crest.MoveTo(xs[0], trackTop - wave.Height(xs[0], left, right));
+        foreach (var x in xs.Skip(1)) crest.LineTo(x, trackTop - wave.Height(x, left, right));
+        paint.Style = SKPaintStyle.Stroke;
+        paint.StrokeWidth = Math.Max(1f, 1.4f * wave.Density);
+        paint.StrokeCap = SKStrokeCap.Round;
+        paint.Color = SKColors.White.WithAlpha(150);
+        canvas.DrawPath(crest, paint);
+        paint.Style = SKPaintStyle.Fill;
+    }
+
+    private static SKColor ParseColor(string hex) => Color.FromArgb(hex).ToSKColor();
+
+    private static bool IsDark() => Application.Current?.RequestedTheme == AppTheme.Dark;
+
     private void EnsureSpritesLoaded()
     {
-        if (s_runner is not null || s_loading) return;
-        s_loading = true;
-        _ = LoadAsync();
+        foreach (var name in new[] { (Look ?? ProgressLooks.Runner).Sprite, SparkSprite })
+        {
+            if (s_sprites.ContainsKey(name) || !s_loading.Add(name)) continue;
+            _ = LoadAsync(name);
+        }
 
-        async Task LoadAsync()
+        async Task LoadAsync(string name)
         {
             try
             {
-                s_runner = await LoadImageAsync("runner.png");
-                s_spark = await LoadImageAsync("spark.png");
+                s_sprites[name] = await LoadImageAsync(name);
             }
             catch (Exception)
             {
-                // Without the pictures the control is a plain bar.
+                // Without the picture the control draws the bar without that sprite.
             }
             finally
             {
-                s_loading = false;
+                s_loading.Remove(name);
                 Dispatcher.Dispatch(_canvas.InvalidateSurface);
             }
         }

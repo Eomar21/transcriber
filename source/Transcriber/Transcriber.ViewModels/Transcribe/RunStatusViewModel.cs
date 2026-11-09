@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Transcriber.Services.Models;
+using Transcriber.ViewModels.Progress;
 
 namespace Transcriber.ViewModels.Transcribe;
 
@@ -8,12 +9,21 @@ namespace Transcriber.ViewModels.Transcribe;
 public sealed partial class RunStatusViewModel : SectionViewModel
 {
     private readonly IModelSuggestion _suggestion;
+    private readonly IProgressLookPicker _looks;
 
-    public RunStatusViewModel(IModelSuggestion suggestion, RunState run) : base(run) => _suggestion = suggestion;
+    public RunStatusViewModel(IModelSuggestion suggestion, IProgressLookPicker looks, RunState run) : base(run)
+    {
+        _suggestion = suggestion;
+        _looks = looks;
+        _look = looks.Pick();
+    }
 
     // ---- Progress ------------------------------------------------------------------------
 
     [ObservableProperty] private double _progress;
+
+    /// <summary>The sprite and the theme of the progress bar. Each run gets a new random look.</summary>
+    [ObservableProperty] private ProgressLook _look;
 
     /// <summary>True while a run is in progress, and for a moment after a run that reached 100 percent, so the finish can be seen.</summary>
     [ObservableProperty] private bool _showProgress;
@@ -26,6 +36,7 @@ public sealed partial class RunStatusViewModel : SectionViewModel
     public void BeginProgress()
     {
         _runId++;
+        Look = _looks.Pick();
         Progress = 0;
         ShowProgress = true;
     }
