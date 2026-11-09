@@ -7,7 +7,7 @@
     x:DataType="vm:AnalysisViewModel">
 
     <Border Style="{StaticResource Card}">
-        <VerticalStackLayout Spacing="8">
+        <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
             <Label Text="What was heard" Style="{StaticResource SectionTitle}" />
             <Label Text="Check the numbers against your words. Filler words only count if the transcript kept them." Style="{StaticResource Caption}" />
             <Label AutomationId="PracticeTranscript" Text="{Binding Transcript}" Style="{StaticResource Body}" LineBreakMode="WordWrap" />

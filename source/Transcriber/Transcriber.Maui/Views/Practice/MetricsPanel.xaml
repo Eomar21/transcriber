@@ -7,5 +7,5 @@
     x:DataType="vm:AnalysisViewModel">
 
     <!-- The tiles are built in the code-behind so they can reflow between 5 and 3 columns. -->
-    <Grid x:Name="MetricsGrid" AutomationId="PracticeMetrics" ColumnSpacing="12" RowSpacing="12" />
+    <Grid x:Name="MetricsGrid" AutomationId="PracticeMetrics" ColumnSpacing="{StaticResource SpaceMd}" RowSpacing="{StaticResource SpaceMd}" />
 </ContentView>

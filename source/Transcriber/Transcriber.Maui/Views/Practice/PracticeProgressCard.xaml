@@ -8,7 +8,7 @@
 
     <!-- The page shows this view only while an analysis is running. -->
     <Border Style="{StaticResource Card}">
-        <VerticalStackLayout Spacing="8">
+        <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
             <ProgressBar Progress="{Binding Progress}" ProgressColor="{StaticResource Primary}" />
             <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
         </VerticalStackLayout>

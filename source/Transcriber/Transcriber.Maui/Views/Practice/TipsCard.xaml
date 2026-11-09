@@ -7,12 +7,12 @@
     x:DataType="vm:AnalysisViewModel">
 
     <Border Style="{StaticResource Card}">
-        <VerticalStackLayout Spacing="12">
+        <VerticalStackLayout Spacing="{StaticResource SpaceLg}">
             <Label Text="What to work on" Style="{StaticResource SectionTitle}" />
-            <VerticalStackLayout AutomationId="PracticeTips" Spacing="12" BindableLayout.ItemsSource="{Binding Tips}">
+            <VerticalStackLayout AutomationId="PracticeTips" Spacing="{StaticResource SpaceMd}" BindableLayout.ItemsSource="{Binding Tips}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:TipItem">
-                        <Grid ColumnDefinitions="28,*" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="28,*" ColumnSpacing="{StaticResource SpaceSm}">
                             <Label Text="{Binding Symbol}" FontAttributes="Bold" FontSize="16" VerticalOptions="Start" HorizontalTextAlignment="Center"
                                    SemanticProperties.Description="{Binding Kind}">
                                 <Label.Triggers>
@@ -27,7 +27,7 @@
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource SpaceXs}">
                                 <Label Text="{Binding Title}" FontAttributes="Bold" Style="{StaticResource Body}" />
                                 <Label Text="{Binding Detail}" Style="{StaticResource Caption}" LineBreakMode="WordWrap" />
                             </VerticalStackLayout>

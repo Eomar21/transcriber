@@ -6,11 +6,11 @@
     x:Class="Transcriber.Maui.Views.Transcribe.PlayerBar"
     x:DataType="vm:PlaybackViewModel">
 
-    <VerticalStackLayout Spacing="10">
+    <VerticalStackLayout Spacing="{StaticResource SpaceMd}">
         <!-- Player bar: appears once a line has been clicked. -->
-        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasPlayback}">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource SpaceSm}" IsVisible="{Binding HasPlayback}">
             <Label AutomationId="PlaybackText" Text="{Binding PlaybackText}" Style="{StaticResource Body}" VerticalOptions="Center" LineBreakMode="MiddleTruncation" />
-            <Button AutomationId="PlayPauseButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" Padding="14,8"
+            <Button AutomationId="PlayPauseButton" Grid.Column="1" Style="{StaticResource SmallButton}"
                     Command="{Binding TogglePlaybackCommand}" Text="Resume">
                 <Button.Triggers>
                     <DataTrigger TargetType="Button" Binding="{Binding IsPlaying}" Value="True">
@@ -18,7 +18,7 @@
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
-            <Button AutomationId="StopButton" Grid.Column="2" Text="Stop" Style="{StaticResource SecondaryButton}" Padding="14,8"
+            <Button AutomationId="StopButton" Grid.Column="2" Text="Stop" Style="{StaticResource SmallButton}"
                     Command="{Binding StopPlaybackCommand}" />
         </Grid>
         <Label Text="Click a line to play it from there." Style="{StaticResource Caption}" IsVisible="{Binding ShowPlayHint}" />

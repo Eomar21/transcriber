@@ -7,8 +7,8 @@
     x:DataType="vm:SavedTranscriptsViewModel">
 
     <!-- Real buttons for the saved transcript, and a warning line when an action fails. -->
-    <VerticalStackLayout Spacing="6">
-        <HorizontalStackLayout Spacing="10" Margin="0,4,0,0" IsVisible="{Binding HasSavedFiles}">
+    <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
+        <HorizontalStackLayout Spacing="{StaticResource SpaceMd}" Margin="0,4,0,0" IsVisible="{Binding HasSavedFiles}">
             <Button AutomationId="OpenTranscriptButton" Text="Open transcript" Style="{StaticResource PrimaryButton}"
                     Command="{Binding OpenTranscriptCommand}" IsVisible="{Binding CanOpenTranscript}"
                     SemanticProperties.Description="Open the saved transcript in its default app" />

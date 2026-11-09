@@ -8,7 +8,7 @@
 
     <!-- Written feedback: only when Ollama is running on this computer. -->
     <Border Style="{StaticResource Card}">
-        <VerticalStackLayout Spacing="10">
+        <VerticalStackLayout Spacing="{StaticResource SpaceLg}">
             <Label Text="Written feedback" Style="{StaticResource SectionTitle}" />
             <Label Style="{StaticResource Caption}"
                    Text="Want a short written review as well? Install Ollama (ollama.com) and download a model, then reopen this tab. It runs on your computer, so nothing is uploaded.">
@@ -18,7 +18,7 @@
                     </DataTrigger>
                 </Label.Triggers>
             </Label>
-            <VerticalStackLayout Spacing="10" IsVisible="{Binding CanAskForFeedback}">
+            <VerticalStackLayout Spacing="{StaticResource SpaceMd}" IsVisible="{Binding CanAskForFeedback}">
                 <Picker AutomationId="FeedbackModelPicker" ItemsSource="{Binding FeedbackModels}" SelectedItem="{Binding SelectedFeedbackModel}"
                         WidthRequest="260" HorizontalOptions="Start" />
                 <Button AutomationId="FeedbackButton" Text="Get written feedback" Style="{StaticResource SecondaryButton}"

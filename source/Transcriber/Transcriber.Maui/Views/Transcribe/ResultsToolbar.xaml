@@ -6,8 +6,8 @@
     x:Class="Transcriber.Maui.Views.Transcribe.ResultsToolbar"
     x:DataType="vm:ResultsViewModel">
 
-    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceMd}">
         <SearchBar Placeholder="Search the transcript" Text="{Binding SearchText}" />
-        <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SecondaryButton}" Command="{Binding CopyAllCommand}" />
+        <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SmallButton}" Command="{Binding CopyAllCommand}" />
     </Grid>
 </ContentView>

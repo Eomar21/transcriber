@@ -11,14 +11,14 @@
                     SelectionMode="Single" SelectedItem="{Binding SelectedSegment}">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:SegmentItem">
-                <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
+                <Grid ColumnDefinitions="110,*" ColumnSpacing="{StaticResource SpaceSm}" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
                     <Grid.Triggers>
                         <!-- The line being played right now. -->
                         <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="True">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActiveRowLight}, Dark={StaticResource ActiveRowDark}}" />
                         </DataTrigger>
                     </Grid.Triggers>
-                    <VerticalStackLayout Spacing="2" VerticalOptions="Start">
+                    <VerticalStackLayout Spacing="{StaticResource SpaceXs}" VerticalOptions="Start">
                         <Label Text="{Binding Time}" Style="{StaticResource Caption}" />
                         <Label Text="{Binding SpeakerLabel}" IsVisible="{Binding HasSpeaker}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource Primary}" />
                     </VerticalStackLayout>

@@ -6,9 +6,9 @@
     x:Class="Transcriber.Maui.Views.Practice.MicrophonePanel"
     x:DataType="vm:MicrophoneViewModel">
 
-    <VerticalStackLayout Spacing="8">
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+    <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceMd}">
+            <VerticalStackLayout VerticalOptions="Center" Spacing="{StaticResource SpaceSm}">
                 <Label AutomationId="RecordingText" Text="{Binding RecordingText}" TextColor="{StaticResource ErrorColor}"
                        FontAttributes="Bold" Style="{StaticResource Body}" />
                 <ProgressBar AutomationId="RecordingLevel" Progress="{Binding RecordingLevel}" ProgressColor="{StaticResource SuccessColor}"

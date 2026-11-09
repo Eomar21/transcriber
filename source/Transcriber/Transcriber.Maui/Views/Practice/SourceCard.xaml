@@ -10,9 +10,9 @@
 
     <!-- 1. Recording -->
     <Border Style="{StaticResource Card}">
-        <VerticalStackLayout Spacing="14">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+        <VerticalStackLayout Spacing="{StaticResource SpaceLg}">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceMd}">
+                <VerticalStackLayout VerticalOptions="Center" Spacing="{StaticResource SpaceXs}">
                     <Label Text="Your recording" Style="{StaticResource SectionTitle}" />
                     <Label AutomationId="PracticeFileName" Text="{Binding FileName}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation">
                         <Label.Triggers>
@@ -23,7 +23,7 @@
                     </Label>
                     <Label Text="Record yourself with the microphone, or choose an audio or video file, for example a presentation rehearsal." Style="{StaticResource Caption}" />
                 </VerticalStackLayout>
-                <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Start">
+                <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource SpaceMd}" VerticalOptions="Center">
                     <Button AutomationId="RecordButton" Text="&#x25CF;  Record" Style="{StaticResource SecondaryButton}"
                             Command="{Binding Microphone.StartRecordingCommand}" />
                     <Button AutomationId="PracticeChooseButton" Text="Choose file" Style="{StaticResource PrimaryButton}"
@@ -35,7 +35,7 @@
             <views:MicrophonePanel BindingContext="{Binding Microphone}" IsVisible="{Binding IsRecording, x:DataType=vm:MicrophoneViewModel}" />
 
             <VerticalStackLayout Spacing="4">
-                <Label Text="Language spoken" Style="{StaticResource Caption}" />
+                <Label Text="Language spoken" Style="{StaticResource FieldLabel}" />
                 <Picker AutomationId="PracticeLanguagePicker" ItemsSource="{Binding Languages}"
                         ItemDisplayBinding="{Binding Label, x:DataType=models:LanguageOption}"
                         SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"

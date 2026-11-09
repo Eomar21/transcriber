@@ -82,6 +82,27 @@ public class AppTests
         finally { app.Dispose(); Directory.Delete(dir, true); }
     }
 
+    /// <summary>Saves a picture of each tab, so a change to spacing or sizes can be looked at. It checks nothing else.</summary>
+    [UiFact]
+    public void Every_tab_can_be_photographed_for_a_look_at_the_layout()
+    {
+        using var app = new AppDriver();
+
+        AppDriver.Wait(() => app.Find("ChooseFilesButton") is not null, TimeSpan.FromSeconds(10), "the transcribe tab");
+        // A fixed size and place, so the pictures can be compared from one change to the next.
+        var transform = app.Window.Patterns.Transform.PatternOrDefault;
+        transform?.Move(0, 0);
+        transform?.Resize(1040, 620);
+        Thread.Sleep(800);
+        AppDriver.SaveScreen("layout-transcribe");
+        app.ScrollPageToBottom();
+        Thread.Sleep(500);
+        AppDriver.SaveScreen("layout-transcribe-bottom");
+        app.SelectTab("Practice");
+        AppDriver.Wait(() => app.Find("PracticeFileName") is not null, TimeSpan.FromSeconds(10), "the practice tab");
+        AppDriver.SaveScreen("layout-practice");
+    }
+
     [UiFact]
     public void The_practice_tab_starts_empty_and_cannot_analyse_until_a_recording_is_chosen()
     {

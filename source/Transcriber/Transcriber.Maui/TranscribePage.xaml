@@ -11,10 +11,10 @@
     <!-- The page only arranges the sections. Each section is a view with its own view model. -->
     <ScrollView>
       <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
-      <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="16">
+      <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="{StaticResource SpaceLg}">
 
             <!-- Header -->
-            <VerticalStackLayout Spacing="2">
+            <VerticalStackLayout Spacing="{StaticResource SpaceXs}">
                 <Label Text="Transcriber" Style="{StaticResource PageTitle}" />
                 <Label Text="Private, offline transcription. Your audio never leaves this computer." Style="{StaticResource Caption}" />
             </VerticalStackLayout>
@@ -26,9 +26,9 @@
             <views:OptionsCard BindingContext="{Binding Options}" />
 
             <!-- 3. Action -->
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <Grid ColumnDefinitions="*,Auto">
                 <Button AutomationId="TranscribeButton" Text="Transcribe" Style="{StaticResource PrimaryButton}" Command="{Binding TranscribeCommand}" />
-                <Button Grid.Column="1" Text="Cancel" Style="{StaticResource SecondaryButton}"
+                <Button Grid.Column="1" Text="Cancel" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0"
                         Command="{Binding TranscribeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
 
@@ -36,14 +36,14 @@
             <views:ProgressCard BindingContext="{Binding Status}" IsVisible="{Binding IsBusy, x:DataType=vm:RunStatusViewModel}" />
 
             <!-- Result: the status line and notes, then the buttons for the saved transcript. -->
-            <VerticalStackLayout IsVisible="{Binding Status.HasResultMessage}" Spacing="6">
+            <VerticalStackLayout IsVisible="{Binding Status.HasResultMessage}" Spacing="{StaticResource SpaceSm}">
                 <views:RunStatusView BindingContext="{Binding Status}" />
                 <views:SavedTranscriptsView BindingContext="{Binding Saved}" />
             </VerticalStackLayout>
 
             <!-- 4. Results -->
             <Border Style="{StaticResource Card}" IsVisible="{Binding Results.HasResults}">
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout Spacing="{StaticResource SpaceMd}">
                     <views:ResultsToolbar BindingContext="{Binding Results}" />
                     <views:PlayerBar BindingContext="{Binding Playback}" />
                     <views:ResultsList BindingContext="{Binding Results}" />

@@ -15,8 +15,8 @@
                 <Setter Property="StrokeThickness" Value="2" />
             </DataTrigger>
         </Border.Triggers>
-        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-            <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource SpaceMd}">
+            <VerticalStackLayout VerticalOptions="Center" Spacing="{StaticResource SpaceXs}">
                 <Label Text="Files" Style="{StaticResource SectionTitle}" />
                 <Label AutomationId="FilesSummary" Text="{Binding FilesSummary}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
                 <Label Text="Drop files here, or choose them. mp3, wav, mp4, mov, m4a and more" Style="{StaticResource Caption}">
@@ -27,9 +27,9 @@
                         </DataTrigger>
                     </Label.Triggers>
                 </Label>
-                <Button AutomationId="AnyFileButton" Text="Any file type" Command="{Binding BrowseAnyCommand}" IsEnabled="{Binding IsIdle}"
-                        BackgroundColor="Transparent" TextColor="{StaticResource Primary}" FontSize="13" Padding="0" MinimumHeightRequest="0"
-                        HorizontalOptions="Start" SemanticProperties.Description="Choose a file of any type. The app tries to read it."
+                <Button AutomationId="AnyFileButton" Text="Any file type" Style="{StaticResource LinkButton}"
+                        Command="{Binding BrowseAnyCommand}" IsEnabled="{Binding IsIdle}"
+                        SemanticProperties.Description="Choose a file of any type. The app tries to read it."
                         ToolTipProperties.Text="Show files of every type. The app tries to read the file you choose." />
                 <Label AutomationId="DropMessage" Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
                        FontSize="13" IsVisible="{Binding HasDropMessage}" />
