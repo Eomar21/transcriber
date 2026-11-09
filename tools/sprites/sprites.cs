@@ -49,65 +49,76 @@ Console.WriteLine("Done: " + outDir);
 static void DrawRunner(Canvas c, int f)
 {
     var t = 2 * Math.PI * f / 8;
-    var bob = Math.Round(-1.5 * Math.Abs(Math.Cos(t)));
-    var hip = (x: 14.0, y: 17.0 + bob);
-    const double lean = 0.25;
-    var shoulder = (x: hip.x + 8 * Math.Sin(lean), y: hip.y - 8 * Math.Cos(lean));
-    var head = (x: shoulder.x + 2.0, y: shoulder.y - 5.0);
+    var bob = Math.Round(-1.0 * Math.Abs(Math.Cos(t)));
+    var hip = (x: 13.5, y: 18.2 + bob);
+    const double lean = 0.3;                                  // leans forward, like the cowboy
+    var shoulder = (x: hip.x + 7.8 * Math.Sin(lean), y: hip.y - 7.8 * Math.Cos(lean));
+    var head = (x: shoulder.x + 2.0, y: shoulder.y - 4.2);
 
-    // Back arm and back leg are drawn first and use darker tones.
-    DrawArm(c, shoulder, t + Math.PI, back: true);
-    DrawLeg(c, hip, t + Math.PI, back: true);
-
-    // Torso: vest over a sash and baggy trousers.
-    c.Line(hip.x, hip.y, shoulder.x, shoulder.y, 1.9, Palette.Vest);
-    c.Line(shoulder.x + 1, shoulder.y + 1, hip.x + 1, hip.y - 2, 0.7, Palette.Skin); // open chest
-    c.Circle(hip.x, hip.y, 3.4, Palette.Trousers);
-    c.Line(hip.x - 3, hip.y - 2, hip.x + 3, hip.y - 2, 0.9, Palette.Sash);
-
-    DrawLeg(c, hip, t, back: false);
-
-    // Scarf streaming behind the neck.
-    var neck = (x: shoulder.x - 1.0, y: shoulder.y - 1.0);
+    // The scarf streams behind the neck. It is drawn first so that the body is in front of it.
+    var neck = (x: shoulder.x - 1.0, y: shoulder.y - 0.8);
     var prev = neck;
-    for (var i = 1; i <= 7; i++)
+    for (var i = 1; i <= 6; i++)
     {
-        var p = (x: neck.x - i * 2.1, y: neck.y + 1.4 * Math.Sin(t * 2 - i * 0.9) * (0.4 + i * 0.22) + i * 0.2);
-        c.Line(prev.x, prev.y, p.x, p.y, 1.1, i % 2 == 0 ? Palette.ScarfDark : Palette.Scarf);
+        var p = (x: neck.x - i * 2.1, y: neck.y + 1.2 * Math.Sin(t * 2 - i * 0.9) * (0.4 + i * 0.22) + i * 0.2);
+        c.Line(prev.x, prev.y, p.x, p.y, i == 6 ? 0.8 : 1.15, i % 2 == 0 ? Palette.ScarfDark : Palette.Scarf);
+        c.Line(prev.x, prev.y - 0.9, p.x, p.y - 0.9, 0.3, RunnerTones.ScarfLight);
         prev = p;
     }
 
-    // Head: dark hair, face, gold headband, one eye.
-    c.Circle(head.x - 1, head.y - 1.2, 4.4, Palette.Hair);
-    c.Circle(head.x + 1, head.y + 0.8, 3.2, Palette.Skin);
-    c.Line(head.x - 2, head.y - 1.6, head.x + 3.5, head.y - 1.6, 0.45, Palette.Sash);
-    c.Set((int)Math.Round(head.x + 2.2), (int)Math.Round(head.y + 0.4), Palette.Outline);
+    // The far arm and the far leg are in darker colours, so that they sit behind the body.
+    DrawRunnerArm(c, shoulder, t + Math.PI, far: true);
+    DrawRunnerLeg(c, hip, t + Math.PI, far: true);
 
-    DrawArm(c, shoulder, t, back: false);
+    // Torso: baggy trousers at the hip, a gold sash, then a teal vest that leaves the chest bare in the middle.
+    c.Ball(hip.x, hip.y + 0.4, 3.7, RunnerTones.Trousers);
+    c.Limb(hip.x - 0.5, hip.y - 1.0, shoulder.x - 0.5, shoulder.y + 0.8, 2.9, RunnerTones.Vest);
+    c.Line(hip.x - 3.2, hip.y - 1.3, hip.x + 3.4, hip.y - 2.0, 1.0, RunnerTones.Sash.Base);
+
+    DrawRunnerLeg(c, hip, t, far: false);
+
+    // Head: dark hair at the back and the top, a face, a gold headband with a tail, an eye, an eyebrow and a smile.
+    c.Ball(head.x - 1.0, head.y - 0.7, 3.8, RunnerTones.Hair);
+    c.Ball(head.x + 1.1, head.y + 1.0, 3.0, RunnerTones.Skin);
+    c.Line(head.x - 2.6, head.y - 0.4, head.x + 3.0, head.y - 1.2, 0.45, RunnerTones.Sash.Base);
+    var flutter = Math.Sin(t * 2) * 0.8;
+    c.Line(head.x - 2.6, head.y - 0.4, head.x - 5.4, head.y + 0.3 + flutter, 0.4, RunnerTones.Sash.Base);
+    c.Set((int)Math.Round(head.x + 2.0), (int)Math.Round(head.y + 0.5), Palette.Bib);
+    c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y + 0.5), Palette.Outline);
+    c.Set((int)Math.Round(head.x + 2.4), (int)Math.Round(head.y - 0.5), RunnerTones.Hair.Shade);
+    c.Set((int)Math.Round(head.x + 3.0), (int)Math.Round(head.y + 2.5), RunnerTones.Skin.Shade);
+
+    DrawRunnerArm(c, shoulder, t, far: false);
 }
 
-static void DrawLeg(Canvas c, (double x, double y) hip, double ph, bool back)
+static void DrawRunnerLeg(Canvas c, (double x, double y) hip, double ph, bool far)
 {
-    var trousers = back ? Palette.TrousersShade : Palette.Trousers;
-    var shoe = back ? Palette.ShoeShade : Palette.Shoe;
-    var a1 = 0.95 * Math.Sin(ph);
-    var a2 = a1 - (0.7 + 0.7 * Math.Max(0, Math.Cos(ph)));
-    var knee = (x: hip.x + 6.5 * Math.Sin(a1), y: hip.y + 6.5 * Math.Cos(a1));
-    var foot = (x: knee.x + 6.0 * Math.Sin(a2), y: knee.y + 6.0 * Math.Cos(a2));
-    c.Line(hip.x, hip.y, knee.x, knee.y, 1.7, trousers);
-    c.Line(knee.x, knee.y, foot.x, foot.y, 1.4, trousers);
-    c.Circle(foot.x + 0.8, foot.y, 1.5, shoe);
+    var trousers = far ? RunnerTones.TrousersFar : RunnerTones.Trousers;
+    var shoe = far ? RunnerTones.ShoeFar : RunnerTones.Shoe;
+    var cuff = far ? RunnerTones.SashFar : RunnerTones.Sash;
+    var a1 = 1.05 * Math.Sin(ph) + 0.08;
+    // The knee bends most while the leg swings forward, and the foot kicks up behind.
+    var a2 = a1 - (0.8 + 0.8 * Math.Max(0, Math.Cos(ph)));
+    var knee = (x: hip.x + 6.2 * Math.Sin(a1), y: hip.y + 6.2 * Math.Cos(a1));
+    var ankle = (x: knee.x + 5.7 * Math.Sin(a2), y: knee.y + 5.7 * Math.Cos(a2));
+    c.Limb(hip.x, hip.y, knee.x, knee.y, 2.3, trousers);
+    c.Ball(knee.x, knee.y, 2.4, trousers);                      // the trousers puff out at the knee
+    c.Limb(knee.x, knee.y, ankle.x, ankle.y, 1.8, trousers);
+    c.Ball(ankle.x, ankle.y, 1.5, cuff);                        // gold cuff
+    c.Limb(ankle.x + 0.2, ankle.y + 1.0, ankle.x + 2.7, ankle.y + 1.5, 1.35, shoe);
+    c.Set((int)Math.Round(ankle.x + 4.0), (int)Math.Round(ankle.y + 0.5), shoe.Base); // the curled toe
 }
 
-static void DrawArm(Canvas c, (double x, double y) shoulder, double ph, bool back)
+static void DrawRunnerArm(Canvas c, (double x, double y) shoulder, double ph, bool far)
 {
-    var skin = back ? Palette.SkinShade : Palette.Skin;
-    var b1 = -0.9 * Math.Sin(ph);
-    var elbow = (x: shoulder.x + 5 * Math.Sin(b1), y: shoulder.y + 5 * Math.Cos(b1));
-    var b2 = b1 + 1.3;
-    var hand = (x: elbow.x + 4.5 * Math.Sin(b2), y: elbow.y + 4.5 * Math.Cos(b2));
-    c.Line(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.0, back ? Palette.VestDark : Palette.Vest);
-    c.Line(elbow.x, elbow.y, hand.x, hand.y, 0.9, skin);
+    var skin = far ? RunnerTones.SkinFar : RunnerTones.Skin;
+    var b1 = -1.1 * Math.Sin(ph) - 0.2;
+    var elbow = (x: shoulder.x + 4.6 * Math.Sin(b1), y: shoulder.y + 4.6 * Math.Cos(b1));
+    var b2 = b1 + 1.8;
+    var hand = (x: elbow.x + 4.0 * Math.Sin(b2), y: elbow.y + 4.0 * Math.Cos(b2));
+    c.Limb(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.35, skin);
+    c.Limb(elbow.x, elbow.y, hand.x, hand.y, 1.15, skin);
+    c.Ball(hand.x, hand.y, 1.3, skin);
 }
 
 static void DrawSurfer(Canvas c, int f)
@@ -419,5 +430,42 @@ class Canvas
             for (var x = 0; x < W * scale; x++)
                 bmp.SetPixel(x, y, px[x / scale, y / scale]);
         bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+    }
+}
+
+/// <summary>A colour in three tones: the base, a darker shade and a lighter highlight. The light comes from the top left.</summary>
+record Tone(Color Base, Color Shade, Color Light);
+
+/// <summary>The colours of the runner.</summary>
+static class RunnerTones
+{
+    public static readonly Tone Skin = new(Color.FromArgb(236, 176, 128), Color.FromArgb(196, 128, 92), Color.FromArgb(252, 210, 164));
+    public static readonly Tone SkinFar = new(Color.FromArgb(196, 138, 100), Color.FromArgb(160, 106, 78), Color.FromArgb(214, 160, 120));
+    public static readonly Tone Hair = new(Color.FromArgb(58, 40, 50), Color.FromArgb(34, 22, 32), Color.FromArgb(104, 76, 86));
+    public static readonly Tone Vest = new(Color.FromArgb(30, 168, 176), Color.FromArgb(16, 106, 126), Color.FromArgb(104, 220, 218));
+    public static readonly Tone Trousers = new(Color.FromArgb(248, 240, 220), Color.FromArgb(198, 184, 160), Color.FromArgb(255, 255, 248));
+    public static readonly Tone TrousersFar = new(Color.FromArgb(206, 194, 170), Color.FromArgb(160, 148, 128), Color.FromArgb(226, 216, 194));
+    public static readonly Tone Sash = new(Color.FromArgb(240, 190, 56), Color.FromArgb(182, 128, 30), Color.FromArgb(255, 226, 120));
+    public static readonly Tone SashFar = new(Color.FromArgb(190, 146, 44), Color.FromArgb(146, 102, 26), Color.FromArgb(212, 176, 84));
+    public static readonly Tone Shoe = new(Color.FromArgb(144, 86, 48), Color.FromArgb(94, 54, 34), Color.FromArgb(190, 126, 76));
+    public static readonly Tone ShoeFar = new(Color.FromArgb(104, 62, 38), Color.FromArgb(70, 40, 28), Color.FromArgb(140, 90, 56));
+    public static readonly Color ScarfLight = Color.FromArgb(255, 150, 80);
+}
+
+/// <summary>Shapes that are shaded with a <see cref="Tone"/>: the shade fills the shape, the base moves towards the light, and a small highlight sits on the largest shapes.</summary>
+static class ToneShading
+{
+    public static void Ball(this Canvas c, double cx, double cy, double r, Tone tone)
+    {
+        c.Circle(cx, cy, r, tone.Shade);
+        c.Circle(cx - r * 0.18, cy - r * 0.22, r * 0.82, tone.Base);
+        if (r >= 2.6) c.Circle(cx - r * 0.38, cy - r * 0.44, r * 0.32, tone.Light);
+    }
+
+    public static void Limb(this Canvas c, double x0, double y0, double x1, double y1, double r, Tone tone)
+    {
+        c.Line(x0, y0, x1, y1, r, tone.Shade);
+        c.Line(x0 - r * 0.2, y0 - r * 0.25, x1 - r * 0.2, y1 - r * 0.25, r * 0.78, tone.Base);
+        if (r >= 2.2) c.Line(x0 - r * 0.4, y0 - r * 0.5, x1 - r * 0.4, y1 - r * 0.5, r * 0.28, tone.Light);
     }
 }
