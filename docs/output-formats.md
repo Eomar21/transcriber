@@ -9,20 +9,20 @@ nav_order: 6
 1. TOC
 {:toc}
 
-Choose the format with **Save as** on the Transcribe tab. The file is saved next to your recording as `<name>_transcript.<extension>`, in UTF-8, so accented and Arabic text stay readable.
+Select the format with **Save as** on the Transcribe tab. The app saves the file in the folder of your recording. The name is `<name>_transcript.<extension>`. The file uses UTF-8 encoding, so accented and Arabic text stays readable.
 
-## Which one to use
+## Choose a format
 
-| Format | Extension | Best for |
+| Format | Extension | Use it for |
 | --- | --- | --- |
-| Plain text | `.txt` | Reading, notes, pasting into documents |
+| Plain text | `.txt` | Reading, notes and text in other documents |
 | SubRip | `.srt` | Subtitles in most video players and editors |
-| WebVTT | `.vtt` | Subtitles on the web (the HTML video element) |
-| JSON | `.json` | Programs and scripts, or when you need exact times |
+| WebVTT | `.vtt` | Subtitles on web pages (the HTML video element) |
+| JSON | `.json` | Programs and scripts, or exact times |
 
 ## Plain text (.txt)
 
-One line per segment, with the start and end time.
+The file has one line for each segment. Each line has a start time and an end time.
 
 ```
 [00:00:00 -> 00:00:02] Yeah. And you worked on the original computer in this country, right?
@@ -38,7 +38,7 @@ With speaker labels:
 
 ## SubRip (.srt)
 
-Numbered subtitles with times in `hours:minutes:seconds,milliseconds`.
+The file has numbered subtitles. The times use the format `hours:minutes:seconds,milliseconds`.
 
 ```
 1
@@ -52,7 +52,11 @@ Speaker 1: I was very fortunate.
 
 ## WebVTT (.vtt)
 
-Like SRT, but with a `WEBVTT` header, a dot before the milliseconds, and speakers as standard voice tags.
+This format is like SRT, but it has these differences:
+
+- The file starts with the header `WEBVTT`.
+- The times use a dot before the milliseconds.
+- Speakers use the standard voice tag.
 
 ```
 WEBVTT
@@ -66,7 +70,7 @@ WEBVTT
 
 ## JSON (.json)
 
-A list of segments with times in seconds. `speaker` is the label, or `null` when speakers were not identified.
+The file has a list of segments. The times are in seconds. The `speaker` field has the label. If the app did not identify the speakers, the field is `null`.
 
 ```json
 [
@@ -87,6 +91,6 @@ A list of segments with times in seconds. `speaker` is the label, or `null` when
 
 ## Notes
 
-- If a recording has no speaker labels, the format simply has no speaker text, and the JSON `speaker` field is `null`.
-- Transcribing the same file again in the same format **overwrites** the earlier file.
-- The on-screen list and **Copy all** always show the speaker label first when speakers were identified.
+- If a recording has no speaker labels, the file has no speaker text. In JSON, the `speaker` field is `null`.
+- If you transcribe the same file again in the same format, the app replaces the earlier file.
+- The list on the screen and **Copy all** show the speaker label first when the app identified the speakers.

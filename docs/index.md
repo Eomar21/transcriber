@@ -8,55 +8,59 @@ permalink: /
 
 # Transcriber
 
-**Private, offline speech tools for your desktop.** Turn recordings into timestamped transcripts, or practise speaking and see how to improve. Everything runs on your own computer. Your audio is never uploaded, and nothing needs to be installed or downloaded first.
+Transcriber is an app for Windows and macOS. It has two modes. The **Transcribe** mode changes speech in a recording into text. The **Practice** mode shows you how to improve your speech.
+
+The app works on your computer only. It does not send your audio to the internet. You do not have to install other software or download files before you use it.
 
 [Download the latest version](https://github.com/Eomar21/transcriber/releases/latest){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Get started]({{ '/getting-started' | relative_url }}){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
-## Two modes
+## The two modes
 
-Transcriber has two tabs. Pick the one that matches what you want to do.
+The app has two tabs. Select the tab for the task that you want to do.
 
 ### Transcribe
 
-Get the words out of audio and video.
+Use this mode to get the words from an audio file or a video file.
 
 ![Transcribe mode]({{ '/transcribe.gif' | relative_url }})
 
-- Many formats and languages, one file or a whole batch
-- Speaker labels (Speaker 1, Speaker 2 and so on)
-- Click any line to hear the recording from that moment
-- Save as text, subtitles (SRT, WebVTT) or JSON
+- The mode supports many file formats and many languages.
+- You can transcribe one file or many files in one run.
+- The mode can show which person speaks each line (Speaker 1, Speaker 2).
+- You can click a line to hear the recording from that point.
+- You can save the transcript as text, as subtitles (SRT or WebVTT) or as JSON.
 
 [Read the Transcribe guide]({{ '/transcribe' | relative_url }})
 
 ### Practice
 
-Improve how you speak.
+Use this mode to improve how you speak.
 
 ![Practice mode]({{ '/practice.gif' | relative_url }})
 
-- Record yourself, or choose a recording
-- Pace, filler words, pauses and stumbles, with plain-language tips
-- Your progress over time
-- Optional written feedback from a model on your own computer
+- You can record your voice, or you can select a recording.
+- The mode measures your pace, filler words, pauses and stumbles.
+- The mode gives you tips in plain language.
+- The mode shows your progress over time.
+- The mode can give written feedback from a model on your computer. This feature is optional.
 
 [Read the Practice guide]({{ '/practice' | relative_url }})
 
 ---
 
-## Why use it
+## Why use this app
 
-| | |
+| Feature | Description |
 | --- | --- |
-| **Private** | Transcription, speaker detection, speech analysis and recording all happen on your computer. See [Privacy]({{ '/privacy' | relative_url }}). |
-| **Nothing to install** | The speech model, ffmpeg and the voice and speaker models are inside the app. It works on first launch with no downloads. |
-| **Free and open** | MIT licensed. The source is on [GitHub](https://github.com/Eomar21/transcriber). |
+| Private | All work is done on your computer. See [Privacy]({{ '/privacy' | relative_url }}). |
+| No extra software | The speech model, ffmpeg, the voice model and the speaker models are in the app. The app works at first start without a download. |
+| Free and open | The app has the MIT licence. The source code is on [GitHub](https://github.com/Eomar21/transcriber). |
 
 ## Where to go next
 
-- New here? [Getting started]({{ '/getting-started' | relative_url }})
-- Something not working? [Troubleshooting]({{ '/troubleshooting' | relative_url }})
-- Quick answers: [FAQ]({{ '/faq' | relative_url }})
+- Are you new to the app? Read [Getting started]({{ '/getting-started' | relative_url }}).
+- Does something not work? Read [Troubleshooting]({{ '/troubleshooting' | relative_url }}).
+- Do you have a question? Read the [FAQ]({{ '/faq' | relative_url }}).

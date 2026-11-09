@@ -6,7 +6,7 @@ nav_order: 4
 # Practice
 {: .no_toc }
 
-Record yourself speaking and see how to improve.
+Use this mode to record your voice and to see how you can improve your speech.
 {: .fs-6 .fw-300 }
 
 1. TOC
@@ -16,95 +16,95 @@ Record yourself speaking and see how to improve.
 
 ## Use cases
 
-- Rehearsing a presentation, talk or pitch
-- Preparing interview answers
-- Reducing filler words ("um", "uh") and finding a comfortable pace
-- Checking progress over weeks of practice
-- Practising in English, Dutch or Spanish
+- Practise a presentation, a talk or a pitch.
+- Prepare answers for an interview.
+- Use fewer filler words (for example "um" and "uh") and find a good pace.
+- Check your progress over many weeks.
+- Practise in English, Dutch or Spanish.
 
-Nothing is uploaded. Your recording is analysed on your computer.
+The app does not send anything to the internet. It analyses your recording on your computer.
 
-## Step by step
+## Procedure
 
 1. Open the **Practice** tab.
-2. Press **Record**, speak, and press **Stop**. A level bar shows that the microphone is hearing you. Or press **Choose file** to analyse an existing audio or video file.
-3. Choose the **language spoken**: English, Dutch or Spanish.
-4. Press **Analyse my speaking**.
+2. Click **Record**. Speak. Click **Stop**. A level bar shows that the microphone hears you. Or click **Choose file** to analyse a recording that you already have.
+3. Select the language that you speak: English, Dutch or Spanish.
+4. Click **Analyse my speaking**.
 5. Read the five tiles and the tips under **What to work on**.
-6. Check **What was heard** to compare the numbers with your actual words.
-7. Past runs appear under **Your progress**.
+6. Read **What was heard**. Compare the numbers with your words.
+7. Find your earlier runs under **Your progress**.
 
-## What is measured
+## What the app measures
 
-| Measure | How it is worked out | A good range |
+| Measure | How the app calculates it | Good range |
 | --- | --- | --- |
-| **Pace** | Words per minute of the time you were actually speaking, so long silences do not slow it down. | 120 to 160 words per minute is easy to follow. Under 110 is flagged as slow and over 170 as fast. |
-| **Filler words** | Fillers per 100 words, from lists for English, Dutch and Spanish, such as "um", "uh", "euh", "eh" and "este". The word "like" is only counted when it is set apart by commas, so "I like cats" is never flagged. | Up to 2 per 100 words is clean. Over 5 is worth working on. |
-| **Pauses** | Gaps of 0.8 seconds or more between spoken lines. Shown as a count, with the longest one. | A few pauses help listeners take things in. More than about 6 a minute reads as hesitation. |
-| **Stumbles** | Repeated words such as "the the", and stuttered starts such as "b-b-because". Emphasis ("very, very") and single letters are not counted. | None is ideal. |
-| **Length** | Duration and word count. | |
+| **Pace** | The number of words for each minute of speaking time. Long silences do not count. | 120 to 160 words each minute is easy to follow. The app marks a pace below 110 as slow and a pace above 170 as fast. |
+| **Filler words** | The number of filler words for each 100 words. The app uses word lists for English, Dutch and Spanish, for example "um", "uh", "euh", "eh" and "este". The app counts "like" only when commas separate it from the other words. The phrase "I like cats" is not a filler. | Up to 2 for each 100 words is clean. More than 5 needs work. |
+| **Pauses** | Gaps of 0.8 seconds or more between two spoken lines. The app shows the number of pauses and the longest pause. | A few pauses help the listener. More than about 6 pauses each minute shows hesitation. |
+| **Stumbles** | Repeated words (for example "the the") and stuttered starts (for example "b-b-because"). The app does not count words that you repeat for emphasis ("very, very") or single letters. | None is best. |
+| **Length** | The duration and the number of words. | Not applicable. |
 
 ## Tips and symbols
 
-Each measure comes with a short tip. A symbol shows its kind, so it does not depend on colour alone:
+Each measure has a short tip. A symbol shows the type of the tip. In this way, the meaning does not depend on color only.
 
 | Symbol | Meaning |
 | --- | --- |
 | ✓ | Good |
-| ! | Something to work on |
+| ! | Needs work |
 | i | Information |
 
 ## Progress over time
 
-Each analysis of **at least 25 words** is saved. The next run in the same language is compared with the previous one, with tips such as "Fewer fillers than last time" or "Pace moved toward the sweet spot".
+The app saves each analysis of **25 words or more**. The app compares a new run with your last run in the same language. For example, the app can show "Fewer fillers than last time" or "Pace moved toward the sweet spot".
 
-Under **Your progress** you can **Delete** one run or **Clear all**. Shorter recordings are still analysed but are not saved, because the numbers would be too noisy to compare.
+Under **Your progress**, click **Delete** to remove one run. Click **Clear all** to remove all runs. The app analyses shorter recordings, but it does not save them. The numbers of a short recording are not stable enough to compare.
 
 ## Recording
 
-- Recordings are saved as 16 kHz mono audio and used directly.
-- A recording under one second is treated as an accidental click and discarded.
+- The app saves a recording as 16 kHz mono audio. The app uses the recording as it is.
+- If a recording is shorter than one second, the app discards it. The app assumes that you clicked by accident.
 - A recording stops by itself after **30 minutes**.
-- If no sound arrives for about three seconds, a warning appears: check that the microphone is connected, not muted and allowed in your system's privacy settings.
-- Your recording is kept while you work with it, so you can analyse it again, for example in another language. It is deleted when you record again or choose another file. Files you choose yourself are never deleted.
-- Leftover recordings older than a day are cleaned up when the app starts.
+- If no sound comes in for about three seconds, a warning shows. Make sure that the microphone is connected, that it is not muted and that your system allows access to it.
+- The app keeps your recording while you work with it. You can analyse it again, for example in another language. The app deletes the recording when you record again or select another file. The app never deletes a file that you selected yourself.
+- When the app starts, it removes recordings that are more than one day old and that it did not delete before.
 
 ### Microphone permission
 
-- **Windows:** if recording fails or stays silent, open **Settings, Privacy and security, Microphone** and allow desktop apps to use the microphone.
-- **macOS:** the first time you record, macOS asks for permission. If you said no, change it in **System Settings, Privacy and Security, Microphone**.
+- **Windows:** If the recording fails or is silent, open **Settings**, then **Privacy and security**, then **Microphone**. Allow desktop apps to use the microphone.
+- **macOS:** At the first recording, macOS asks for permission. If you selected **Don't Allow**, open **System Settings**, then **Privacy and Security**, then **Microphone**. Turn on Transcriber.
 
-## How filler words are counted
+## How the app counts filler words
 
-Speech recognition normally cleans up "um" and "uh", which would hide exactly what this tab measures. Practice transcribes with settings that encourage the model to keep fillers and stutters. The **What was heard** box shows the result, so you can see which words were kept.
+A speech model normally removes "um" and "uh" from the text. This hides the words that this tab must measure. For this reason, the Practice tab sets the model to keep filler words and stutters. **What was heard** shows the result, so you can see which words the app kept.
 
-Filler counts are only as good as that transcript. A clear recording close to the microphone gives the most reliable numbers.
+The count of filler words is only as good as this text. A clear recording that is close to the microphone gives the most reliable numbers.
 
 ## Written feedback with Ollama (optional)
 
-If you use [Ollama](https://ollama.com) on your computer, Practice can ask one of your models for a short written review of your transcript and measures.
+[Ollama](https://ollama.com) is a program that runs language models on your computer. If you use Ollama, the Practice tab can ask one of your models for a short written review of your transcript and measures.
 
-1. Install Ollama and download any model.
-2. Make sure Ollama is running.
-3. Open the Practice tab. If it finds models, a picker and **Get written feedback** appear after you analyse a recording.
+1. Install Ollama. Download a model.
+2. Make sure that Ollama is running.
+3. Open the Practice tab. Analyse a recording. If the app finds models, a model list and the **Get written feedback** button show.
 
-The request goes to Ollama on your own computer (`localhost`), not to the internet. If Ollama is not running, the tab says how to set it up, and everything else keeps working.
+The app sends the request to Ollama on your own computer (`localhost`). The request does not go to the internet. If Ollama is not running, the tab shows how to set it up. All other functions continue to work.
 
-## Where your history is stored
+## Where the app stores your history
 
-Practice history is a small file named `practice-history.json` in the app's local data folder. On Windows that is `%LOCALAPPDATA%\Transcriber`. It holds the measures and the title of each run. It does not contain your audio.
+The history is a small file with the name `practice-history.json`. It is in the local data folder of the app. On Windows, this folder is `%LOCALAPPDATA%\Transcriber`. The file contains the measures and the title of each run. It does not contain your audio.
 
-## Edge cases
+## Special cases
 
-| Situation | What happens |
+| Situation | Result |
 | --- | --- |
-| **Under 25 words** | The recording is analysed but not saved to your history. |
-| **Very short recording** | Under one second is discarded with a hint to try again. |
-| **No microphone** | A message explains that none was found. Use **Choose file** with a recording made elsewhere. |
-| **Microphone blocked or muted** | The recording is silent. After a few seconds a warning appears. |
-| **A pause that is not counted** | Pauses are measured from gaps between spoken lines, so very short hesitations inside a line may not appear. |
-| **A filler the app missed** | The model may have left it out. Check **What was heard**. |
-| **Recording in another language than selected** | Results will be poor. Choose the language you actually spoke. |
-| **Language not in the list** | Practice currently supports English, Dutch and Spanish. For other languages, use the Transcribe tab. |
-| **Background noise or several voices** | The analysis assumes one speaker. Other voices count as yours. |
-| **A very fast speaker** | A high pace is reported honestly, for example 220 words per minute for fast conversation, and the tip suggests slowing down. |
+| **Less than 25 words** | The app analyses the recording. It does not save the run in your history. |
+| **Recording shorter than one second** | The app discards the recording and shows a hint. |
+| **No microphone** | A message shows that the app found no microphone. Click **Choose file** and select a recording that you made with other software. |
+| **Microphone blocked or muted** | The recording is silent. After a few seconds, a warning shows. |
+| **A pause that the app did not count** | The app finds pauses in the gaps between spoken lines. It can miss a very short hesitation inside a line. |
+| **A filler word that the app did not find** | The model can remove a filler word from the text. Read **What was heard**. |
+| **You select a different language than you speak** | The results are poor. Select the language that you speak. |
+| **Your language is not in the list** | The Practice tab supports English, Dutch and Spanish only. For other languages, use the Transcribe tab. |
+| **Background noise or more than one voice** | The app assumes that one person speaks. It counts all voices as yours. |
+| **A very fast speaker** | The app shows the real pace, for example 220 words each minute for a fast conversation. The tip tells you to speak slower. |

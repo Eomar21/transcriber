@@ -9,23 +9,23 @@ nav_order: 8
 1. TOC
 {:toc}
 
-Transcriber is built so that your audio never leaves your computer.
+The app keeps your audio on your computer. It does not send your audio to the internet.
 
 ## What stays on your computer
 
-| What | Where |
+| Item | Location |
 | --- | --- |
-| Your recordings and files | Wherever you keep them. The app reads them but does not copy or upload them. |
-| Transcripts | Saved next to your recording. |
-| Recordings made in the Practice tab | A temporary file on your computer, deleted when you record again or choose another file, and cleaned up after a day if the app was closed unexpectedly. |
-| Practice history | A small file, `practice-history.json`, with the measures and title of each run. No audio. |
-| Speech, voice and speaker models | Inside the app, or in the models folder after you choose a bigger model. |
+| Your recordings and files | In the folder where you keep them. The app reads them. The app does not copy them and does not upload them. |
+| Transcripts | In the folder of the recording. |
+| Recordings that you make in the Practice tab | A temporary file on your computer. The app deletes the file when you record again or select another file. If the app closes by accident, the app deletes the file after one day. |
+| Practice history | A small file with the name `practice-history.json`. It has the measures and the title of each run. It has no audio. |
+| Speech, voice and speaker models | In the app. If you select a larger model, the models folder. |
 
 ## What the app connects to
 
-- **Nothing, for its normal work.** Transcription, speaker detection, speech analysis and recording all run locally.
-- **Ollama on your own computer (optional).** If you use written feedback in Practice, the app sends your transcript and measures to Ollama at `localhost`. That is a program on your machine, not the internet.
-- **A model download, only if you ask.** Choosing a bigger speech model than the one included downloads it once from its public host. Your audio is not part of that request.
+- **Normal work: no connection.** Transcription, speaker detection, speech analysis and recording all run on your computer.
+- **Ollama on your own computer (optional).** If you use written feedback in the Practice tab, the app sends your transcript and measures to Ollama at `localhost`. Ollama is a program on your computer. It is not on the internet.
+- **A model download, only when you ask for it.** If you select a larger speech model than the included model, the app downloads it one time from its public host. The request does not contain your audio.
 
 ## What the app does not do
 
@@ -33,12 +33,16 @@ Transcriber is built so that your audio never leaves your computer.
 - It does not collect usage data.
 - It does not need an account.
 
-## Checking it yourself
+## Check it yourself
 
-You can confirm this the simplest way: turn off your network connection, then transcribe a file and analyse a recording. Both work. The code is open source, so you can read exactly what it does at [github.com/Eomar21/transcriber](https://github.com/Eomar21/transcriber).
+1. Disconnect your computer from the network.
+2. Transcribe a file.
+3. Analyse a recording in the Practice tab.
 
-## Removing your data
+Both functions work without a network. The source code is open. You can read it at [github.com/Eomar21/transcriber](https://github.com/Eomar21/transcriber).
 
-- **Practice history:** use **Delete** or **Clear all** in the Practice tab, or delete `practice-history.json` from the app's local data folder.
-- **Transcripts:** they are ordinary files next to your recordings. Delete them like any other file.
-- **Downloaded models:** delete them from the `models` folder in the app's local data folder.
+## Remove your data
+
+- **Practice history:** In the Practice tab, click **Delete** or **Clear all**. Or delete `practice-history.json` from the local data folder of the app.
+- **Transcripts:** A transcript is a normal file next to your recording. Delete it as you delete other files.
+- **Downloaded models:** Delete them from the `models` folder in the local data folder of the app.

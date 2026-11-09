@@ -11,96 +11,96 @@ nav_order: 11
 
 ## General
 
-### Is it really offline?
+### Does the app work offline?
 
-Yes. Transcription, speaker detection, speech analysis and recording all run on your computer. See [Privacy]({{ '/privacy' | relative_url }}) for the details, including the one optional local connection (Ollama on your own machine).
+Yes. Transcription, speaker detection, speech analysis and recording all run on your computer. Refer to [Privacy]({{ '/privacy' | relative_url }}). It explains the one optional local connection (Ollama on your own computer).
 
-### Is it free?
+### Is the app free?
 
-Yes. It is open source under the MIT licence.
+Yes. The app is open source and has the MIT licence.
 
-### Which systems does it run on?
+### Which systems does the app support?
 
-Windows 10 and 11 (64-bit), and macOS on Apple Silicon (M1 and later). Intel Macs and Linux are not supported.
+The app supports Windows 10 and 11 (64-bit) and macOS on Apple Silicon (M1 and later). It does not support Intel Macs or Linux.
 
-### Why is the download so big?
+### Why is the download so large?
 
-It includes everything: the speech model (about 488 MB), the voice and speaker models, and ffmpeg. That is why nothing is downloaded when you first start it.
+The download contains everything that the app needs: the speech model (about 488 MB), the voice model, the speaker models and ffmpeg. For this reason, the app does not download files at first start.
 
 ### Do I need an internet connection?
 
-Not to use it. Only downloading an extra, bigger speech model needs the internet, once.
+No. You need the internet only to download an extra, larger speech model. You do this one time.
 
 ### Do I need a graphics card?
 
-No. A graphics card makes transcription faster when available, and the app falls back to the processor by itself.
+No. A graphics card makes the transcription faster. If no graphics card is available, the app uses the processor.
 
 ## Transcribe
 
-### How accurate is it?
+### How accurate is the transcript?
 
-It depends on the recording and the model. Clear speech with the default model is usually very good. Noise, accents, jargon and several people talking at once reduce accuracy. A bigger model, choosing the language yourself and adding names under **Names or special terms** all help.
+The accuracy depends on the recording and the model. A clear recording with the default model usually gives very good results. Noise, accents, special terms and people who speak at the same time reduce the accuracy. These actions help: use a larger model, select the language, and add names to **Names or special terms**.
 
-### How long does it take?
+### How long does the app need?
 
-It depends on your computer. For example, a 6.5 minute recording took under two minutes with a graphics card, including speaker labels. The processor alone is slower. Longer recordings, bigger models and speaker labels all add time.
+The time depends on your computer. For example, a recording of 6.5 minutes needed less than two minutes with a graphics card, with speaker labels. The processor alone is slower. A longer recording, a larger model and speaker labels add time.
 
-### Can I transcribe video?
+### Can the app transcribe video?
 
-Yes. mp4, mov, avi, mkv and webm are supported, and the audio is extracted for you.
+Yes. The app supports mp4, mov, avi, mkv and webm. The app takes the audio from the video.
 
-### Which languages are supported?
+### Which languages does the app support?
 
-Automatic detection or your choice. It is tested with English, Dutch, Arabic and Spanish, and the model understands many more. See [Models and languages]({{ '/models-and-languages' | relative_url }}).
+You can use automatic detection or select a language. The app is tested with English, Dutch, Arabic and Spanish. The model understands many more languages. Refer to [Models and languages]({{ '/models-and-languages' | relative_url }}).
 
-### Can it make subtitles?
+### Can the app make subtitles?
 
-Yes. Choose **SubRip (.srt)** or **WebVTT (.vtt)** under **Save as**.
+Yes. Under **Save as**, select **SubRip (.srt)** or **WebVTT (.vtt)**.
 
-### Can it tell me who is speaking?
+### Can the app show who speaks?
 
-Yes, as Speaker 1, Speaker 2 and so on. It does not know names. See [Speaker labels]({{ '/speaker-labels' | relative_url }}).
+Yes. It shows Speaker 1, Speaker 2 and so on. The app does not know names. Refer to [Speaker labels]({{ '/speaker-labels' | relative_url }}).
 
 ### Where does the transcript go?
 
-Next to your recording, as `<name>_transcript.<extension>`. It overwrites an earlier transcript with the same name and format.
+The app saves it next to your recording. The name is `<name>_transcript.<extension>`. The app replaces an earlier transcript that has the same name and format.
 
-### Can I transcribe many files at once?
+### Can I transcribe many files at the same time?
 
-Yes. Add several files and press **Transcribe**. Each gets its own transcript file.
+Yes. Add the files. Click **Transcribe**. Each file gets its own transcript file.
 
 ## Practice
 
-### What does Practice measure?
+### What does the Practice tab measure?
 
-Pace, filler words, pauses, stumbles and length, with tips and your progress over time. See [Practice]({{ '/practice' | relative_url }}).
+It measures pace, filler words, pauses, stumbles and length. It gives tips and shows your progress over time. Refer to [Practice]({{ '/practice' | relative_url }}).
 
-### Does it hear what my voice sounds like?
+### Does the app judge how my voice sounds?
 
-It analyses what you said and when, not tone, volume or accent. It cannot judge how confident you sound, only the measurable habits listed above.
+No. The app analyses what you said and when you said it. It does not judge tone, volume or accent. It cannot tell if you sound confident. It measures only the habits in the list above.
 
-### Which languages does Practice support?
+### Which languages does the Practice tab support?
 
 English, Dutch and Spanish.
 
-### Why did it miss my "um"?
+### Why did the app not find my "um"?
 
-Speech models tend to leave fillers out. Practice asks the model to keep them, but it is not perfect. **What was heard** shows exactly what was counted.
+Speech models normally remove filler words. The Practice tab tells the model to keep them, but this is not perfect. **What was heard** shows the words that the app counted.
 
 ### Is my practice history private?
 
-Yes. It is a small file on your computer with numbers and titles, not audio. You can delete runs or clear everything in the tab.
+Yes. The history is a small file on your computer. It has numbers and titles. It has no audio. You can delete runs or clear all of them in the tab.
 
 ### Do I need Ollama?
 
-No. It is optional and only adds a written review. Everything else works without it.
+No. Ollama is optional. It adds a written review only. All other functions work without it.
 
 ## Problems
 
-### Windows or macOS warns me about the app
+### Windows or macOS shows a warning about the app
 
-The app is not code signed yet, so both systems show a one-time warning. See [Troubleshooting]({{ '/troubleshooting' | relative_url }}) for the two clicks needed.
+The app does not have a code signature yet. For this reason, both systems show a warning one time. Refer to [Troubleshooting]({{ '/troubleshooting' | relative_url }}) for the two clicks that you must do.
 
-### I found a bug or have an idea
+### I found a bug, or I have an idea
 
-Please open an issue on [GitHub](https://github.com/Eomar21/transcriber/issues).
+Open an issue on [GitHub](https://github.com/Eomar21/transcriber/issues).

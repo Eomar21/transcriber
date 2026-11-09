@@ -9,51 +9,56 @@ nav_order: 2
 1. TOC
 {:toc}
 
-## Download
+## Download the app
 
-Get the latest build from the [Releases page](https://github.com/Eomar21/transcriber/releases/latest).
+Download the latest version from the [Releases page](https://github.com/Eomar21/transcriber/releases/latest).
 
-| Platform | File | Notes |
+| Platform | File | Note |
 | --- | --- | --- |
-| Windows 10 or 11 (64-bit) | `Transcriber-<version>-win-x64-setup.exe` | The installer. |
-| Windows, no installation | `Transcriber-<version>-win-x64-portable.zip` | Unzip it anywhere and run `Transcriber.Maui.exe`. |
-| macOS, Apple Silicon | `Transcriber-<version>-mac-arm64.dmg` | Open the image and drag Transcriber to Applications. |
+| Windows 10 or 11 (64-bit) | `Transcriber-<version>-win-x64-setup.exe` | This file is the installer. |
+| Windows, no installation | `Transcriber-<version>-win-x64-portable.zip` | Unzip the file. Run `Transcriber.Maui.exe`. |
+| macOS, Apple Silicon | `Transcriber-<version>-mac-arm64.dmg` | Open the file. Drag Transcriber to the Applications folder. |
 
-The downloads are large, about 550 MB, because everything is included: the speech model, the voice and speaker models and ffmpeg. This is why nothing is downloaded when you first start the app.
+Each file is about 550 MB. The file contains everything the app needs: the speech model, the voice model, the speaker models and ffmpeg. For this reason, the app does not download files at first start.
 
 {: .note }
-Intel Macs are not supported. The macOS build is for Apple Silicon (M1 and later) only.
+The app does not run on Intel Macs. It runs on Apple Silicon Macs only (M1 and later).
 
-## Install and open
+## Install and open the app
 
 ### Windows
 
-1. Run the installer, or unzip the portable version.
+1. Run the installer. Or unzip the portable file.
 2. Start **Transcriber**.
-3. The first time, Windows SmartScreen may say it protected your PC. The app is not code signed yet. Choose **More info**, then **Run anyway**.
+3. At the first start, Windows SmartScreen can show a warning. The app does not have a code signature yet. Click **More info**. Then click **Run anyway**.
 
 ### macOS
 
-1. Open the `.dmg` and drag **Transcriber** to **Applications**.
-2. The first time, right-click the app and choose **Open**, then confirm. This is needed because the app is not code signed yet.
-3. If you use the Practice tab to record, macOS asks for microphone access. Choose **OK**. You can change it later in **System Settings, Privacy and Security, Microphone**.
+1. Open the `.dmg` file.
+2. Drag **Transcriber** to the **Applications** folder.
+3. At the first start, right-click the app. Select **Open**. Then confirm. The app does not have a code signature yet.
+4. To record in the Practice tab, macOS asks for microphone access. Select **OK**. To change this setting later, open **System Settings**, then **Privacy and Security**, then **Microphone**.
 
-## Your first transcript
+## Make your first transcript
 
-1. Start Transcriber. You are on the **Transcribe** tab.
-2. Drop an audio or video file onto the window, or press **Choose files**.
-3. Leave the settings as they are for now.
-4. Press **Transcribe**.
-5. When it says **Transcript saved**, the text appears below, and a file named `<your file>_transcript.txt` is saved next to your recording.
+1. Start Transcriber. The **Transcribe** tab is open.
+2. Drop an audio file or a video file on the window. Or click **Choose files**.
+3. Do not change the settings.
+4. Click **Transcribe**.
+5. Wait for the message **Transcript saved**. The text shows below the message.
 
-## Your first practice run
+The app saves a file next to your recording. The name of the file is `<your file>_transcript.txt`.
+
+## Make your first practice run
 
 1. Open the **Practice** tab.
-2. Press **Record**, say a minute or so of what you would like to practise, and press **Stop**.
-3. Press **Analyse my speaking**.
-4. Read the results and the tips.
+2. Click **Record**.
+3. Speak for about one minute. Speak about the subject that you want to practise.
+4. Click **Stop**.
+5. Click **Analyse my speaking**.
+6. Read the results and the tips.
 
-## What next
+## Next steps
 
-- [Transcribe guide]({{ '/transcribe' | relative_url }}) for every setting
-- [Practice guide]({{ '/practice' | relative_url }}) for what is measured and how to read it
+- Read the [Transcribe guide]({{ '/transcribe' | relative_url }}) for all the settings.
+- Read the [Practice guide]({{ '/practice' | relative_url }}) to see what the app measures.
