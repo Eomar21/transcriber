@@ -4,6 +4,7 @@ using Transcriber.Coach.Extensions;
 using Transcriber.Services.Extensions;
 using Transcriber.Maui.Services;
 using Transcriber.ViewModels;
+using Transcriber.ViewModels.Extensions;
 
 namespace Transcriber.Maui
 {
@@ -35,7 +36,7 @@ namespace Transcriber.Maui
             builder.Services.AddSingleton<IAudioRecorder, MauiAudioRecorder>();
 
             // View models are singletons so a screen keeps its state while you switch tabs.
-            builder.Services.AddSingleton<TranscribeViewModel>();
+            builder.Services.AddTranscribeScreen();
             builder.Services.AddTransient<TranscribePage>();
 
             // Practice tab: history stays in the user's app data; written feedback is optional and local (Ollama).

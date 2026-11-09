@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.Views.Transcribe.RunStatusView"
+    x:DataType="vm:RunStatusViewModel">
+
+    <!-- The outcome of a run: a status line (icon and text), the path and the notes. -->
+    <VerticalStackLayout Spacing="6">
+        <HorizontalStackLayout Spacing="8">
+            <Label x:Name="StatusIcon" FontAttributes="Bold" VerticalOptions="Center"
+                   SemanticProperties.Description="Status">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Success">
+                        <Setter Property="Text" Value="&#x2713;" />
+                        <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Error">
+                        <Setter Property="Text" Value="!" />
+                        <Setter Property="TextColor" Value="{StaticResource ErrorColor}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+            <Label AutomationId="ResultMessage" Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold" VerticalOptions="Center" />
+        </HorizontalStackLayout>
+
+        <Label AutomationId="ResultDetail" Text="{Binding ResultDetail}" Style="{StaticResource Caption}" LineBreakMode="MiddleTruncation"
+               ToolTipProperties.Text="{Binding ResultDetail}" IsVisible="{Binding HasResultDetail}" />
+        <Label Text="{Binding RuntimeNote}" Style="{StaticResource Caption}" IsVisible="{Binding HasRuntimeNote}" />
+
+        <!-- Files that could not be read, with the reason for each. Shown next to the result of the files that did work. -->
+        <Label AutomationId="FailureNote" Text="{Binding FailureNote, StringFormat='&#x26A0;  {0}'}" Style="{StaticResource Caption}"
+               TextColor="{StaticResource ErrorColor}" IsVisible="{Binding HasFailureNote}" />
+
+        <!-- Next to the result, where the user is looking after a run: only shown when there is something to check. -->
+        <Label AutomationId="CompletenessNote" Text="{Binding CompletenessNote}" Style="{StaticResource Caption}"
+               TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasCompletenessNote}" />
+        <VerticalStackLayout IsVisible="{Binding HasAccuracyNote}" Spacing="6">
+            <Label AutomationId="AccuracyNote" Text="{Binding AccuracyNote}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
+            <Button AutomationId="UseMediumResultButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SecondaryButton}" Padding="12,6"
+                    HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentView>

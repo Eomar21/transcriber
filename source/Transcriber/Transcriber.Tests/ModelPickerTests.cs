@@ -1,4 +1,5 @@
 using Transcriber.ViewModels;
+using Transcriber.ViewModels.Transcribe;
 
 public class ModelPickerTests
 {
@@ -44,14 +45,14 @@ public class ModelPickerTests
 
     private TranscribeViewModel Create()
     {
-        var vm = new TranscribeViewModel(new Reader(), _whisper, new Picker(), new Clipboard(), new Launcher(), _models, ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, _dialogs, new FakePlayer());
+        var vm = TranscribeFixture.Create(new Reader(), _whisper, new Picker(), new Clipboard(), new Launcher(), _models, _dialogs, new FakePlayer());
         var file = Path.Combine(_dir, "talk.mp3");
         File.WriteAllText(file, "x");
-        vm.AddFiles([file]);
+        vm.Files.AddFiles([file]);
         return vm;
     }
 
-    private ModelOption Option(TranscribeViewModel vm, WhisperModel model) => vm.Models.First(m => m.Model == model);
+    private ModelOption Option(TranscribeViewModel vm, WhisperModel model) => vm.Options.Models.First(m => m.Model == model);
 
     [Fact]
     public void Installed_models_are_labelled_installed_and_others_show_their_download_size()
@@ -68,8 +69,8 @@ public class ModelPickerTests
     {
         var vm = Create();
 
-        Assert.Equal(TestModels.Small, vm.SelectedModel);
-        Assert.False(vm.HasModelHint);
+        Assert.Equal(TestModels.Small, vm.Options.SelectedModel);
+        Assert.False(vm.Options.HasModelHint);
     }
 
     [Fact]
@@ -78,10 +79,10 @@ public class ModelPickerTests
         _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
 
-        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
+        vm.Options.SelectedModelOption = Option(vm, TestModels.MediumQ5);
 
-        Assert.True(vm.HasModelHint);
-        Assert.Contains("one-time download of 539 MB", vm.ModelHint);
+        Assert.True(vm.Options.HasModelHint);
+        Assert.Contains("one-time download of 539 MB", vm.Options.ModelHint);
     }
 
     [Fact]
@@ -90,13 +91,13 @@ public class ModelPickerTests
         _models.Missing.Add(TestModels.MediumQ5.Id);
         _dialogs.Answer = false;
         var vm = Create();
-        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
+        vm.Options.SelectedModelOption = Option(vm, TestModels.MediumQ5);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
         Assert.Equal(0, _whisper.Calls);
         Assert.Single(_dialogs.Messages);
-        Assert.Equal(ResultKind.Info, vm.ResultKind);
+        Assert.Equal(ResultKind.Info, vm.Status.ResultKind);
         Assert.False(vm.IsBusy);
     }
 
@@ -105,7 +106,7 @@ public class ModelPickerTests
     {
         _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
-        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
+        vm.Options.SelectedModelOption = Option(vm, TestModels.MediumQ5);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
@@ -129,14 +130,14 @@ public class ModelPickerTests
     {
         _models.Missing.Add(TestModels.MediumQ5.Id);
         var vm = Create();
-        vm.SelectedModelOption = Option(vm, TestModels.MediumQ5);
-        Assert.True(vm.HasModelHint);
+        vm.Options.SelectedModelOption = Option(vm, TestModels.MediumQ5);
+        Assert.True(vm.Options.HasModelHint);
 
         // The download finishes while transcribing.
         _models.Missing.Remove(TestModels.MediumQ5.Id);
         await vm.TranscribeCommand.ExecuteAsync(null);
 
         Assert.Contains("installed", Option(vm, TestModels.MediumQ5).Label);
-        Assert.False(vm.HasModelHint);
+        Assert.False(vm.Options.HasModelHint);
     }
 }

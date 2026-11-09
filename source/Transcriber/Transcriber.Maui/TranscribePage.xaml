@@ -2,11 +2,13 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    xmlns:views="clr-namespace:Transcriber.Maui.Views.Transcribe"
     x:Class="Transcriber.Maui.TranscribePage"
     x:DataType="vm:TranscribeViewModel"
     Title="Transcribe">
 
+    <!-- The page only arranges the sections. Each section is a view with its own view model. -->
     <ScrollView>
       <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
       <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="16">
@@ -18,97 +20,10 @@
             </VerticalStackLayout>
 
             <!-- 1. Files -->
-            <Border Style="{StaticResource Card}">
-                <Border.Triggers>
-                    <!-- Highlight the card while files are dragged over the window. -->
-                    <DataTrigger TargetType="Border" Binding="{Binding IsDragOver}" Value="True">
-                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                        <Setter Property="StrokeThickness" Value="2" />
-                    </DataTrigger>
-                </Border.Triggers>
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                    <VerticalStackLayout VerticalOptions="Center" Spacing="2">
-                        <Label Text="Files" Style="{StaticResource SectionTitle}" />
-                        <Label AutomationId="FilesSummary" Text="{Binding FilesSummary}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
-                        <Label Text="Drop files here, or choose them. mp3, wav, mp4, mov, m4a and more" Style="{StaticResource Caption}">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding IsDragOver}" Value="True">
-                                    <Setter Property="Text" Value="Release to add these files" />
-                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                        <Button AutomationId="AnyFileButton" Text="Any file type" Command="{Binding BrowseAnyCommand}" IsEnabled="{Binding IsIdle}"
-                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}" FontSize="13" Padding="0" MinimumHeightRequest="0"
-                                HorizontalOptions="Start" SemanticProperties.Description="Choose a file of any type. The app tries to read it."
-                                ToolTipProperties.Text="Show files of every type. The app tries to read the file you choose." />
-                        <Label AutomationId="DropMessage" Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
-                               FontSize="13" IsVisible="{Binding HasDropMessage}" />
-                    </VerticalStackLayout>
-                    <Button AutomationId="ClearFilesButton" Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding ClearFilesCommand}" IsVisible="{Binding HasFiles}" />
-                    <Button AutomationId="ChooseFilesButton" Grid.Column="2" Text="Choose files" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding BrowseCommand}" IsEnabled="{Binding IsIdle}" />
-                </Grid>
-            </Border>
+            <views:FilesCard BindingContext="{Binding Files}" />
 
-            <!-- 2. Settings (wraps onto new rows when the window is narrow) -->
-            <Border Style="{StaticResource Card}">
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="Settings" Style="{StaticResource SectionTitle}" />
-
-                    <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Start">
-                        <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
-                            <Label Text="Language" Style="{StaticResource Caption}"
-                                   ToolTipProperties.Text="Auto-detect picks the language from each stretch of speech. If a recording mixes languages, part of it can be missing. For the best result, select the main language." />
-                            <Picker AutomationId="LanguagePicker" ItemsSource="{Binding Languages}" ItemDisplayBinding="{Binding Label, x:DataType=vm:LanguageOption}"
-                                    SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}" />
-                            <!-- Only shown when a bigger model would be clearly more accurate for the chosen language. -->
-                            <VerticalStackLayout IsVisible="{Binding HasLanguageAdvice}" Spacing="6" Margin="0,4,0,0">
-                                <Label AutomationId="LanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
-                                <Button AutomationId="UseMediumButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SecondaryButton}" Padding="12,6"
-                                        HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
-                            </VerticalStackLayout>
-                        </VerticalStackLayout>
-                        <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
-                            <Label Text="Model (bigger is more accurate, slower)" Style="{StaticResource Caption}" />
-                            <Picker AutomationId="ModelPicker" ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModelOption}" IsEnabled="{Binding IsIdle}" />
-                            <Label AutomationId="ModelHint" Text="{Binding ModelHint}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasModelHint}" />
-                        </VerticalStackLayout>
-                        <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,0,10">
-                            <Label Text="Save as" Style="{StaticResource Caption}" />
-                            <Picker ItemsSource="{Binding Formats}" ItemDisplayBinding="{Binding Label, x:DataType=vm:FormatOption}"
-                                    SelectedItem="{Binding SelectedFormat}" IsEnabled="{Binding IsIdle}" />
-                        </VerticalStackLayout>
-                    </FlexLayout>
-
-                    <VerticalStackLayout>
-                        <Label Text="Names or special terms (optional, improves recognition)" Style="{StaticResource Caption}" />
-                        <Entry Text="{Binding Prompt}" Placeholder="e.g. Eindhoven, Dr. Haddad" IsEnabled="{Binding IsIdle}" />
-                    </VerticalStackLayout>
-
-                    <HorizontalStackLayout Spacing="10">
-                        <Switch IsToggled="{Binding UseGpu}" IsEnabled="{Binding IsIdle}" VerticalOptions="Center" />
-                        <VerticalStackLayout VerticalOptions="Center">
-                            <Label Text="Use graphics card when available" Style="{StaticResource Body}" />
-                            <Label Text="Falls back to the processor automatically. A change applies after restarting the app." Style="{StaticResource Caption}" />
-                        </VerticalStackLayout>
-                    </HorizontalStackLayout>
-
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding CanIdentifySpeakers}">
-                        <HorizontalStackLayout Spacing="10">
-                            <Switch AutomationId="IdentifySpeakersSwitch" IsToggled="{Binding IdentifySpeakers}" IsEnabled="{Binding IsIdle}" VerticalOptions="Center" />
-                            <VerticalStackLayout VerticalOptions="Center">
-                                <Label Text="Label who is speaking" Style="{StaticResource Body}" />
-                                <Label Text="Marks each line as Speaker 1, Speaker 2 and so on. Adds some processing time." Style="{StaticResource Caption}" />
-                            </VerticalStackLayout>
-                        </HorizontalStackLayout>
-                        <Picker AutomationId="SpeakerCountPicker" IsVisible="{Binding IdentifySpeakers}" IsEnabled="{Binding IsIdle}"
-                                ItemsSource="{Binding SpeakerCounts}" ItemDisplayBinding="{Binding Label, x:DataType=vm:SpeakerCountOption}"
-                                SelectedItem="{Binding SelectedSpeakerCount}" WidthRequest="260" HorizontalOptions="Start" />
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
+            <!-- 2. Settings -->
+            <views:OptionsCard BindingContext="{Binding Options}" />
 
             <!-- 3. Action -->
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
@@ -117,114 +32,21 @@
                         Command="{Binding TranscribeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
 
-            <!-- Progress -->
-            <Border Style="{StaticResource Card}" IsVisible="{Binding IsBusy}">
-                <VerticalStackLayout Spacing="8">
-                    <ProgressBar Progress="{Binding Progress}" ProgressColor="{StaticResource Primary}" />
-                    <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
-                </VerticalStackLayout>
-            </Border>
+            <!-- Progress: only while a run is in progress. -->
+            <views:ProgressCard BindingContext="{Binding Status}" IsVisible="{Binding IsBusy, x:DataType=vm:RunStatusViewModel}" />
 
-            <!-- Result: plain status line (icon + text), path and runtime as captions, then real buttons. -->
-            <VerticalStackLayout IsVisible="{Binding HasResultMessage}" Spacing="6">
-                <HorizontalStackLayout Spacing="8">
-                    <Label x:Name="StatusIcon" FontAttributes="Bold" VerticalOptions="Center"
-                           SemanticProperties.Description="Status">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Success">
-                                <Setter Property="Text" Value="&#x2713;" />
-                                <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Error">
-                                <Setter Property="Text" Value="!" />
-                                <Setter Property="TextColor" Value="{StaticResource ErrorColor}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
-                    <Label AutomationId="ResultMessage" Text="{Binding ResultMessage}" Style="{StaticResource Body}" FontAttributes="Bold" VerticalOptions="Center" />
-                </HorizontalStackLayout>
-
-                <Label AutomationId="ResultDetail" Text="{Binding ResultDetail}" Style="{StaticResource Caption}" LineBreakMode="MiddleTruncation"
-                       ToolTipProperties.Text="{Binding ResultDetail}" IsVisible="{Binding HasResultDetail}" />
-                <Label Text="{Binding RuntimeNote}" Style="{StaticResource Caption}" IsVisible="{Binding HasRuntimeNote}" />
-
-                <!-- Files that could not be read, with the reason for each. Shown next to the result of the files that did work. -->
-                <Label AutomationId="FailureNote" Text="{Binding FailureNote, StringFormat='&#x26A0;  {0}'}" Style="{StaticResource Caption}"
-                       TextColor="{StaticResource ErrorColor}" IsVisible="{Binding HasFailureNote}" />
-
-                <!-- Next to the result, where the user is looking after a run: only shown when there is something to check. -->
-                <Label AutomationId="CompletenessNote" Text="{Binding CompletenessNote}" Style="{StaticResource Caption}"
-                       TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasCompletenessNote}" />
-                <VerticalStackLayout IsVisible="{Binding HasAccuracyNote}" Spacing="6">
-                    <Label AutomationId="AccuracyNote" Text="{Binding AccuracyNote}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
-                    <Button AutomationId="UseMediumResultButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SecondaryButton}" Padding="12,6"
-                            HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
-                </VerticalStackLayout>
-
-                <HorizontalStackLayout Spacing="10" Margin="0,4,0,0" IsVisible="{Binding HasSavedFiles}">
-                    <Button AutomationId="OpenTranscriptButton" Text="Open transcript" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding OpenTranscriptCommand}" IsVisible="{Binding CanOpenTranscript}"
-                            SemanticProperties.Description="Open the saved transcript in its default app" />
-                    <Button AutomationId="ShowInFolderButton" Text="{Binding ShowInFolderLabel}" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding ShowInFolderCommand}"
-                            SemanticProperties.Description="Show the saved transcript in its folder">
-                        <Button.Triggers>
-                            <!-- For a batch there is no "Open", so the folder action becomes the primary one. -->
-                            <DataTrigger TargetType="Button" Binding="{Binding CanOpenTranscript}" Value="False">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                <Setter Property="TextColor" Value="White" />
-                                <Setter Property="BorderWidth" Value="0" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-                </HorizontalStackLayout>
-
-                <Label AutomationId="ActionMessage" Text="{Binding ActionMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
-                       FontSize="13" IsVisible="{Binding HasActionMessage}" />
+            <!-- Result: the status line and notes, then the buttons for the saved transcript. -->
+            <VerticalStackLayout IsVisible="{Binding Status.HasResultMessage}" Spacing="6">
+                <views:RunStatusView BindingContext="{Binding Status}" />
+                <views:SavedTranscriptsView BindingContext="{Binding Saved}" />
             </VerticalStackLayout>
 
             <!-- 4. Results -->
-            <Border Style="{StaticResource Card}" IsVisible="{Binding HasResults}">
+            <Border Style="{StaticResource Card}" IsVisible="{Binding Results.HasResults}">
                 <VerticalStackLayout Spacing="10">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <SearchBar Placeholder="Search the transcript" Text="{Binding SearchText}" />
-                        <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SecondaryButton}" Command="{Binding CopyAllCommand}" />
-                    </Grid>
-                    <!-- Player bar: appears once a line has been clicked. -->
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasPlayback}">
-                        <Label AutomationId="PlaybackText" Text="{Binding PlaybackText}" Style="{StaticResource Body}" VerticalOptions="Center" LineBreakMode="MiddleTruncation" />
-                        <Button AutomationId="PlayPauseButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" Padding="14,8"
-                                Command="{Binding TogglePlaybackCommand}" Text="Resume">
-                            <Button.Triggers>
-                                <DataTrigger TargetType="Button" Binding="{Binding IsPlaying}" Value="True">
-                                    <Setter Property="Text" Value="Pause" />
-                                </DataTrigger>
-                            </Button.Triggers>
-                        </Button>
-                        <Button AutomationId="StopButton" Grid.Column="2" Text="Stop" Style="{StaticResource SecondaryButton}" Padding="14,8"
-                                Command="{Binding StopPlaybackCommand}" />
-                    </Grid>
-                    <Label Text="Click a line to play it from there." Style="{StaticResource Caption}" IsVisible="{Binding ShowPlayHint}" />
-                    <CollectionView AutomationId="Segments" ItemsSource="{Binding VisibleSegments}" HeightRequest="340"
-                                    SelectionMode="Single" SelectedItem="{Binding SelectedSegment}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:SegmentItem">
-                                <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
-                                    <Grid.Triggers>
-                                        <!-- The line being played right now. -->
-                                        <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActiveRowLight}, Dark={StaticResource ActiveRowDark}}" />
-                                        </DataTrigger>
-                                    </Grid.Triggers>
-                                    <VerticalStackLayout Spacing="2" VerticalOptions="Start">
-                                        <Label Text="{Binding Time}" Style="{StaticResource Caption}" />
-                                        <Label Text="{Binding SpeakerLabel}" IsVisible="{Binding HasSpeaker}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource Primary}" />
-                                    </VerticalStackLayout>
-                                    <Label Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Body}" />
-                                </Grid>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                    <views:ResultsToolbar BindingContext="{Binding Results}" />
+                    <views:PlayerBar BindingContext="{Binding Playback}" />
+                    <views:ResultsList BindingContext="{Binding Results}" />
                 </VerticalStackLayout>
             </Border>
 

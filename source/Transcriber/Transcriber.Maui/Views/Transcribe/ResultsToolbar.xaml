@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.Views.Transcribe.ResultsToolbar"
+    x:DataType="vm:ResultsViewModel">
+
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+        <SearchBar Placeholder="Search the transcript" Text="{Binding SearchText}" />
+        <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SecondaryButton}" Command="{Binding CopyAllCommand}" />
+    </Grid>
+</ContentView>

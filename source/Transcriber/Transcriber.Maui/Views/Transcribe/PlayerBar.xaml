@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.Views.Transcribe.PlayerBar"
+    x:DataType="vm:PlaybackViewModel">
+
+    <VerticalStackLayout Spacing="10">
+        <!-- Player bar: appears once a line has been clicked. -->
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasPlayback}">
+            <Label AutomationId="PlaybackText" Text="{Binding PlaybackText}" Style="{StaticResource Body}" VerticalOptions="Center" LineBreakMode="MiddleTruncation" />
+            <Button AutomationId="PlayPauseButton" Grid.Column="1" Style="{StaticResource SecondaryButton}" Padding="14,8"
+                    Command="{Binding TogglePlaybackCommand}" Text="Resume">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsPlaying}" Value="True">
+                        <Setter Property="Text" Value="Pause" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+            <Button AutomationId="StopButton" Grid.Column="2" Text="Stop" Style="{StaticResource SecondaryButton}" Padding="14,8"
+                    Command="{Binding StopPlaybackCommand}" />
+        </Grid>
+        <Label Text="Click a line to play it from there." Style="{StaticResource Caption}" IsVisible="{Binding ShowPlayHint}" />
+    </VerticalStackLayout>
+</ContentView>

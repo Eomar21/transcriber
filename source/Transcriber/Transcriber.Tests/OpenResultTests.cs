@@ -1,4 +1,5 @@
 using Transcriber.ViewModels;
+using Transcriber.ViewModels.Transcribe;
 
 /// <summary>The "Open transcript" / "Show in folder" actions shown after a run finishes.</summary>
 public class OpenResultTests : IDisposable
@@ -44,9 +45,9 @@ public class OpenResultTests : IDisposable
 
     private async Task<TranscribeViewModel> RunAsync(params string[] names)
     {
-        var vm = new TranscribeViewModel(new Reader(), new Whisper(), new Picker(), new Clipboard(), _launcher, new FakeModels(), ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, new FakeDialogs(), new FakePlayer());
+        var vm = TranscribeFixture.Create(new Reader(), new Whisper(), new Picker(), new Clipboard(), _launcher, new FakeModels(), new FakeDialogs(), new FakePlayer());
         var files = names.Select(n => { var p = Path.Combine(_dir, n); File.WriteAllText(p, "x"); return p; }).ToList();
-        vm.AddFiles(files);
+        vm.Files.AddFiles(files);
         await vm.TranscribeCommand.ExecuteAsync(null);
         return vm;
     }
@@ -56,13 +57,13 @@ public class OpenResultTests : IDisposable
     {
         var vm = await RunAsync("talk.mp3");
 
-        Assert.Equal("Transcript saved", vm.ResultMessage);
-        Assert.Equal(Path.Combine(_dir, "talk_transcript.txt"), vm.ResultDetail);
-        Assert.Equal("Processed with Vulkan", vm.RuntimeNote);
-        Assert.True(vm.HasSavedFiles);
-        Assert.True(vm.CanOpenTranscript);
-        Assert.True(vm.OpenTranscriptCommand.CanExecute(null));
-        Assert.True(vm.ShowInFolderCommand.CanExecute(null));
+        Assert.Equal("Transcript saved", vm.Status.ResultMessage);
+        Assert.Equal(Path.Combine(_dir, "talk_transcript.txt"), vm.Status.ResultDetail);
+        Assert.Equal("Processed with Vulkan", vm.Status.RuntimeNote);
+        Assert.True(vm.Saved.HasSavedFiles);
+        Assert.True(vm.Saved.CanOpenTranscript);
+        Assert.True(vm.Saved.OpenTranscriptCommand.CanExecute(null));
+        Assert.True(vm.Saved.ShowInFolderCommand.CanExecute(null));
     }
 
     [Fact]
@@ -70,11 +71,11 @@ public class OpenResultTests : IDisposable
     {
         var vm = await RunAsync("a.mp3", "b.mp3", "c.mp3");
 
-        Assert.Equal("3 transcripts saved next to the source files", vm.ResultMessage);
-        Assert.Equal(_dir, vm.ResultDetail);
-        Assert.False(vm.CanOpenTranscript);
+        Assert.Equal("3 transcripts saved next to the source files", vm.Status.ResultMessage);
+        Assert.Equal(_dir, vm.Status.ResultDetail);
+        Assert.False(vm.Saved.CanOpenTranscript);
 
-        vm.ShowInFolderCommand.Execute(null);
+        vm.Saved.ShowInFolderCommand.Execute(null);
         Assert.Equal([Path.Combine(_dir, "a_transcript.txt")], _launcher.Revealed);
         Assert.Empty(_launcher.Opened);
     }
@@ -84,10 +85,10 @@ public class OpenResultTests : IDisposable
     {
         var vm = await RunAsync("talk.mp3");
 
-        vm.OpenTranscriptCommand.Execute(null);
+        vm.Saved.OpenTranscriptCommand.Execute(null);
 
         Assert.Equal([Path.Combine(_dir, "talk_transcript.txt")], _launcher.Opened);
-        Assert.False(vm.HasActionMessage);
+        Assert.False(vm.Saved.HasActionMessage);
     }
 
     [Fact]
@@ -95,13 +96,13 @@ public class OpenResultTests : IDisposable
     {
         _launcher.OpenResult = LaunchResult.NoHandler;
         var vm = await RunAsync("talk.mp3");
-        vm.SelectedFormat = vm.Formats.First(f => f.Format == TranscriptFormat.Srt);
+        vm.Options.SelectedFormat = vm.Options.Formats.First(f => f.Format == TranscriptFormat.Srt);
 
-        vm.OpenTranscriptCommand.Execute(null);
+        vm.Saved.OpenTranscriptCommand.Execute(null);
 
         Assert.Single(_launcher.Revealed);
-        Assert.Equal("No app is set to open .txt files. Showing it in the folder instead.", vm.ActionMessage);
-        Assert.True(vm.ShowInFolderCommand.CanExecute(null), "the folder action stays available");
+        Assert.Equal("No app is set to open .txt files. Showing it in the folder instead.", vm.Saved.ActionMessage);
+        Assert.True(vm.Saved.ShowInFolderCommand.CanExecute(null), "the folder action stays available");
     }
 
     [Fact]
@@ -110,11 +111,11 @@ public class OpenResultTests : IDisposable
         _launcher.OpenResult = LaunchResult.NotFound;
         var vm = await RunAsync("talk.mp3");
 
-        vm.OpenTranscriptCommand.Execute(null);
+        vm.Saved.OpenTranscriptCommand.Execute(null);
 
-        Assert.Equal("Couldn't find talk_transcript.txt. It may have been moved or deleted.", vm.ActionMessage);
-        Assert.False(vm.OpenTranscriptCommand.CanExecute(null));
-        Assert.False(vm.ShowInFolderCommand.CanExecute(null));
+        Assert.Equal("Couldn't find talk_transcript.txt. It may have been moved or deleted.", vm.Saved.ActionMessage);
+        Assert.False(vm.Saved.OpenTranscriptCommand.CanExecute(null));
+        Assert.False(vm.Saved.ShowInFolderCommand.CanExecute(null));
     }
 
     [Fact]
@@ -123,25 +124,25 @@ public class OpenResultTests : IDisposable
         _launcher.RevealResult = LaunchResult.NotFound;
         var vm = await RunAsync("talk.mp3");
 
-        vm.ShowInFolderCommand.Execute(null);
+        vm.Saved.ShowInFolderCommand.Execute(null);
 
-        Assert.Equal("The folder is no longer available.", vm.ActionMessage);
-        Assert.False(vm.OpenTranscriptCommand.CanExecute(null));
-        Assert.False(vm.ShowInFolderCommand.CanExecute(null));
+        Assert.Equal("The folder is no longer available.", vm.Saved.ActionMessage);
+        Assert.False(vm.Saved.OpenTranscriptCommand.CanExecute(null));
+        Assert.False(vm.Saved.ShowInFolderCommand.CanExecute(null));
     }
 
     [Fact]
     public async Task Choosing_new_files_clears_the_previous_result_and_actions()
     {
         var vm = await RunAsync("talk.mp3");
-        Assert.True(vm.HasSavedFiles);
+        Assert.True(vm.Saved.HasSavedFiles);
 
         File.WriteAllText(Path.Combine(_dir, "next.mp3"), "x");
-        vm.AddFiles([Path.Combine(_dir, "next.mp3")]);
+        vm.Files.AddFiles([Path.Combine(_dir, "next.mp3")]);
 
-        Assert.False(vm.HasSavedFiles);
-        Assert.False(vm.CanOpenTranscript);
-        Assert.Equal(string.Empty, vm.ResultDetail);
-        Assert.False(vm.OpenTranscriptCommand.CanExecute(null));
+        Assert.False(vm.Saved.HasSavedFiles);
+        Assert.False(vm.Saved.CanOpenTranscript);
+        Assert.Equal(string.Empty, vm.Status.ResultDetail);
+        Assert.False(vm.Saved.OpenTranscriptCommand.CanExecute(null));
     }
 }

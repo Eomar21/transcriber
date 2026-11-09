@@ -1,4 +1,5 @@
 using Transcriber.ViewModels;
+using Transcriber.ViewModels.Transcribe;
 
 public class TranscribeViewModelTests : IDisposable
 {
@@ -75,7 +76,7 @@ public class TranscribeViewModelTests : IDisposable
         var whisper = new FakeWhisper();
         var picker = new FakePicker();
         var clipboard = new FakeClipboard();
-        return (new TranscribeViewModel(reader, whisper, picker, clipboard, Launcher, Models, ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, Dialogs, Player), reader, whisper, picker, clipboard);
+        return (TranscribeFixture.Create(reader, whisper, picker, clipboard, Launcher, Models, Dialogs, Player), reader, whisper, picker, clipboard);
     }
 
     private string MakeInput(string name = "talk.mp3")
@@ -90,67 +91,67 @@ public class TranscribeViewModelTests : IDisposable
 
     // ---- languages and accuracy hints --------------------------------------------------
 
-    private static LanguageOption Pick(TranscribeViewModel vm, string code) => vm.Languages.First(l => l.Code == code);
+    private static LanguageOption Pick(TranscribeViewModel vm, string code) => vm.Options.Languages.First(l => l.Code == code);
 
     [Fact]
     public void Language_list_follows_the_selected_model()
     {
         var (vm, _, _, _, _) = Create();
-        Assert.DoesNotContain(vm.Languages, l => l.Code == "fr");
+        Assert.DoesNotContain(vm.Options.Languages, l => l.Code == "fr");
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.MediumQ5);
-        Assert.Contains(vm.Languages, l => l.Code == "fr");
+        vm.Options.SelectedModelOption = vm.Options.Models.First(m => m.Model == TestModels.MediumQ5);
+        Assert.Contains(vm.Options.Languages, l => l.Code == "fr");
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.Small);
-        Assert.DoesNotContain(vm.Languages, l => l.Code == "fr");
+        vm.Options.SelectedModelOption = vm.Options.Models.First(m => m.Model == TestModels.Small);
+        Assert.DoesNotContain(vm.Options.Languages, l => l.Code == "fr");
     }
 
     [Fact]
     public void Language_choice_is_kept_when_the_new_model_still_offers_it_and_resets_when_not()
     {
         var (vm, _, _, _, _) = Create();
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.MediumQ5);
-        vm.SelectedLanguage = Pick(vm, "fr");
+        vm.Options.SelectedModelOption = vm.Options.Models.First(m => m.Model == TestModels.MediumQ5);
+        vm.Options.SelectedLanguage = Pick(vm, "fr");
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.LargeV3TurboQ5);
-        Assert.Equal("fr", vm.SelectedLanguage.Code);
+        vm.Options.SelectedModelOption = vm.Options.Models.First(m => m.Model == TestModels.LargeV3TurboQ5);
+        Assert.Equal("fr", vm.Options.SelectedLanguage.Code);
 
-        vm.SelectedModelOption = vm.Models.First(m => m.Model == TestModels.Small);
-        Assert.Equal("auto", vm.SelectedLanguage.Code);
+        vm.Options.SelectedModelOption = vm.Options.Models.First(m => m.Model == TestModels.Small);
+        Assert.Equal("auto", vm.Options.SelectedLanguage.Code);
     }
 
     [Fact]
     public void Dutch_with_small_shows_advice_and_the_button_switches_to_medium()
     {
         var (vm, _, _, _, _) = Create();
-        Assert.False(vm.HasLanguageAdvice);
+        Assert.False(vm.Options.HasLanguageAdvice);
 
-        vm.SelectedLanguage = Pick(vm, "nl");
-        Assert.True(vm.HasLanguageAdvice);
-        Assert.Contains("Medium", vm.LanguageAdvice);
-        Assert.Contains("better with Medium", vm.SelectedLanguage.Label);
+        vm.Options.SelectedLanguage = Pick(vm, "nl");
+        Assert.True(vm.Options.HasLanguageAdvice);
+        Assert.Contains("Medium", vm.Options.LanguageAdvice);
+        Assert.Contains("better with Medium", vm.Options.SelectedLanguage.Label);
 
-        vm.UseSuggestedModelCommand.Execute(null);
+        vm.Options.UseSuggestedModelCommand.Execute(null);
 
-        Assert.Equal(TestModels.MediumQ5, vm.SelectedModel);
-        Assert.Equal("nl", vm.SelectedLanguage.Code);
-        Assert.False(vm.HasLanguageAdvice);
+        Assert.Equal(TestModels.MediumQ5, vm.Options.SelectedModel);
+        Assert.Equal("nl", vm.Options.SelectedLanguage.Code);
+        Assert.False(vm.Options.HasLanguageAdvice);
     }
 
     [Fact]
     public async Task Result_shows_accuracy_note_for_dutch_with_small_and_clears_on_next_run()
     {
         var (vm, _, _, picker, _) = Create();
-        vm.SelectedLanguage = Pick(vm, "nl");
+        vm.Options.SelectedLanguage = Pick(vm, "nl");
         picker.Result = [MakeInput()];
-        await vm.BrowseCommand.ExecuteAsync(null);
+        await vm.Files.BrowseCommand.ExecuteAsync(null);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
-        Assert.True(vm.HasAccuracyNote);
+        Assert.True(vm.Status.HasAccuracyNote);
 
-        vm.SelectedLanguage = Pick(vm, "en");
+        vm.Options.SelectedLanguage = Pick(vm, "en");
         await vm.TranscribeCommand.ExecuteAsync(null);
-        Assert.False(vm.HasAccuracyNote);
+        Assert.False(vm.Status.HasAccuracyNote);
     }
 
     [Fact]
@@ -159,13 +160,13 @@ public class TranscribeViewModelTests : IDisposable
         var (vm, _, whisper, picker, _) = Create();
         whisper.Coverage = new SpeechCoverage(SpeechSeconds: 30, TextSeconds: 12) { LooksIncomplete = true };
         picker.Result = [MakeInput()];
-        await vm.BrowseCommand.ExecuteAsync(null);
+        await vm.Files.BrowseCommand.ExecuteAsync(null);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.True(vm.HasCompletenessNote);
-        Assert.Contains("18 of 30 seconds", vm.CompletenessNote);
-        Assert.Contains("main language", vm.CompletenessNote);
+        Assert.True(vm.Status.HasCompletenessNote);
+        Assert.Contains("18 of 30 seconds", vm.Status.CompletenessNote);
+        Assert.Contains("main language", vm.Status.CompletenessNote);
     }
 
     [Fact]
@@ -174,21 +175,21 @@ public class TranscribeViewModelTests : IDisposable
         var (vm, _, whisper, picker, _) = Create();
         whisper.Coverage = new SpeechCoverage(30, 29);
         picker.Result = [MakeInput()];
-        await vm.BrowseCommand.ExecuteAsync(null);
+        await vm.Files.BrowseCommand.ExecuteAsync(null);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.False(vm.HasCompletenessNote);
+        Assert.False(vm.Status.HasCompletenessNote);
     }
     [Fact]
     public void Starts_with_sensible_defaults_and_cannot_transcribe_without_files()
     {
         var (vm, _, _, _, _) = Create();
 
-        Assert.Equal("auto", vm.SelectedLanguage.Code);
-        Assert.Equal(TestModels.Small, vm.SelectedModel);
-        Assert.Equal(TranscriptFormat.Txt, vm.SelectedFormat.Format);
-        Assert.False(vm.HasFiles);
+        Assert.Equal("auto", vm.Options.SelectedLanguage.Code);
+        Assert.Equal(TestModels.Small, vm.Options.SelectedModel);
+        Assert.Equal(TranscriptFormat.Txt, vm.Options.SelectedFormat.Format);
+        Assert.False(vm.Files.HasFiles);
         Assert.False(vm.TranscribeCommand.CanExecute(null));
     }
 
@@ -198,9 +199,9 @@ public class TranscribeViewModelTests : IDisposable
         var (vm, _, _, picker, _) = Create();
         picker.Result = [MakeInput("a.mp3"), MakeInput("b.mp3")];
 
-        await vm.BrowseCommand.ExecuteAsync(null);
+        await vm.Files.BrowseCommand.ExecuteAsync(null);
 
-        Assert.Equal("2 files selected", vm.FilesSummary);
+        Assert.Equal("2 files selected", vm.Files.FilesSummary);
         Assert.True(vm.TranscribeCommand.CanExecute(null));
     }
 
@@ -208,12 +209,12 @@ public class TranscribeViewModelTests : IDisposable
     public async Task Cancelling_the_picker_keeps_the_current_selection()
     {
         var (vm, _, _, picker, _) = Create();
-        vm.AddFiles([MakeInput()]);
+        vm.Files.AddFiles([MakeInput()]);
         picker.Result = [];
 
-        await vm.BrowseCommand.ExecuteAsync(null);
+        await vm.Files.BrowseCommand.ExecuteAsync(null);
 
-        Assert.Equal("talk.mp3", vm.FilesSummary);
+        Assert.Equal("talk.mp3", vm.Files.FilesSummary);
     }
 
     [Fact]
@@ -221,11 +222,11 @@ public class TranscribeViewModelTests : IDisposable
     {
         var (vm, _, _, _, _) = Create();
 
-        vm.AddFiles([Path.Combine(_dir, "notes.txt"), Path.Combine(_dir, "photo.jpg")]);
-        Assert.False(vm.HasFiles);
+        vm.Files.AddFiles([Path.Combine(_dir, "notes.txt"), Path.Combine(_dir, "photo.jpg")]);
+        Assert.False(vm.Files.HasFiles);
 
-        vm.AddFiles([Path.Combine(_dir, "clip.MP4")]);
-        Assert.Single(vm.SelectedFiles);
+        vm.Files.AddFiles([Path.Combine(_dir, "clip.MP4")]);
+        Assert.Single(vm.Files.SelectedFiles);
     }
 
     [Fact]
@@ -233,17 +234,17 @@ public class TranscribeViewModelTests : IDisposable
     {
         var (vm, reader, _, _, _) = Create();
         var input = MakeInput();
-        vm.AddFiles([input]);
-        vm.SelectedFormat = vm.Formats.First(f => f.Format == TranscriptFormat.Srt);
+        vm.Files.AddFiles([input]);
+        vm.Options.SelectedFormat = vm.Options.Formats.First(f => f.Format == TranscriptFormat.Srt);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Equal(ResultKind.Success, vm.ResultKind);
-        Assert.Equal("Transcript saved", vm.ResultMessage);
-        Assert.EndsWith("talk_transcript.srt", vm.ResultDetail);
+        Assert.Equal(ResultKind.Success, vm.Status.ResultKind);
+        Assert.Equal("Transcript saved", vm.Status.ResultMessage);
+        Assert.EndsWith("talk_transcript.srt", vm.Status.ResultDetail);
         Assert.True(File.Exists(Path.Combine(_dir, "talk_transcript.srt")));
-        Assert.Equal(["Hello world", "Goodbye moon"], vm.VisibleSegments.Select(s => s.Text));
-        Assert.True(vm.HasResults);
+        Assert.Equal(["Hello world", "Goodbye moon"], vm.Results.VisibleSegments.Select(s => s.Text));
+        Assert.True(vm.Results.HasResults);
         Assert.False(vm.IsBusy);
         Assert.All(reader.TempFiles, t => Assert.True(File.Exists(t), "kept so a clicked line can play it"));
         Assert.True(File.Exists(input), "the user's own input file must never be deleted");
@@ -258,13 +259,13 @@ public class TranscribeViewModelTests : IDisposable
     {
         var (vm, _, _, picker, _) = Create();
         picker.Result = [MakeInput("bad.xyz")];
-        await vm.BrowseAnyCommand.ExecuteAsync(null);
+        await vm.Files.BrowseAnyCommand.ExecuteAsync(null);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Equal(ResultKind.Error, vm.ResultKind);
-        Assert.Equal("Failed: " + Unreadable, vm.ResultMessage);
-        Assert.False(vm.HasFailureNote);
+        Assert.Equal(ResultKind.Error, vm.Status.ResultKind);
+        Assert.Equal("Failed: " + Unreadable, vm.Status.ResultMessage);
+        Assert.False(vm.Status.HasFailureNote);
         Assert.False(vm.IsBusy);
     }
 
@@ -272,46 +273,46 @@ public class TranscribeViewModelTests : IDisposable
     public async Task One_unreadable_file_does_not_stop_the_others()
     {
         var (vm, _, _, _, _) = Create();
-        vm.AddFiles([MakeInput("one.mp3"), MakeInput("bad.mp3"), MakeInput("two.mp3")]);
+        vm.Files.AddFiles([MakeInput("one.mp3"), MakeInput("bad.mp3"), MakeInput("two.mp3")]);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Equal(ResultKind.Success, vm.ResultKind);
-        Assert.Equal("2 transcripts saved next to the source files", vm.ResultMessage);
+        Assert.Equal(ResultKind.Success, vm.Status.ResultKind);
+        Assert.Equal("2 transcripts saved next to the source files", vm.Status.ResultMessage);
         Assert.True(File.Exists(Path.Combine(_dir, "one_transcript.txt")));
         Assert.True(File.Exists(Path.Combine(_dir, "two_transcript.txt")));
         Assert.False(File.Exists(Path.Combine(_dir, "bad_transcript.txt")));
-        Assert.True(vm.HasFailureNote);
-        Assert.Contains("1 of 3 files were skipped.", vm.FailureNote);
-        Assert.Contains("bad.mp3: " + Unreadable, vm.FailureNote);
+        Assert.True(vm.Status.HasFailureNote);
+        Assert.Contains("1 of 3 files were skipped.", vm.Status.FailureNote);
+        Assert.Contains("bad.mp3: " + Unreadable, vm.Status.FailureNote);
     }
 
     [Fact]
     public async Task When_no_file_can_be_read_each_one_is_listed_with_its_reason()
     {
         var (vm, _, _, _, _) = Create();
-        vm.AddFiles([MakeInput("bad1.mp3"), MakeInput("bad2.mp3")]);
+        vm.Files.AddFiles([MakeInput("bad1.mp3"), MakeInput("bad2.mp3")]);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Equal(ResultKind.Error, vm.ResultKind);
-        Assert.Equal("Failed: none of the 2 files could be read", vm.ResultMessage);
-        Assert.Contains("bad1.mp3: " + Unreadable, vm.FailureNote);
-        Assert.Contains("bad2.mp3: " + Unreadable, vm.FailureNote);
-        Assert.False(vm.HasResults);
+        Assert.Equal(ResultKind.Error, vm.Status.ResultKind);
+        Assert.Equal("Failed: none of the 2 files could be read", vm.Status.ResultMessage);
+        Assert.Contains("bad1.mp3: " + Unreadable, vm.Status.FailureNote);
+        Assert.Contains("bad2.mp3: " + Unreadable, vm.Status.FailureNote);
+        Assert.False(vm.Results.HasResults);
     }
 
     [Fact]
     public async Task The_failure_note_is_cleared_for_the_next_run()
     {
         var (vm, _, _, _, _) = Create();
-        vm.AddFiles([MakeInput("one.mp3"), MakeInput("bad.mp3")]);
+        vm.Files.AddFiles([MakeInput("one.mp3"), MakeInput("bad.mp3")]);
         await vm.TranscribeCommand.ExecuteAsync(null);
-        Assert.True(vm.HasFailureNote);
+        Assert.True(vm.Status.HasFailureNote);
 
-        vm.ClearFilesCommand.Execute(null);
+        vm.Files.ClearFilesCommand.Execute(null);
 
-        Assert.False(vm.HasFailureNote);
+        Assert.False(vm.Status.HasFailureNote);
     }
 
     [Fact]
@@ -320,36 +321,36 @@ public class TranscribeViewModelTests : IDisposable
         var (vm, _, _, picker, _) = Create();
         picker.Result = [MakeInput("voice.xyz")];
 
-        await vm.BrowseAnyCommand.ExecuteAsync(null);
+        await vm.Files.BrowseAnyCommand.ExecuteAsync(null);
 
-        Assert.Equal(["voice.xyz"], vm.SelectedFiles.Select(Path.GetFileName));
+        Assert.Equal(["voice.xyz"], vm.Files.SelectedFiles.Select(Path.GetFileName));
     }
 
     [Fact]
     public async Task Search_filters_the_visible_segments_case_insensitively()
     {
         var (vm, _, _, _, _) = Create();
-        vm.AddFiles([MakeInput()]);
+        vm.Files.AddFiles([MakeInput()]);
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        vm.SearchText = "MOON";
-        Assert.Equal(["Goodbye moon"], vm.VisibleSegments.Select(s => s.Text));
+        vm.Results.SearchText = "MOON";
+        Assert.Equal(["Goodbye moon"], vm.Results.VisibleSegments.Select(s => s.Text));
 
-        vm.SearchText = "";
-        Assert.Equal(2, vm.VisibleSegments.Count);
+        vm.Results.SearchText = "";
+        Assert.Equal(2, vm.Results.VisibleSegments.Count);
     }
 
     [Fact]
     public async Task Multiple_files_are_all_transcribed_and_rows_name_their_source()
     {
         var (vm, _, _, _, _) = Create();
-        vm.AddFiles([MakeInput("one.mp3"), MakeInput("two.mp3")]);
+        vm.Files.AddFiles([MakeInput("one.mp3"), MakeInput("two.mp3")]);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Contains("2 transcripts saved", vm.ResultMessage);
-        Assert.Equal(4, vm.VisibleSegments.Count);
-        Assert.Contains(vm.VisibleSegments, s => s.Source == "two.mp3");
+        Assert.Contains("2 transcripts saved", vm.Status.ResultMessage);
+        Assert.Equal(4, vm.Results.VisibleSegments.Count);
+        Assert.Contains(vm.Results.VisibleSegments, s => s.Source == "two.mp3");
     }
 
     [Fact]
@@ -357,12 +358,12 @@ public class TranscribeViewModelTests : IDisposable
     {
         var (vm, _, whisper, _, _) = Create();
         whisper.Handler = (_, _) => throw new InvalidOperationException("boom");
-        vm.AddFiles([MakeInput()]);
+        vm.Files.AddFiles([MakeInput()]);
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.Equal(ResultKind.Error, vm.ResultKind);
-        Assert.Contains("boom", vm.ResultMessage);
+        Assert.Equal(ResultKind.Error, vm.Status.ResultKind);
+        Assert.Contains("boom", vm.Status.ResultMessage);
         Assert.False(vm.IsBusy);
         Assert.True(vm.TranscribeCommand.CanExecute(null));
     }
@@ -378,7 +379,7 @@ public class TranscribeViewModelTests : IDisposable
             await Task.Delay(Timeout.Infinite, ct);
             return [];
         };
-        vm.AddFiles([MakeInput()]);
+        vm.Files.AddFiles([MakeInput()]);
 
         var run = vm.TranscribeCommand.ExecuteAsync(null);
         await started.Task;
@@ -388,8 +389,8 @@ public class TranscribeViewModelTests : IDisposable
         vm.TranscribeCancelCommand.Execute(null);
         await run;
 
-        Assert.Equal(ResultKind.Info, vm.ResultKind);
-        Assert.Equal("Cancelled.", vm.ResultMessage);
+        Assert.Equal(ResultKind.Info, vm.Status.ResultKind);
+        Assert.Equal("Cancelled.", vm.Status.ResultMessage);
         Assert.False(vm.IsBusy);
     }
 
@@ -397,10 +398,10 @@ public class TranscribeViewModelTests : IDisposable
     public async Task CopyAll_puts_the_whole_transcript_on_the_clipboard()
     {
         var (vm, _, _, _, clipboard) = Create();
-        vm.AddFiles([MakeInput()]);
+        vm.Files.AddFiles([MakeInput()]);
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        await vm.CopyAllCommand.ExecuteAsync(null);
+        await vm.Results.CopyAllCommand.ExecuteAsync(null);
 
         Assert.Equal($"Hello world{Environment.NewLine}Goodbye moon", clipboard.Text);
     }

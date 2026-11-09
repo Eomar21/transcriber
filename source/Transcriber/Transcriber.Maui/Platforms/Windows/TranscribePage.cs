@@ -22,15 +22,15 @@ public partial class TranscribePage
             e.AcceptedOperation = accept ? Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy
                                          : Windows.ApplicationModel.DataTransfer.DataPackageOperation.None;
             if (accept) e.DragUIOverride.Caption = "Add to transcribe";
-            _viewModel.IsDragOver = accept;
+            _viewModel.Files.IsDragOver = accept;
         };
-        page.DragLeave += (_, _) => _viewModel.IsDragOver = false;
+        page.DragLeave += (_, _) => _viewModel.Files.IsDragOver = false;
         page.Drop += async (_, e) =>
         {
             // Keep the drop open while the items are read asynchronously.
             var deferral = e.GetDeferral();
-            try { _viewModel.AddFiles(await DroppedFiles.GetPathsAsync(e.DataView)); }
-            catch { _viewModel.IsDragOver = false; }
+            try { _viewModel.Files.AddFiles(await DroppedFiles.GetPathsAsync(e.DataView)); }
+            catch { _viewModel.Files.IsDragOver = false; }
             finally { deferral.Complete(); }
         };
     }

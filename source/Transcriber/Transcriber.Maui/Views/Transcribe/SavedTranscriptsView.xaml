@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.Views.Transcribe.SavedTranscriptsView"
+    x:DataType="vm:SavedTranscriptsViewModel">
+
+    <!-- Real buttons for the saved transcript, and a warning line when an action fails. -->
+    <VerticalStackLayout Spacing="6">
+        <HorizontalStackLayout Spacing="10" Margin="0,4,0,0" IsVisible="{Binding HasSavedFiles}">
+            <Button AutomationId="OpenTranscriptButton" Text="Open transcript" Style="{StaticResource PrimaryButton}"
+                    Command="{Binding OpenTranscriptCommand}" IsVisible="{Binding CanOpenTranscript}"
+                    SemanticProperties.Description="Open the saved transcript in its default app" />
+            <Button AutomationId="ShowInFolderButton" Text="{Binding ShowInFolderLabel}" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding ShowInFolderCommand}"
+                    SemanticProperties.Description="Show the saved transcript in its folder">
+                <Button.Triggers>
+                    <!-- For a batch there is no "Open", so the folder action becomes the primary one. -->
+                    <DataTrigger TargetType="Button" Binding="{Binding CanOpenTranscript}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                        <Setter Property="TextColor" Value="White" />
+                        <Setter Property="BorderWidth" Value="0" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </HorizontalStackLayout>
+
+        <Label AutomationId="ActionMessage" Text="{Binding ActionMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
+               FontSize="13" IsVisible="{Binding HasActionMessage}" />
+    </VerticalStackLayout>
+</ContentView>

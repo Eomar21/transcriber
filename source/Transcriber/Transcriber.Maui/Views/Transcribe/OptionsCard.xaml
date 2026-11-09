@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    xmlns:models="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.Views.Transcribe.OptionsCard"
+    x:DataType="vm:OptionsViewModel">
+
+    <!-- 2. Settings (wraps onto new rows when the window is narrow) -->
+    <Border Style="{StaticResource Card}">
+        <VerticalStackLayout Spacing="14">
+            <Label Text="Settings" Style="{StaticResource SectionTitle}" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Start">
+                <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
+                    <Label Text="Language" Style="{StaticResource Caption}"
+                           ToolTipProperties.Text="Auto-detect picks the language from each stretch of speech. If a recording mixes languages, part of it can be missing. For the best result, select the main language." />
+                    <Picker AutomationId="LanguagePicker" ItemsSource="{Binding Languages}" ItemDisplayBinding="{Binding Label, x:DataType=models:LanguageOption}"
+                            SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}" />
+                    <!-- Only shown when a bigger model would be clearly more accurate for the chosen language. -->
+                    <VerticalStackLayout IsVisible="{Binding HasLanguageAdvice}" Spacing="6" Margin="0,4,0,0">
+                        <Label AutomationId="LanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
+                        <Button AutomationId="UseMediumButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SecondaryButton}" Padding="12,6"
+                                HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+                <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,12,10">
+                    <Label Text="Model (bigger is more accurate, slower)" Style="{StaticResource Caption}" />
+                    <Picker AutomationId="ModelPicker" ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModelOption}" IsEnabled="{Binding IsIdle}" />
+                    <Label AutomationId="ModelHint" Text="{Binding ModelHint}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasModelHint}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout FlexLayout.Basis="250" FlexLayout.Grow="1" Margin="0,0,0,10">
+                    <Label Text="Save as" Style="{StaticResource Caption}" />
+                    <Picker ItemsSource="{Binding Formats}" ItemDisplayBinding="{Binding Label, x:DataType=models:FormatOption}"
+                            SelectedItem="{Binding SelectedFormat}" IsEnabled="{Binding IsIdle}" />
+                </VerticalStackLayout>
+            </FlexLayout>
+
+            <VerticalStackLayout>
+                <Label Text="Names or special terms (optional, improves recognition)" Style="{StaticResource Caption}" />
+                <Entry Text="{Binding Prompt}" Placeholder="e.g. Eindhoven, Dr. Haddad" IsEnabled="{Binding IsIdle}" />
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Spacing="10">
+                <Switch IsToggled="{Binding UseGpu}" IsEnabled="{Binding IsIdle}" VerticalOptions="Center" />
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label Text="Use graphics card when available" Style="{StaticResource Body}" />
+                    <Label Text="Falls back to the processor automatically. A change applies after restarting the app." Style="{StaticResource Caption}" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding CanIdentifySpeakers}">
+                <HorizontalStackLayout Spacing="10">
+                    <Switch AutomationId="IdentifySpeakersSwitch" IsToggled="{Binding IdentifySpeakers}" IsEnabled="{Binding IsIdle}" VerticalOptions="Center" />
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Label who is speaking" Style="{StaticResource Body}" />
+                        <Label Text="Marks each line as Speaker 1, Speaker 2 and so on. Adds some processing time." Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+                <Picker AutomationId="SpeakerCountPicker" IsVisible="{Binding IdentifySpeakers}" IsEnabled="{Binding IsIdle}"
+                        ItemsSource="{Binding SpeakerCounts}" ItemDisplayBinding="{Binding Label, x:DataType=models:SpeakerCountOption}"
+                        SelectedItem="{Binding SelectedSpeakerCount}" WidthRequest="260" HorizontalOptions="Start" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

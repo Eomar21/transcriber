@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Transcriber.ViewModels;
+using Transcriber.ViewModels.Transcribe;
 
 /// <summary>Speaker labels in the exports and in the transcript list.</summary>
 public class SpeakerLabelTests : IDisposable
@@ -103,10 +104,10 @@ public class SpeakerLabelTests : IDisposable
     {
         var whisper = new Whisper(canIdentify);
         var clip = new Clip();
-        var vm = new TranscribeViewModel(new Reader(), whisper, new Picker(), clip, new Launcher(), new FakeModels(), ServicesFixture.Models, ServicesFixture.Languages, ServicesFixture.Formats, ServicesFixture.Exporter, new FakeDialogs(), new FakePlayer());
+        var vm = TranscribeFixture.Create(new Reader(), whisper, new Picker(), clip, new Launcher(), new FakeModels(), new FakeDialogs(), new FakePlayer());
         var file = Path.Combine(_dir, "talk.mp3");
         File.WriteAllText(file, "x");
-        vm.AddFiles([file]);
+        vm.Files.AddFiles([file]);
         return (vm, whisper, clip);
     }
 
@@ -114,13 +115,13 @@ public class SpeakerLabelTests : IDisposable
     public async Task Turning_it_on_asks_for_speakers_and_labels_the_lines()
     {
         var (vm, whisper, _) = Create(canIdentify: true);
-        vm.IdentifySpeakers = true;
+        vm.Options.IdentifySpeakers = true;
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
         Assert.True(whisper.Options!.IdentifySpeakers);
-        Assert.Equal(["Speaker 1", "Speaker 2"], vm.VisibleSegments.Select(s => s.SpeakerLabel));
-        Assert.All(vm.VisibleSegments, s => Assert.True(s.HasSpeaker));
+        Assert.Equal(["Speaker 1", "Speaker 2"], vm.Results.VisibleSegments.Select(s => s.SpeakerLabel));
+        Assert.All(vm.Results.VisibleSegments, s => Assert.True(s.HasSpeaker));
     }
 
     [Fact]
@@ -131,19 +132,19 @@ public class SpeakerLabelTests : IDisposable
         await vm.TranscribeCommand.ExecuteAsync(null);
 
         Assert.False(whisper.Options!.IdentifySpeakers);
-        Assert.All(vm.VisibleSegments, s => Assert.False(s.HasSpeaker));
+        Assert.All(vm.Results.VisibleSegments, s => Assert.False(s.HasSpeaker));
     }
 
     [Fact]
     public async Task A_chosen_speaker_count_is_passed_on_and_automatic_means_unknown()
     {
         var (vm, whisper, _) = Create(canIdentify: true);
-        vm.IdentifySpeakers = true;
+        vm.Options.IdentifySpeakers = true;
 
         await vm.TranscribeCommand.ExecuteAsync(null);
         Assert.Null(whisper.Options!.SpeakerCount);
 
-        vm.SelectedSpeakerCount = vm.SpeakerCounts.First(c => c.Count == 3);
+        vm.Options.SelectedSpeakerCount = vm.Options.SpeakerCounts.First(c => c.Count == 3);
         await vm.TranscribeCommand.ExecuteAsync(null);
         Assert.Equal(3, whisper.Options!.SpeakerCount);
     }
@@ -152,11 +153,11 @@ public class SpeakerLabelTests : IDisposable
     public async Task Where_speakers_cannot_be_identified_the_option_is_hidden_and_never_requested()
     {
         var (vm, whisper, _) = Create(canIdentify: false);
-        vm.IdentifySpeakers = true;
+        vm.Options.IdentifySpeakers = true;
 
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        Assert.False(vm.CanIdentifySpeakers);
+        Assert.False(vm.Options.CanIdentifySpeakers);
         Assert.False(whisper.Options!.IdentifySpeakers);
     }
 
@@ -164,10 +165,10 @@ public class SpeakerLabelTests : IDisposable
     public async Task Copy_all_includes_the_speaker_names()
     {
         var (vm, _, clip) = Create(canIdentify: true);
-        vm.IdentifySpeakers = true;
+        vm.Options.IdentifySpeakers = true;
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        await vm.CopyAllCommand.ExecuteAsync(null);
+        await vm.Results.CopyAllCommand.ExecuteAsync(null);
 
         Assert.Equal("Speaker 1: First" + Environment.NewLine + "Speaker 2: Second", clip.Text);
     }
@@ -176,11 +177,11 @@ public class SpeakerLabelTests : IDisposable
     public async Task Searching_still_matches_the_spoken_text_only()
     {
         var (vm, _, _) = Create(canIdentify: true);
-        vm.IdentifySpeakers = true;
+        vm.Options.IdentifySpeakers = true;
         await vm.TranscribeCommand.ExecuteAsync(null);
 
-        vm.SearchText = "Speaker";
+        vm.Results.SearchText = "Speaker";
 
-        Assert.Empty(vm.VisibleSegments);
+        Assert.Empty(vm.Results.VisibleSegments);
     }
 }

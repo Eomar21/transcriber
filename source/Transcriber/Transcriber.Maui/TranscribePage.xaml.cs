@@ -1,5 +1,5 @@
 using Transcriber.Maui.Services;
-using Transcriber.ViewModels;
+using Transcriber.ViewModels.Transcribe;
 
 namespace Transcriber.Maui;
 
