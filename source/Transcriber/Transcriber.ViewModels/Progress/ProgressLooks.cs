@@ -8,10 +8,12 @@ namespace Transcriber.ViewModels.Progress;
 /// </summary>
 public static class ProgressLooks
 {
-    /// <summary>The runner on a plain bar. The control uses it when it has no other look.</summary>
+    /// <summary>The runner on a plain bar, with the princess who runs in front of him. They kiss at the finish line. The control uses it when it has no other look.</summary>
     public static ProgressLook Runner { get; } = new(
         Id: "runner", Sprite: "runner.png", Cell: 32, Frames: 8, FramesPerSecond: 12,
-        Fill: "#512BD4", FillDark: "#AC99EA");
+        Fill: "#512BD4", FillDark: "#AC99EA",
+        Companion: new("princess.png", Frames: 8, Lead: 42),
+        Finale: new("couple.png", Cell: 48, Frames: 6, Seconds: 1.5));
 
     /// <summary>The surfer on a wave.</summary>
     public static ProgressLook Surfer { get; } = new(

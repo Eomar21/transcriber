@@ -17,7 +17,7 @@ public sealed partial class PracticeStatusViewModel(PracticeState state, IProgre
     private int _runId;
 
     /// <summary>How long the bar stays after an analysis that finished.</summary>
-    public static TimeSpan FinishLinger { get; } = TimeSpan.FromMilliseconds(2000);
+    public static TimeSpan FinishLinger { get; } = TimeSpan.FromMilliseconds(3000);
 
     public void BeginProgress()
     {

@@ -111,6 +111,23 @@ public class ProgressLookTests
             var (width, height) = PngSize(Path.Combine(raw, look.Sprite));
             Assert.Equal(look.Cell * look.Frames, width);
             Assert.Equal(look.Cell, height);
+
+            if (look.Companion is { } companion)
+            {
+                // The strip has the run frames and one more frame: the companion standing at the finish line.
+                var (companionWidth, companionHeight) = PngSize(Path.Combine(raw, companion.Sprite));
+                Assert.Equal(look.Cell * (companion.Frames + 1), companionWidth);
+                Assert.Equal(look.Cell, companionHeight);
+                Assert.True(companion.Lead > 0, look.Id);
+            }
+
+            if (look.Finale is { } finale)
+            {
+                var (finaleWidth, finaleHeight) = PngSize(Path.Combine(raw, finale.Sprite));
+                Assert.Equal(finale.Cell * finale.Frames, finaleWidth);
+                Assert.Equal(finale.Cell, finaleHeight);
+                Assert.True(finale.Seconds > 0 && finale.Seconds < RunStatusViewModel.FinishLinger.TotalSeconds, look.Id);
+            }
         }
     }
 

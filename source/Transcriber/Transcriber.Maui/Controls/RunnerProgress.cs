@@ -17,6 +17,9 @@ public sealed class RunnerProgress : ContentView
     private const int SparkCell = 48, SparkFrames = 6;
     private const double SparkSeconds = 0.7;
     private const string SparkSprite = "spark.png";
+    private const double ApproachSeconds = 0.4;       // the second character walks the last steps to the first
+    private const int KissDistance = 17;                      // pixels of the finale picture between the two characters
+    private const float KissCellOffset = 17.5f;               // pixels from the left edge of the finale picture to the main character
 
     public static readonly BindableProperty ProgressProperty = BindableProperty.Create(
         nameof(Progress), typeof(double), typeof(RunnerProgress), 0.0,
@@ -45,6 +48,7 @@ public sealed class RunnerProgress : ContentView
     private double _shown;               // where the runner is now, from 0 to 1. It follows Progress smoothly.
     private double _lastTick;
     private double? _sparkStart;         // seconds on the clock when the burst began
+    private double? _approachStart;      // seconds on the clock when the characters reached the end of the bar
     private bool _finished;
 
     public RunnerProgress()
@@ -71,7 +75,7 @@ public sealed class RunnerProgress : ContentView
 
     private bool Running => Handler is not null && IsVisible && _animate && !(_finished && SparkIsOver);
 
-    private bool SparkIsOver => _sparkStart is { } start && _clock.Elapsed.TotalSeconds - start > SparkSeconds;
+    private bool SparkIsOver => _sparkStart is { } start && _clock.Elapsed.TotalSeconds - start > Math.Max(SparkSeconds, (Look ?? ProgressLooks.Runner).Finale?.Seconds ?? 0) + 0.2;
 
     private void OnProgressChanged()
     {
@@ -81,6 +85,7 @@ public sealed class RunnerProgress : ContentView
             // A new run starts from the beginning.
             _shown = 0;
             _sparkStart = null;
+            _approachStart = null;
             _finished = false;
         }
         SemanticProperties.SetDescription(this, $"Progress {(int)Math.Round(progress * 100)} percent");
@@ -131,6 +136,12 @@ public sealed class RunnerProgress : ContentView
         {
             _shown = 1;
             _finished = true;
+            // With a finale, the second character waits and the first one runs the last steps. Then the finale starts.
+            if ((Look ?? ProgressLooks.Runner).Finale is null) _sparkStart = now;
+            else _approachStart = now;
+        }
+        else if (_approachStart is { } approach && _sparkStart is null && now - approach >= ApproachSeconds)
+        {
             _sparkStart = now;
         }
 
@@ -173,7 +184,13 @@ public sealed class RunnerProgress : ContentView
 
         // Whole-number scaling keeps the pixels square. The character stands on the bar, or on the wave.
         var scale = Math.Max(1, (int)Math.Round(density * 1.6));
-        var x = left + shown * trackWidth;
+        // With a companion, the companion runs in front. Both reach the end of the bar, the companion first.
+        var companion = look.Companion;
+        var lead = companion is null ? 0f : (float)companion.Lead * density;
+        var x = left + shown * (trackWidth - lead);
+        var companionX = left + lead + shown * (trackWidth - lead);
+        if (companion is not null && _approachStart is { } approach)
+            x += (float)Math.Clamp((seconds - approach) / ApproachSeconds, 0, 1) * (lead - KissDistance * scale);
         var lift = 0f;
         if (look.Decoration == TrackDecoration.Wave)
         {
@@ -194,10 +211,35 @@ public sealed class RunnerProgress : ContentView
         if (!s_sprites.TryGetValue(look.Sprite, out var sprite)) return;
 
         var sampling = new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None);
-        var frame = _finished || !_animate ? 0 : (int)(_clock.Elapsed.TotalSeconds * look.FramesPerSecond) % look.Frames;
-        var box = SKRect.Create(x - look.Cell * scale / 2f, trackTop - lift - (look.Cell - 1) * scale, look.Cell * scale, look.Cell * scale);
-        canvas.DrawImage(sprite, SKRect.Create(frame * look.Cell, 0, look.Cell, look.Cell), box, sampling);
+        // At the finale, one picture of the two characters takes the place of both.
+        var finale = look.Finale;
+        var finaleSheet = finale is not null && s_sprites.TryGetValue(finale.Sprite, out var finaleImage) ? finaleImage : null;
+        var atFinale = finale is not null && finaleSheet is not null && _sparkStart is not null && _animate;
+        // The main character runs until the finish, and also while he walks the last steps to the companion.
+        var runs = _animate && (!_finished || (_approachStart is not null && _sparkStart is null));
 
+        if (!atFinale && companion is not null && s_sprites.TryGetValue(companion.Sprite, out var companionSheet))
+        {
+            var companionFrame = runs || (_animate && !_finished) ? (int)(seconds * look.FramesPerSecond) % companion.Frames : companion.Frames;
+            var companionBox = SKRect.Create(companionX - look.Cell * scale / 2f, trackTop - lift - (look.Cell - 1) * scale, look.Cell * scale, look.Cell * scale);
+            canvas.DrawImage(companionSheet, SKRect.Create(companionFrame * look.Cell, 0, look.Cell, look.Cell), companionBox, sampling);
+        }
+
+        if (atFinale)
+        {
+            var index = Math.Min(finale!.Frames - 1, (int)((seconds - _sparkStart!.Value) / (finale.Seconds / finale.Frames)));
+            var finaleBox = SKRect.Create(x - KissCellOffset * scale, trackTop - lift - (finale.Cell - 1) * scale, finale.Cell * scale, finale.Cell * scale);
+            canvas.DrawImage(finaleSheet!, SKRect.Create(index * finale.Cell, 0, finale.Cell, finale.Cell), finaleBox, sampling);
+        }
+        else
+        {
+            var frame = runs ? (int)(seconds * look.FramesPerSecond) % look.Frames : 0;
+            var box = SKRect.Create(x - look.Cell * scale / 2f, trackTop - lift - (look.Cell - 1) * scale, look.Cell * scale, look.Cell * scale);
+            canvas.DrawImage(sprite, SKRect.Create(frame * look.Cell, 0, look.Cell, look.Cell), box, sampling);
+        }
+
+        // The sparks go off at the end of the bar. With a companion, that is where the companion stands.
+        var sparkX = companion is null ? x : companionX;
         if (s_sprites.TryGetValue(SparkSprite, out var spark) && _sparkStart is { } start && _animate)
         {
             var sparkFrame = (int)((_clock.Elapsed.TotalSeconds - start) / (SparkSeconds / SparkFrames));
@@ -206,7 +248,7 @@ public sealed class RunnerProgress : ContentView
                 var size = SparkCell * scale;
                 var top = Math.Max(0, trackTop - lift - size * 0.55f);
                 canvas.DrawImage(spark, SKRect.Create(sparkFrame * SparkCell, 0, SparkCell, SparkCell),
-                    SKRect.Create(x - size / 2f + 8 * scale, top, size, size), sampling);
+                    SKRect.Create(sparkX - size / 2f + 8 * scale, top, size, size), sampling);
             }
         }
     }
@@ -455,9 +497,18 @@ public sealed class RunnerProgress : ContentView
 
     private static bool IsDark() => Application.Current?.RequestedTheme == AppTheme.Dark;
 
+    /// <summary>The sprite sheets that a look needs, and the burst.</summary>
+    private static IEnumerable<string> SpriteNames(ProgressLook look)
+    {
+        yield return look.Sprite;
+        if (look.Companion is { } companion) yield return companion.Sprite;
+        if (look.Finale is { } finale) yield return finale.Sprite;
+        yield return SparkSprite;
+    }
+
     private void EnsureSpritesLoaded()
     {
-        foreach (var name in new[] { (Look ?? ProgressLooks.Runner).Sprite, SparkSprite })
+        foreach (var name in SpriteNames(Look ?? ProgressLooks.Runner))
         {
             if (s_sprites.ContainsKey(name) || !s_loading.Add(name)) continue;
             _ = LoadAsync(name);
