@@ -7,17 +7,9 @@ namespace Transcriber.Maui
             InitializeComponent();
         }
 
-        /// <summary>The wanted size, or less when the screen is smaller. The margin leaves room for the title bar and the task bar.</summary>
-        private static double FitToScreen(double wanted, double available, double margin, double density) =>
-            (available <= 0 ? wanted : Math.Max(480, Math.Min(wanted, available - margin))) / WindowSizeScale(density);
-
-        /// <summary>The Windows window takes its size in pixels, so on a scaled screen the size in DIP must be divided by the scale. The Mac window takes points.</summary>
-        private static double WindowSizeScale(double density) =>
-#if WINDOWS
-            density > 0 ? density : 1;
-#else
-            1;
-#endif
+        /// <summary>The wanted size, or less when the screen is smaller. The margin leaves room for the title bar and the task bar. All sizes are in device-independent units.</summary>
+        private static double FitToScreen(double wanted, double available, double margin) =>
+            available <= 0 ? wanted : Math.Max(480, Math.Min(wanted, available - margin));
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
@@ -29,11 +21,20 @@ namespace Transcriber.Maui
             // A window that is taller than the screen hides its lower part, and that part cannot be reached by scrolling.
             var display = DeviceDisplay.Current.MainDisplayInfo;
 
+            var screenWidth = display.Width / display.Density;
+            var screenHeight = display.Height / display.Density;
+            var width = FitToScreen(1040, screenWidth, 40);
+            var height = FitToScreen(820, screenHeight, 120);
+
+            // The system puts a new window at an offset, and the lower part of a tall window can end below the screen.
+            // The window opens in the middle of the screen instead, a little above the centre because of the task bar.
             return new Window(new AppShell())
             {
                 Title = "Transcriber",
-                Width = FitToScreen(1040, display.Width / display.Density, 40, display.Density),
-                Height = FitToScreen(820, display.Height / display.Density, 120, display.Density),
+                Width = width,
+                Height = height,
+                X = Math.Max(0, (screenWidth - width) / 2),
+                Y = Math.Max(0, (screenHeight - height) / 2 - 24),
                 MinimumWidth = 520,
                 MinimumHeight = 480,
             };
