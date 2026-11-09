@@ -25,6 +25,8 @@ public class TranscribeViewModelTests : IDisposable
     private sealed class FakeWhisper : IWhisperService
     {
         public string? LastRuntime => "Fake";
+        public SpeechCoverage? Coverage { get; set; }
+        public SpeechCoverage? LastCoverage => Coverage;
         public Func<string, CancellationToken, Task<List<TranscriptSegment>>> Handler { get; set; } = (_, _) =>
             Task.FromResult(new List<TranscriptSegment>
             {
@@ -82,6 +84,99 @@ public class TranscribeViewModelTests : IDisposable
 
     // ---- tests -----------------------------------------------------------------------
 
+
+    // ---- languages and accuracy hints --------------------------------------------------
+
+    private static LanguageOption Pick(TranscribeViewModel vm, string code) => vm.Languages.First(l => l.Code == code);
+
+    [Fact]
+    public void Language_list_follows_the_selected_model()
+    {
+        var (vm, _, _, _, _) = Create();
+        Assert.DoesNotContain(vm.Languages, l => l.Code == "fr");
+
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.MediumQ5);
+        Assert.Contains(vm.Languages, l => l.Code == "fr");
+
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.Small);
+        Assert.DoesNotContain(vm.Languages, l => l.Code == "fr");
+    }
+
+    [Fact]
+    public void Language_choice_is_kept_when_the_new_model_still_offers_it_and_resets_when_not()
+    {
+        var (vm, _, _, _, _) = Create();
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.MediumQ5);
+        vm.SelectedLanguage = Pick(vm, "fr");
+
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.LargeV3TurboQ5);
+        Assert.Equal("fr", vm.SelectedLanguage.Code);
+
+        vm.SelectedModelOption = vm.Models.First(m => m.Model == WhisperModel.Small);
+        Assert.Equal("auto", vm.SelectedLanguage.Code);
+    }
+
+    [Fact]
+    public void Dutch_with_small_shows_advice_and_the_button_switches_to_medium()
+    {
+        var (vm, _, _, _, _) = Create();
+        Assert.False(vm.HasLanguageAdvice);
+
+        vm.SelectedLanguage = Pick(vm, "nl");
+        Assert.True(vm.HasLanguageAdvice);
+        Assert.Contains("Medium", vm.LanguageAdvice);
+        Assert.Contains("better with Medium", vm.SelectedLanguage.Label);
+
+        vm.UseSuggestedModelCommand.Execute(null);
+
+        Assert.Equal(WhisperModel.MediumQ5, vm.SelectedModel);
+        Assert.Equal("nl", vm.SelectedLanguage.Code);
+        Assert.False(vm.HasLanguageAdvice);
+    }
+
+    [Fact]
+    public async Task Result_shows_accuracy_note_for_dutch_with_small_and_clears_on_next_run()
+    {
+        var (vm, _, _, picker, _) = Create();
+        vm.SelectedLanguage = Pick(vm, "nl");
+        picker.Result = [MakeInput()];
+        await vm.BrowseCommand.ExecuteAsync(null);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+        Assert.True(vm.HasAccuracyNote);
+
+        vm.SelectedLanguage = Pick(vm, "en");
+        await vm.TranscribeCommand.ExecuteAsync(null);
+        Assert.False(vm.HasAccuracyNote);
+    }
+
+    [Fact]
+    public async Task Incomplete_transcript_shows_a_note_that_suggests_the_main_language_for_auto()
+    {
+        var (vm, _, whisper, picker, _) = Create();
+        whisper.Coverage = new SpeechCoverage(SpeechSeconds: 30, TextSeconds: 12);
+        picker.Result = [MakeInput()];
+        await vm.BrowseCommand.ExecuteAsync(null);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasCompletenessNote);
+        Assert.Contains("18 of 30 seconds", vm.CompletenessNote);
+        Assert.Contains("main language", vm.CompletenessNote);
+    }
+
+    [Fact]
+    public async Task Complete_transcript_shows_no_completeness_note()
+    {
+        var (vm, _, whisper, picker, _) = Create();
+        whisper.Coverage = new SpeechCoverage(30, 29);
+        picker.Result = [MakeInput()];
+        await vm.BrowseCommand.ExecuteAsync(null);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        Assert.False(vm.HasCompletenessNote);
+    }
     [Fact]
     public void Starts_with_sensible_defaults_and_cannot_transcribe_without_files()
     {

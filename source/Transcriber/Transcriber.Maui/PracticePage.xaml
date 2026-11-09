@@ -59,9 +59,11 @@
                     <VerticalStackLayout Spacing="4">
                         <Label Text="Language spoken" Style="{StaticResource Caption}" />
                         <Picker AutomationId="PracticeLanguagePicker" ItemsSource="{Binding Languages}"
-                                ItemDisplayBinding="{Binding Name, x:DataType=vm:LanguageOption}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=vm:LanguageOption}"
                                 SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"
                                 WidthRequest="260" HorizontalOptions="Start" />
+                        <Label AutomationId="PracticeLanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}"
+                               TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasLanguageAdvice}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>

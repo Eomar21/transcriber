@@ -64,7 +64,13 @@ public sealed partial class SegmentItem : CommunityToolkit.Mvvm.ComponentModel.O
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private bool _isActive;
 }
 
-public sealed record LanguageOption(string Code, string Name);
+/// <param name="Advice">A hint to show when this language is less accurate with the current setup, or null.</param>
+/// <param name="Tag">A short note shown in the picker next to the name, or null.</param>
+public sealed record LanguageOption(string Code, string Name, string? Advice = null, string? Tag = null)
+{
+    /// <summary>The text in the picker: the name, and the tag when there is one.</summary>
+    public string Label => Tag is null ? Name : $"{Name} - {Tag}";
+}
 
 /// <summary>How many people speak in the recording; a null count means "work it out".</summary>
 public sealed record SpeakerCountOption(string Label, int? Count);

@@ -185,7 +185,7 @@ public class PracticeViewModelTests : IDisposable
     [Fact]
     public void Only_languages_with_filler_support_are_offered()
     {
-        Assert.Equal(["en", "nl", "es"], Create().Languages.Select(l => l.Code));
+        Assert.Equal(["en", "es", "nl"], Create().Languages.Select(l => l.Code));
     }
 
     // ---- analysis ----

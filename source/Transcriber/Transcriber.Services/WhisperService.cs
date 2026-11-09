@@ -17,6 +17,8 @@ public class WhisperService : IWhisperService
     /// <summary>The native runtime that was actually loaded for the last run, e.g. "Vulkan" or "Cpu".</summary>
     public string? LastRuntime { get; private set; }
 
+    public SpeechCoverage? LastCoverage { get; private set; }
+
     public bool CanIdentifySpeakers => _speakerDiarizer is { IsAvailable: true };
 
     // Both tabs share one engine, and two runs at once would fight over the GPU and the loaded native library.
@@ -40,6 +42,7 @@ public class WhisperService : IWhisperService
         CancellationToken ct = default)
     {
         options ??= new TranscriptionOptions();
+        LastCoverage = null;
 
         // Don't download or load a model (and pin a native runtime) for a run that is already cancelled.
         ct.ThrowIfCancellationRequested();
@@ -114,6 +117,7 @@ public class WhisperService : IWhisperService
         }
 
         var cleaned = options.FilterHallucinations ? TranscriptFilter.Clean(segments) : segments;
+        LastCoverage = spans is null ? null : SpeechCoverage.Measure(spans, cleaned);
 
         // Speaker labels: who talks when is worked out from the audio, then matched to each line by time.
         if (options.IdentifySpeakers && cleaned.Count > 0 && _speakerDiarizer is { IsAvailable: true })

@@ -66,10 +66,13 @@ public sealed partial class PracticeViewModel : ObservableObject
         _recorder.Progress += OnRecordingProgress;
         DeleteOldRecordings();
 
-        // Only languages with their own filler words and a verbatim prompt are offered.
-        Languages = SupportedLanguages.All
-            .Where(l => l.Code is "en" or "nl" or "es")
-            .Select(l => new LanguageOption(l.Code, l.Name))
+        // Only languages with their own filler words and a verbatim prompt are offered, and Dutch carries a hint.
+        Languages = LanguageSupport.Practice
+            .Select(l =>
+            {
+                var advice = LanguageSupport.PracticeAdvice(l.Code);
+                return new LanguageOption(l.Code, l.Name, advice, advice is null ? null : "less accurate");
+            })
             .ToList();
         _selectedLanguage = Languages[0];
 
@@ -80,7 +83,14 @@ public sealed partial class PracticeViewModel : ObservableObject
 
     public IReadOnlyList<LanguageOption> Languages { get; }
 
-    [ObservableProperty] private LanguageOption _selectedLanguage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LanguageAdvice), nameof(HasLanguageAdvice))]
+    private LanguageOption _selectedLanguage;
+
+    /// <summary>Under the language picker: says when the chosen language is less reliable in Practice.</summary>
+    public string LanguageAdvice => SelectedLanguage?.Advice ?? string.Empty;
+
+    public bool HasLanguageAdvice => LanguageAdvice.Length > 0;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasFile))]

@@ -28,23 +28,3 @@ public record TranscriptionOptions
     public float NoSpeechThreshold { get; init; } = 0.6f;
 }
 
-/// <summary>Language choices for the UI. "auto" lets Whisper detect.</summary>
-public static class SupportedLanguages
-{
-    public static readonly IReadOnlyList<(string Code, string Name)> All =
-    [
-        ("auto", "Auto-detect"),
-        ("en", "English"),
-        ("nl", "Dutch (Nederlands)"),
-        ("ar", "Arabic (العربية)"),
-        ("es", "Spanish (Español)"),
-        ("fr", "French"),
-        ("de", "German"),
-        ("it", "Italian"),
-        ("pt", "Portuguese"),
-        ("tr", "Turkish"),
-        ("ru", "Russian"),
-        ("zh", "Chinese"),
-        ("ja", "Japanese"),
-    ];
-}

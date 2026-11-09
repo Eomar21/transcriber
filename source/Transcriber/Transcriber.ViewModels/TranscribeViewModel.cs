@@ -37,7 +37,6 @@ public partial class TranscribeViewModel : ObservableObject
         _player = player;
         _player.StateChanged += (_, _) => UpdatePlaybackState();
 
-        Languages = SupportedLanguages.All.Select(l => new LanguageOption(l.Code, l.Name)).ToList();
         Models = WhisperModel.All.Select(m => new ModelOption(m, modelManager)).ToList();
         Formats =
         [
@@ -47,19 +46,73 @@ public partial class TranscribeViewModel : ObservableObject
             new(TranscriptFormat.Json, "Data (.json)"),
         ];
 
-        _selectedLanguage = Languages[0];
         _selectedModelOption = Models.First(m => m.Model == WhisperModel.Small);
+        RebuildLanguages();
         _selectedFormat = Formats[0];
         _selectedSpeakerCount = SpeakerCounts[0];
     }
 
     // ---- Options -------------------------------------------------------------------------
 
-    public IReadOnlyList<LanguageOption> Languages { get; }
+    /// <summary>The languages offered for the selected model. The list changes when another model is selected.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<LanguageOption> Languages { get; } = [];
     public IReadOnlyList<ModelOption> Models { get; }
     public IReadOnlyList<FormatOption> Formats { get; }
 
-    [ObservableProperty] private LanguageOption _selectedLanguage;
+    private LanguageOption _selectedLanguage = null!;
+
+    public LanguageOption SelectedLanguage
+    {
+        get => _selectedLanguage;
+        // A picker briefly reports "nothing selected" while its list is rebuilt; that must not clear the choice.
+        set
+        {
+            if (value is null || !SetProperty(ref _selectedLanguage, value)) return;
+            NotifyLanguageAdvice();
+        }
+    }
+
+    /// <summary>Under the language picker: says when a bigger model would be clearly more accurate for the language.</summary>
+    public string LanguageAdvice => SelectedLanguage?.Advice ?? string.Empty;
+
+    public bool HasLanguageAdvice => LanguageAdvice.Length > 0;
+
+    private void NotifyLanguageAdvice()
+    {
+        OnPropertyChanged(nameof(LanguageAdvice));
+        OnPropertyChanged(nameof(HasLanguageAdvice));
+    }
+
+    // Keeps the language when the new model still offers it; otherwise falls back to auto-detect.
+    private void RebuildLanguages()
+    {
+        var model = SelectedModel;
+        var previous = _selectedLanguage?.Code ?? "auto";
+        var items = LanguageSupport.For(model)
+            .Select(l =>
+            {
+                var advice = LanguageSupport.Advice(l.Code, model);
+                return new LanguageOption(l.Code, l.Name, advice, advice is null ? null : "better with Medium");
+            })
+            .ToList();
+
+        Languages.Clear();
+        foreach (var item in items) Languages.Add(item);
+
+        _selectedLanguage = items.FirstOrDefault(i => i.Code == previous) ?? items[0];
+        OnPropertyChanged(nameof(SelectedLanguage));
+        NotifyLanguageAdvice();
+    }
+
+    partial void OnSelectedModelOptionChanged(ModelOption value) => RebuildLanguages();
+
+    private bool CanUseSuggestedModel() => IsIdle;
+
+    /// <summary>Switches to the model that is more accurate for the selected language.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseSuggestedModel))]
+    private void UseSuggestedModel() =>
+        SelectedModelOption = Models.First(m => m.Model == LanguageSupport.SuggestedModel);
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedModel), nameof(ModelHint), nameof(HasModelHint))]
     private ModelOption _selectedModelOption;
@@ -175,6 +228,7 @@ public partial class TranscribeViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(TranscribeCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UseSuggestedModelCommand))]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     private bool _isBusy;
 
@@ -203,12 +257,42 @@ public partial class TranscribeViewModel : ObservableObject
 
     public bool HasRuntimeNote => RuntimeNote.Length > 0;
 
+    /// <summary>Shown with a finished transcript when a bigger model would have been clearly more accurate for its language.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAccuracyNote))]
+    private string _accuracyNote = string.Empty;
+
+    public bool HasAccuracyNote => AccuracyNote.Length > 0;
+
+    /// <summary>Shown when a clear part of the speech in a recording has no text, for example when two languages are mixed.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCompletenessNote))]
+    private string _completenessNote = string.Empty;
+
+    public bool HasCompletenessNote => CompletenessNote.Length > 0;
+
+    /// <summary>The warning for recordings whose transcript misses speech, or an empty string when nothing is missing.</summary>
+    public static string CompletenessMessage(IReadOnlyList<(string Name, SpeechCoverage Coverage)> incomplete, string language)
+    {
+        if (incomplete.Count == 0) return string.Empty;
+
+        var what = incomplete.Count == 1
+            ? $"About {incomplete[0].Coverage.MissingSeconds:0} of {incomplete[0].Coverage.SpeechSeconds:0} seconds of speech has no text."
+            : $"Some speech has no text in {string.Join(", ", incomplete.Select(i => i.Name))}.";
+        var why = language == "auto"
+            ? "This can happen when a recording mixes languages. Select the main language instead of Auto-detect, or use a larger model, and transcribe again."
+            : "This can happen when the audio is unclear or contains another language. Use a larger model or a cleaner recording, and transcribe again.";
+        return $"Some speech may be missing. {what} {why}";
+    }
+
     private void ClearResult()
     {
         DropMessage = string.Empty;
         ResultMessage = string.Empty;
         ResultDetail = string.Empty;
         RuntimeNote = string.Empty;
+        AccuracyNote = string.Empty;
+        CompletenessNote = string.Empty;
         ResultKind = ResultKind.None;
         ClearSavedFiles();
     }
@@ -347,6 +431,7 @@ public partial class TranscribeViewModel : ObservableObject
         var files = SelectedFiles;
         var rows = new List<SegmentItem>();
         var saved = new List<string>();
+        var incomplete = new List<(string Name, SpeechCoverage Coverage)>();
         var newPlayback = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         IsBusy = true;
@@ -372,6 +457,7 @@ public partial class TranscribeViewModel : ObservableObject
                 {
                     var segments = await _whisper.TranscribeAsync(audioPath, options, progress, ct);
                     saved.Add(await TranscriptExporter.WriteAsync(segments, file, SelectedFormat.Format));
+                    if (_whisper.LastCoverage is { LooksIncomplete: true } coverage) incomplete.Add((Path.GetFileName(file), coverage));
 
                     var source = files.Count > 1 ? Path.GetFileName(file) : string.Empty;
                     rows.AddRange(segments.Select(s => new SegmentItem(s.Start, s.End, s.Text.Trim(), source, file, s.Speaker)));
@@ -397,6 +483,8 @@ public partial class TranscribeViewModel : ObservableObject
             SetSavedFiles(saved);
             ResultDetail = saved.Count == 1 ? saved[0] : Path.GetDirectoryName(saved[0]) ?? string.Empty;
             RuntimeNote = _whisper.LastRuntime is { } r ? $"Processed with {r}" : string.Empty;
+            AccuracyNote = LanguageSupport.ResultNote(options.Language, options.Model) ?? string.Empty;
+            CompletenessNote = CompletenessMessage(incomplete, options.Language);
             SetResult(ResultKind.Success, saved.Count == 1
                 ? "Transcript saved"
                 : $"{saved.Count} transcripts saved next to the source files");
