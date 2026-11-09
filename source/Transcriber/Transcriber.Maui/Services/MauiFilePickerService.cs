@@ -23,4 +23,11 @@ public class MauiFilePickerService : IFilePickerService
 
         return result?.Select(f => f.FullPath).ToList() ?? [];
     }
+
+    /// <summary>No type filter: for a file whose extension the app does not list. ffmpeg decides whether it can be read.</summary>
+    public async Task<IReadOnlyList<string>> PickAnyFilesAsync()
+    {
+        var result = await FilePicker.Default.PickMultipleAsync(new PickOptions { PickerTitle = "Select any file" });
+        return result?.Select(f => f.FullPath).ToList() ?? [];
+    }
 }

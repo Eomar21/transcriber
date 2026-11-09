@@ -194,7 +194,7 @@ public partial class TranscribeViewModel : ObservableObject
         if (supported.Count == 0)
         {
             if (dropped.Count > 0)
-                DropMessage = "Those files can't be transcribed. Try mp3, wav, m4a, mp4, mov or another common audio or video file.";
+                DropMessage = "Those files can't be transcribed. Try mp3, wav, m4a, mp4, mov or another common audio or video file. To try a file with another extension, use Any file type.";
             return 0;
         }
 
@@ -210,6 +210,18 @@ public partial class TranscribeViewModel : ObservableObject
     {
         if (IsBusy) return;
         var picked = await _filePicker.PickMediaFilesAsync();
+        if (picked.Count == 0) return;
+
+        SelectedFiles = picked;
+        ClearResult();
+    }
+
+    /// <summary>For a file whose extension is not in the list. The file is tried, and a clear message shows if it cannot be read.</summary>
+    [RelayCommand]
+    private async Task BrowseAnyAsync()
+    {
+        if (IsBusy) return;
+        var picked = await _filePicker.PickAnyFilesAsync();
         if (picked.Count == 0) return;
 
         SelectedFiles = picked;
@@ -271,6 +283,17 @@ public partial class TranscribeViewModel : ObservableObject
 
     public bool HasCompletenessNote => CompletenessNote.Length > 0;
 
+    /// <summary>Lists the files that could not be read, each with the reason, when other files in the run were transcribed.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasFailureNote))]
+    private string _failureNote = string.Empty;
+
+    public bool HasFailureNote => FailureNote.Length > 0;
+
+    /// <summary>One line for each file that could not be read: its name and why.</summary>
+    public static string FailureMessage(IReadOnlyList<(string Name, string Reason)> failed) =>
+        string.Join(Environment.NewLine, failed.Select(f => $"{f.Name}: {f.Reason}"));
+
     /// <summary>The warning for recordings whose transcript misses speech, or an empty string when nothing is missing.</summary>
     public static string CompletenessMessage(IReadOnlyList<(string Name, SpeechCoverage Coverage)> incomplete, string language)
     {
@@ -293,6 +316,7 @@ public partial class TranscribeViewModel : ObservableObject
         RuntimeNote = string.Empty;
         AccuracyNote = string.Empty;
         CompletenessNote = string.Empty;
+        FailureNote = string.Empty;
         ResultKind = ResultKind.None;
         ClearSavedFiles();
     }
@@ -432,6 +456,7 @@ public partial class TranscribeViewModel : ObservableObject
         var rows = new List<SegmentItem>();
         var saved = new List<string>();
         var incomplete = new List<(string Name, SpeechCoverage Coverage)>();
+        var failed = new List<(string Name, string Reason)>();
         var newPlayback = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         IsBusy = true;
@@ -451,7 +476,17 @@ public partial class TranscribeViewModel : ObservableObject
                 });
 
                 StatusText = prefix + "Preparing audio";
-                var audioPath = await _fileReader.GetAudioFileFromFileAsync(file);
+                string audioPath;
+                try
+                {
+                    audioPath = await _fileReader.GetAudioFileFromFileAsync(file);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // One file that cannot be read must not stop the others. It is reported when the run ends.
+                    failed.Add((Path.GetFileName(file), ex.Message));
+                    continue;
+                }
                 var keepForPlayback = false;
                 try
                 {
@@ -474,12 +509,26 @@ public partial class TranscribeViewModel : ObservableObject
                 }
             }
 
+            if (saved.Count == 0)
+            {
+                // Nothing could be read. A single file gets its reason as the headline; several files get one line each.
+                if (failed.Count == 1) SetResult(ResultKind.Error, "Failed: " + failed[0].Reason);
+                else
+                {
+                    FailureNote = FailureMessage(failed);
+                    SetResult(ResultKind.Error, $"Failed: none of the {failed.Count} files could be read");
+                }
+                return;
+            }
+
             _playbackFiles = newPlayback;
             newPlayback = [];
             _allSegments = rows;
             SearchText = string.Empty;
             RefreshVisibleSegments();
 
+            FailureNote = failed.Count == 0 ? string.Empty
+                : $"{failed.Count} of {files.Count} files were skipped.{Environment.NewLine}{FailureMessage(failed)}";
             SetSavedFiles(saved);
             ResultDetail = saved.Count == 1 ? saved[0] : Path.GetDirectoryName(saved[0]) ?? string.Empty;
             RuntimeNote = _whisper.LastRuntime is { } r ? $"Processed with {r}" : string.Empty;

@@ -5,6 +5,9 @@ public interface IFilePickerService
 {
     /// <returns>Full paths of the chosen files, or an empty list if the user cancelled.</returns>
     Task<IReadOnlyList<string>> PickMediaFilesAsync();
+
+    /// <summary>Like <see cref="PickMediaFilesAsync"/>, but the dialog shows files of every type.</summary>
+    Task<IReadOnlyList<string>> PickAnyFilesAsync() => PickMediaFilesAsync();
 }
 
 /// <summary>Clipboard access, abstracted so view models never touch platform APIs.</summary>

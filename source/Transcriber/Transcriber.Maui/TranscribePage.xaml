@@ -38,6 +38,10 @@
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
+                        <Button AutomationId="AnyFileButton" Text="Any file type" Command="{Binding BrowseAnyCommand}" IsEnabled="{Binding IsIdle}"
+                                BackgroundColor="Transparent" TextColor="{StaticResource Primary}" FontSize="13" Padding="0" MinimumHeightRequest="0"
+                                HorizontalOptions="Start" SemanticProperties.Description="Choose a file of any type. The app tries to read it."
+                                ToolTipProperties.Text="Show files of every type. The app tries to read the file you choose." />
                         <Label AutomationId="DropMessage" Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
                                FontSize="13" IsVisible="{Binding HasDropMessage}" />
                     </VerticalStackLayout>
@@ -143,6 +147,10 @@
                 <Label AutomationId="ResultDetail" Text="{Binding ResultDetail}" Style="{StaticResource Caption}" LineBreakMode="MiddleTruncation"
                        ToolTipProperties.Text="{Binding ResultDetail}" IsVisible="{Binding HasResultDetail}" />
                 <Label Text="{Binding RuntimeNote}" Style="{StaticResource Caption}" IsVisible="{Binding HasRuntimeNote}" />
+
+                <!-- Files that could not be read, with the reason for each. Shown next to the result of the files that did work. -->
+                <Label AutomationId="FailureNote" Text="{Binding FailureNote, StringFormat='&#x26A0;  {0}'}" Style="{StaticResource Caption}"
+                       TextColor="{StaticResource ErrorColor}" IsVisible="{Binding HasFailureNote}" />
 
                 <!-- Next to the result, where the user is looking after a run: only shown when there is something to check. -->
                 <Label AutomationId="CompletenessNote" Text="{Binding CompletenessNote}" Style="{StaticResource Caption}"

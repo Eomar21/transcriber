@@ -14,6 +14,9 @@ public class TranscribeViewModelTests : IDisposable
 
         public Task<string> GetAudioFileFromFileAsync(string filePath)
         {
+            if (Path.GetFileName(filePath).StartsWith("bad", StringComparison.Ordinal))
+                throw new InvalidOperationException("This file could not be read. It may be damaged, or it may not be an audio or video file.");
+
             // Mimic a conversion that produces a temp wav.
             var temp = Path.Combine(Path.GetDirectoryName(filePath)!, Guid.NewGuid().ToString("N") + ".wav");
             File.WriteAllText(temp, "wav");
@@ -244,6 +247,82 @@ public class TranscribeViewModelTests : IDisposable
         Assert.False(vm.IsBusy);
         Assert.All(reader.TempFiles, t => Assert.True(File.Exists(t), "kept so a clicked line can play it"));
         Assert.True(File.Exists(input), "the user's own input file must never be deleted");
+    }
+
+    // ---- files that cannot be read -----------------------------------------------------------
+
+    private const string Unreadable = "This file could not be read. It may be damaged, or it may not be an audio or video file.";
+
+    [Fact]
+    public async Task A_single_unreadable_file_shows_its_reason_as_the_failure()
+    {
+        var (vm, _, _, picker, _) = Create();
+        picker.Result = [MakeInput("bad.xyz")];
+        await vm.BrowseAnyCommand.ExecuteAsync(null);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        Assert.Equal(ResultKind.Error, vm.ResultKind);
+        Assert.Equal("Failed: " + Unreadable, vm.ResultMessage);
+        Assert.False(vm.HasFailureNote);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public async Task One_unreadable_file_does_not_stop_the_others()
+    {
+        var (vm, _, _, _, _) = Create();
+        vm.AddFiles([MakeInput("one.mp3"), MakeInput("bad.mp3"), MakeInput("two.mp3")]);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        Assert.Equal(ResultKind.Success, vm.ResultKind);
+        Assert.Equal("2 transcripts saved next to the source files", vm.ResultMessage);
+        Assert.True(File.Exists(Path.Combine(_dir, "one_transcript.txt")));
+        Assert.True(File.Exists(Path.Combine(_dir, "two_transcript.txt")));
+        Assert.False(File.Exists(Path.Combine(_dir, "bad_transcript.txt")));
+        Assert.True(vm.HasFailureNote);
+        Assert.Contains("1 of 3 files were skipped.", vm.FailureNote);
+        Assert.Contains("bad.mp3: " + Unreadable, vm.FailureNote);
+    }
+
+    [Fact]
+    public async Task When_no_file_can_be_read_each_one_is_listed_with_its_reason()
+    {
+        var (vm, _, _, _, _) = Create();
+        vm.AddFiles([MakeInput("bad1.mp3"), MakeInput("bad2.mp3")]);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        Assert.Equal(ResultKind.Error, vm.ResultKind);
+        Assert.Equal("Failed: none of the 2 files could be read", vm.ResultMessage);
+        Assert.Contains("bad1.mp3: " + Unreadable, vm.FailureNote);
+        Assert.Contains("bad2.mp3: " + Unreadable, vm.FailureNote);
+        Assert.False(vm.HasResults);
+    }
+
+    [Fact]
+    public async Task The_failure_note_is_cleared_for_the_next_run()
+    {
+        var (vm, _, _, _, _) = Create();
+        vm.AddFiles([MakeInput("one.mp3"), MakeInput("bad.mp3")]);
+        await vm.TranscribeCommand.ExecuteAsync(null);
+        Assert.True(vm.HasFailureNote);
+
+        vm.ClearFilesCommand.Execute(null);
+
+        Assert.False(vm.HasFailureNote);
+    }
+
+    [Fact]
+    public async Task Choosing_any_file_type_replaces_the_list_with_the_chosen_files()
+    {
+        var (vm, _, _, picker, _) = Create();
+        picker.Result = [MakeInput("voice.xyz")];
+
+        await vm.BrowseAnyCommand.ExecuteAsync(null);
+
+        Assert.Equal(["voice.xyz"], vm.SelectedFiles.Select(Path.GetFileName));
     }
 
     [Fact]
