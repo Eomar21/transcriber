@@ -1,4 +1,3 @@
-using Transcriber.Coach;
 using Transcriber.ViewModels;
 
 public class LanguageSupportTests
@@ -49,8 +48,14 @@ public class LanguageSupportTests
     public void Practice_languages_all_have_filler_words_and_a_prompt()
     {
         foreach (var l in LanguageSupport.Practice)
-            Assert.NotEmpty(FillerLexicon.For(l.Code));
-        Assert.Equal(["en", "es", "nl"], LanguageSupport.Practice.Select(l => l.Code));
+        {
+            var profile = CoachFixture.Profiles.Find(l.Code);
+            Assert.NotNull(profile);
+            Assert.NotEmpty(profile.Fillers);
+            Assert.False(string.IsNullOrWhiteSpace(profile.VerbatimPrompt), $"{l.Code} needs a verbatim prompt");
+        }
+        // Practice runs the Small model, so it offers what the Small model offers.
+        Assert.Equal(["en", "es", "pt", "it", "de", "nl"], LanguageSupport.Practice.Select(l => l.Code));
         Assert.NotNull(LanguageSupport.PracticeAdvice("nl"));
         Assert.Null(LanguageSupport.PracticeAdvice("en"));
     }

@@ -1,4 +1,5 @@
-using Transcriber.Coach;
+using Transcriber.Coach.History;
+using Transcriber.Coach.Models;
 
 /// <summary>Practice sessions saved to a JSON file and read back.</summary>
 public class PracticeHistoryTests : IDisposable

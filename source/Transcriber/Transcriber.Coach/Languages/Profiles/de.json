@@ -1,0 +1,7 @@
+{
+  "code": "de",
+  "fillers": ["äh", "ähm", "öhm", "hm", "halt", "eigentlich", "sozusagen", "quasi", "irgendwie", "weißt du", "na ja"],
+  "setApartFillers": ["also", "ne"],
+  "emphasisRepeats": ["sehr", "ja", "nein"],
+  "verbatimPrompt": "Ähm, also, lass mich überlegen, sozusagen... Okay, das ist, ähm, was ich denke. Ich ich glaube, dass es, äh, funktioniert."
+}

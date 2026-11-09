@@ -133,7 +133,10 @@ public class TranscriptionTests(ITestOutputHelper output)
                 new FileReaderService(new AudioService(), new VideoReaderService()),
                 new CpuOnly(whisper),
                 new NoPicker(),
-                new Transcriber.Coach.JsonPracticeHistory(historyFile),
+                new Transcriber.Coach.History.JsonPracticeHistory(historyFile),
+                CoachFixture.Analyzer,
+                CoachFixture.Advisor,
+                CoachFixture.VerbatimPrompts,
                 new NoFeedback(),
                 new NoRecorder());
             vm.SetFile(sample);
@@ -177,11 +180,11 @@ public class TranscriptionTests(ITestOutputHelper output)
         public void Stop() { }
     }
 
-    private sealed class NoFeedback : Transcriber.Coach.ICoachFeedback
+    private sealed class NoFeedback : Transcriber.Coach.Interfaces.ICoachFeedback
     {
         public Task<IReadOnlyList<string>> ListModelsAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<string>>([]);
 
-        public Task<string> GetFeedbackAsync(string model, string transcript, Transcriber.Coach.SpeechReport report, CancellationToken ct = default) =>
+        public Task<string> GetFeedbackAsync(string model, string transcript, Transcriber.Coach.Models.SpeechReport report, CancellationToken ct = default) =>
             throw new NotSupportedException();
     }
 

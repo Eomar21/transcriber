@@ -1,0 +1,7 @@
+{
+  "code": "nl",
+  "fillers": ["eh", "ehm", "uhm", "uh", "zeg maar", "eigenlijk", "gewoon", "nou", "weet je"],
+  "setApartFillers": [],
+  "emphasisRepeats": ["ja", "nee"],
+  "verbatimPrompt": "Eh, ehm, nou, laat me denken, zeg maar, eh... Oké, dit is wat ik, uhm, denk. Ik ik denk dat het, eh, werkt."
+}

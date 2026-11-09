@@ -5,6 +5,15 @@
     <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- The language profiles are data files that are built into the assembly. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Languages\Profiles\*.json" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

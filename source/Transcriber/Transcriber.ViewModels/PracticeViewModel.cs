@@ -1,7 +1,9 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Transcriber.Coach;
+using Transcriber.Coach.Exceptions;
+using Transcriber.Coach.Interfaces;
+using Transcriber.Coach.Models;
 
 namespace Transcriber.ViewModels;
 
@@ -27,6 +29,9 @@ public sealed partial class PracticeViewModel : ObservableObject
     private readonly IWhisperService _whisper;
     private readonly IFilePickerService _filePicker;
     private readonly IPracticeHistory _history;
+    private readonly ISpeechAnalyzer _analyzer;
+    private readonly ICoachAdvisor _advisor;
+    private readonly IVerbatimPromptProvider _verbatimPrompts;
     private readonly ICoachFeedback _feedback;
     private readonly IAudioRecorder _recorder;
     private readonly Func<DateTimeOffset> _now;
@@ -50,6 +55,9 @@ public sealed partial class PracticeViewModel : ObservableObject
         IWhisperService whisper,
         IFilePickerService filePicker,
         IPracticeHistory history,
+        ISpeechAnalyzer analyzer,
+        ICoachAdvisor advisor,
+        IVerbatimPromptProvider verbatimPrompts,
         ICoachFeedback feedback,
         IAudioRecorder recorder,
         Func<DateTimeOffset>? now = null,
@@ -59,6 +67,9 @@ public sealed partial class PracticeViewModel : ObservableObject
         _whisper = whisper;
         _filePicker = filePicker;
         _history = history;
+        _analyzer = analyzer;
+        _advisor = advisor;
+        _verbatimPrompts = verbatimPrompts;
         _feedback = feedback;
         _recorder = recorder;
         _now = now ?? (() => DateTimeOffset.Now);
@@ -66,7 +77,7 @@ public sealed partial class PracticeViewModel : ObservableObject
         _recorder.Progress += OnRecordingProgress;
         DeleteOldRecordings();
 
-        // Only languages with their own filler words and a verbatim prompt are offered, and Dutch carries a hint.
+        // Practice runs the Small model, so it offers the languages that model handles well. Dutch carries a hint.
         Languages = LanguageSupport.Practice
             .Select(l =>
             {
@@ -297,20 +308,20 @@ public sealed partial class PracticeViewModel : ObservableObject
                 Language = language,
                 Model = WhisperModel.Small,
                 // Without this Whisper tidies away the very um's and stutters being measured.
-                Prompt = VerbatimPrompt.For(language),
+                Prompt = _verbatimPrompts.For(language),
             }, progress, ct);
 
-            _report = SpeechAnalyzer.Analyze(segments, language);
+            _report = _analyzer.Analyze(segments, language);
             _transcript = string.Join(" ", segments.Select(s => s.Text.Trim()));
             OnPropertyChanged(nameof(Transcript));
 
             var previous = _history.Load().LastOrDefault(s => s.Language == language)?.Report;
             Metrics = BuildMetrics(_report);
-            Tips = CoachTips.From(_report, previous).Select(t => new TipItem(t.Kind, t.Title, t.Detail)).ToList();
+            Tips = _advisor.Advise(_report, previous).Select(t => new TipItem(t.Kind, t.Title, t.Detail)).ToList();
             HasResult = true;
 
             // Runs too short to judge would only distort the progress shown over time.
-            if (_report.WordCount >= CoachTips.MinimumWords)
+            if (_report.WordCount >= _advisor.MinimumWords)
             {
                 _history.Add(new PracticeSession(Guid.NewGuid(), _now(), FileName, language, _report));
                 ReloadHistory();

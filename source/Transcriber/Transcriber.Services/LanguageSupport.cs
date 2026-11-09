@@ -77,18 +77,13 @@ public static class LanguageSupport
     // ---- Practice ----
 
     /// <summary>
-    /// Practice always runs the bundled Small model and needs a filler word list and a prompt that keeps fillers, so only
-    /// these languages are offered.
+    /// Practice always runs the bundled Small model, so it offers the languages that model handles well. Each of these
+    /// needs a language profile in the coach (filler words and a verbatim prompt). A test keeps the two in step.
     /// </summary>
-    public static readonly IReadOnlyList<LanguageInfo> Practice =
-    [
-        new("en", "English", ModelTier.Small),
-        new("es", "Spanish (Español)", ModelTier.Small),
-        new("nl", "Dutch (Nederlands)", ModelTier.Small, AdvisedUntil: ModelTier.Large),
-    ];
+    public static readonly IReadOnlyList<LanguageInfo> Practice = [.. All.Where(l => l.ConfidentFrom <= ModelTier.Small)];
 
     /// <summary>The hint under the Practice language picker, or null when the language is reliable.</summary>
     public static string? PracticeAdvice(string? code) => code == "nl"
-        ? "Practice uses the built-in Small model. Dutch is less accurate with it, so counts of filler words and pauses can be off. English and Spanish are the most reliable."
+        ? "Practice uses the built-in Small model. Dutch is less accurate with it, so counts of filler words and pauses can be off. English, Spanish, Portuguese, Italian and German are the most reliable."
         : null;
 }

@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
-using Transcriber.Coach;
+using Transcriber.Coach.Exceptions;
+using Transcriber.Coach.Feedback;
+using Transcriber.Coach.Models;
 
 /// <summary>The optional local Ollama feedback, tested against a stand-in server.</summary>
 public class OllamaCoachTests
@@ -25,7 +27,7 @@ public class OllamaCoachTests
         Fillers = [new FillerCount("um", 5)],
     };
 
-    private static OllamaCoach Coach(Handler handler) => new(new HttpClient(handler));
+    private static OllamaCoach Coach(Handler handler) => new(new HttpClient(handler), new OllamaPromptBuilder());
 
     [Fact]
     public async Task Installed_models_are_listed()
@@ -94,7 +96,7 @@ public class OllamaCoachTests
     [Fact]
     public void The_prompt_carries_the_measurements_and_the_transcript()
     {
-        var prompt = OllamaCoach.BuildPrompt("Um, hello there.", Report);
+        var prompt = new OllamaPromptBuilder().Build("Um, hello there.", Report);
 
         Assert.Contains("150 words per minute", prompt);
         Assert.Contains("\"um\" x5", prompt);
@@ -107,7 +109,7 @@ public class OllamaCoachTests
     {
         var handler = new Handler(_ => Json("""{"models":[]}"""));
 
-        new OllamaCoach(new HttpClient(handler), "http://example.test:9999/").ListModelsAsync().GetAwaiter().GetResult();
+        new OllamaCoach(new HttpClient(handler), new OllamaPromptBuilder(), new OllamaOptions { BaseAddress = "http://example.test:9999/" }).ListModelsAsync().GetAwaiter().GetResult();
 
         Assert.Equal("http://example.test:9999/api/tags", handler.Requests[0].Url);
     }

@@ -1,0 +1,7 @@
+{
+  "code": "pt",
+  "fillers": ["hum", "hã", "éh", "né", "ou seja", "quer dizer", "sabe", "tipo assim", "digamos"],
+  "setApartFillers": ["tipo", "então", "assim"],
+  "emphasisRepeats": ["muito", "não", "sim"],
+  "verbatimPrompt": "Hum, deixa eu pensar, tipo... é, hã... Ok, é isso que eu, né, acho. Eu eu acho que, éh, funciona."
+}

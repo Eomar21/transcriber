@@ -1,4 +1,4 @@
-using Transcriber.Coach;
+using Transcriber.Coach.Models;
 
 /// <summary>The plain-language advice drawn from a report.</summary>
 public class CoachTipsTests
@@ -17,10 +17,25 @@ public class CoachTipsTests
 
     private static Tip Find(IReadOnlyList<Tip> tips, string titleStart) => tips.Single(t => t.Title.StartsWith(titleStart));
 
+    private sealed class FixedRule(string title) : Transcriber.Coach.Interfaces.IAdviceRule
+    {
+        public IEnumerable<Tip> Evaluate(SpeechReport report, SpeechReport? previous) => [new Tip(TipKind.Info, title, "")];
+    }
+
+    [Fact]
+    public void A_new_kind_of_advice_is_a_new_rule_and_the_order_of_the_rules_is_the_order_of_the_tips()
+    {
+        var advisor = new Transcriber.Coach.Advice.CoachAdvisor([new FixedRule("first"), new FixedRule("second")]);
+
+        var tips = advisor.Advise(Report());
+
+        Assert.Equal(["first", "second"], tips.Select(t => t.Title));
+    }
+
     [Fact]
     public void A_very_short_recording_is_not_judged()
     {
-        var tips = CoachTips.From(Report(words: 10));
+        var tips = CoachFixture.Advisor.Advise(Report(words: 10));
 
         var tip = Assert.Single(tips);
         Assert.Equal(TipKind.Info, tip.Kind);
@@ -35,7 +50,7 @@ public class CoachTipsTests
     [InlineData(210, TipKind.Improve, "Pace is fast")]
     public void Pace_advice_follows_the_words_per_minute(double wpm, TipKind kind, string title)
     {
-        var tip = CoachTips.From(Report(wpm: wpm))[0]; // pace is always the first tip
+        var tip = CoachFixture.Advisor.Advise(Report(wpm: wpm))[0]; // pace is always the first tip
 
         Assert.Equal(kind, tip.Kind);
         Assert.Equal(title, tip.Title);
@@ -48,7 +63,7 @@ public class CoachTipsTests
     [InlineData(20, TipKind.Improve)] // 10 per 100
     public void Filler_advice_follows_the_rate(int fillers, TipKind kind)
     {
-        var tip = Find(CoachTips.From(Report(fillers: fillers)), fillers == 0 || kind == TipKind.Good ? "Few filler" : kind == TipKind.Info ? "Some filler" : "Many filler");
+        var tip = Find(CoachFixture.Advisor.Advise(Report(fillers: fillers)), fillers == 0 || kind == TipKind.Good ? "Few filler" : kind == TipKind.Info ? "Some filler" : "Many filler");
 
         Assert.Equal(kind, tip.Kind);
     }
@@ -58,7 +73,7 @@ public class CoachTipsTests
     {
         var report = Report(fillers: 20) with { Fillers = [new FillerCount("um", 12), new FillerCount("you know", 8)] };
 
-        var tip = Find(CoachTips.From(report), "Many filler");
+        var tip = Find(CoachFixture.Advisor.Advise(report), "Many filler");
 
         Assert.Contains("\"um\" (12)", tip.Detail);
         Assert.Contains("\"you know\" (8)", tip.Detail);
@@ -67,9 +82,9 @@ public class CoachTipsTests
     [Fact]
     public void No_pauses_is_worth_a_note_and_too_many_is_hesitation()
     {
-        Assert.Equal(TipKind.Info, Find(CoachTips.From(Report(pauses: 0)), "No clear pauses").Kind);
-        Assert.Equal(TipKind.Improve, Find(CoachTips.From(Report(pauses: 15)), "Lots of hesitation").Kind);
-        Assert.Equal(TipKind.Good, Find(CoachTips.From(Report(pauses: 3)), "Pauses used well").Kind);
+        Assert.Equal(TipKind.Info, Find(CoachFixture.Advisor.Advise(Report(pauses: 0)), "No clear pauses").Kind);
+        Assert.Equal(TipKind.Improve, Find(CoachFixture.Advisor.Advise(Report(pauses: 15)), "Lots of hesitation").Kind);
+        Assert.Equal(TipKind.Good, Find(CoachFixture.Advisor.Advise(Report(pauses: 3)), "Pauses used well").Kind);
     }
 
     [Fact]
@@ -77,7 +92,7 @@ public class CoachTipsTests
     {
         var report = Report(pauses: 1) with { Pauses = [new PauseInfo(TimeSpan.Zero, TimeSpan.FromSeconds(4.5))] };
 
-        Assert.Contains("4.5 seconds", Find(CoachTips.From(report), "Pauses used well").Detail);
+        Assert.Contains("4.5 seconds", Find(CoachFixture.Advisor.Advise(report), "Pauses used well").Detail);
     }
 
     [Theory]
@@ -86,7 +101,7 @@ public class CoachTipsTests
     [InlineData(5, TipKind.Improve)]
     public void Stumbles_are_graded_by_how_many(int repeats, TipKind kind)
     {
-        var tips = CoachTips.From(Report(repeats: repeats));
+        var tips = CoachFixture.Advisor.Advise(Report(repeats: repeats));
 
         Assert.Equal(kind, tips.Single(t => t.Title is "Smooth delivery" or "A few stumbles" or "Repeated words").Kind);
     }
@@ -98,8 +113,8 @@ public class CoachTipsTests
         var better = Report(fillers: 4);
         var worse = Report(fillers: 24);
 
-        Assert.Equal(TipKind.Good, Find(CoachTips.From(better, before), "Fewer fillers").Kind);
-        Assert.Equal(TipKind.Improve, Find(CoachTips.From(worse, better), "More fillers").Kind);
+        Assert.Equal(TipKind.Good, Find(CoachFixture.Advisor.Advise(better, before), "Fewer fillers").Kind);
+        Assert.Equal(TipKind.Improve, Find(CoachFixture.Advisor.Advise(worse, better), "More fillers").Kind);
     }
 
     [Fact]
@@ -108,15 +123,15 @@ public class CoachTipsTests
         var a = Report(fillers: 10);
         var b = Report(fillers: 11);
 
-        Assert.DoesNotContain(CoachTips.From(b, a), t => t.Title.Contains("than last time"));
-        Assert.DoesNotContain(CoachTips.From(a, null), t => t.Title.Contains("than last time"));
-        Assert.DoesNotContain(CoachTips.From(a, Report(words: 5, fillers: 5)), t => t.Title.Contains("than last time"));
+        Assert.DoesNotContain(CoachFixture.Advisor.Advise(b, a), t => t.Title.Contains("than last time"));
+        Assert.DoesNotContain(CoachFixture.Advisor.Advise(a, null), t => t.Title.Contains("than last time"));
+        Assert.DoesNotContain(CoachFixture.Advisor.Advise(a, Report(words: 5, fillers: 5)), t => t.Title.Contains("than last time"));
     }
 
     [Fact]
     public void Pace_moving_toward_the_comfortable_range_is_celebrated()
     {
-        var tips = CoachTips.From(Report(wpm: 135), Report(wpm: 190));
+        var tips = CoachFixture.Advisor.Advise(Report(wpm: 135), Report(wpm: 190));
 
         Assert.Contains(tips, t => t.Title.StartsWith("Pace moved"));
     }

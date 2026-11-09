@@ -1,0 +1,7 @@
+{
+  "code": "en",
+  "fillers": ["um", "umm", "uh", "uhh", "er", "erm", "ah", "hmm", "you know", "i mean", "sort of", "kind of", "basically", "literally", "actually"],
+  "setApartFillers": ["like"],
+  "emphasisRepeats": ["very", "really", "so", "no", "bye", "many", "yes", "well"],
+  "verbatimPrompt": "Umm, let me think like, hmm... Okay, here's what I'm, like, thinking. I I think that, uh, it's w-working."
+}

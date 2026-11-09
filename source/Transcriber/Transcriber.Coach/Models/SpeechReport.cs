@@ -1,12 +1,4 @@
-namespace Transcriber.Coach;
-
-/// <summary>A silence between two lines of speech.</summary>
-public sealed record PauseInfo(TimeSpan Start, TimeSpan Length);
-
-public sealed record FillerCount(string Filler, int Count);
-
-/// <summary>A stumble: a word said again straight away ("I I think") or a stuttered start ("w-what").</summary>
-public sealed record RepeatInfo(TimeSpan At, string Text);
+namespace Transcriber.Coach.Models;
 
 /// <summary>What the analysis found in one recording.</summary>
 public sealed record SpeechReport

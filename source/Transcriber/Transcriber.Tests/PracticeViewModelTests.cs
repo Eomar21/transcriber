@@ -1,4 +1,6 @@
-using Transcriber.Coach;
+using Transcriber.Coach.Exceptions;
+using Transcriber.Coach.Interfaces;
+using Transcriber.Coach.Models;
 using Transcriber.ViewModels;
 
 /// <summary>The practice tab: pick a recording, get it analysed, track progress, optionally ask Ollama.</summary>
@@ -126,7 +128,7 @@ public class PracticeViewModelTests : IDisposable
     private PracticeViewModel Create(bool convert = true)
     {
         _reader = new Reader(_dir, convert);
-        return new PracticeViewModel(_reader, _whisper, _picker, _history, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
+        return new PracticeViewModel(_reader, _whisper, _picker, _history, CoachFixture.Analyzer, CoachFixture.Advisor, CoachFixture.VerbatimPrompts, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
     }
 
     private string MakeFile(string name = "talk.mp3")
@@ -183,9 +185,12 @@ public class PracticeViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Only_languages_with_filler_support_are_offered()
+    public void Only_languages_with_a_coach_profile_are_offered()
     {
-        Assert.Equal(["en", "es", "nl"], Create().Languages.Select(l => l.Code));
+        var offered = Create().Languages.Select(l => l.Code).ToList();
+
+        Assert.Equal(["en", "es", "pt", "it", "de", "nl"], offered);
+        Assert.All(offered, code => Assert.NotNull(CoachFixture.Profiles.Find(code)));
     }
 
     // ---- analysis ----
@@ -217,7 +222,7 @@ public class PracticeViewModelTests : IDisposable
         await Analyze(vm);
 
         Assert.Equal("nl", _whisper.Options!.Language);
-        Assert.Equal(VerbatimPrompt.For("nl"), _whisper.Options.Prompt);
+        Assert.Equal(CoachFixture.VerbatimPrompts.For("nl"), _whisper.Options.Prompt);
         Assert.Contains("eh", _whisper.Options.Prompt!);
     }
 

@@ -1,21 +1,8 @@
 using System.Text.Json;
+using Transcriber.Coach.Interfaces;
+using Transcriber.Coach.Models;
 
-namespace Transcriber.Coach;
-
-/// <summary>One saved practice run.</summary>
-public sealed record PracticeSession(Guid Id, DateTimeOffset When, string Title, string Language, SpeechReport Report);
-
-public interface IPracticeHistory
-{
-    /// <summary>All sessions, oldest first.</summary>
-    IReadOnlyList<PracticeSession> Load();
-
-    void Add(PracticeSession session);
-
-    void Delete(Guid id);
-
-    void Clear();
-}
+namespace Transcriber.Coach.History;
 
 /// <summary>Keeps sessions in a small JSON file in the user's app data folder. Nothing leaves the computer.</summary>
 public sealed class JsonPracticeHistory(string path) : IPracticeHistory

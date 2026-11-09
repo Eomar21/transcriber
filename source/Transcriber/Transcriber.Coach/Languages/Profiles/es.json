@@ -1,0 +1,7 @@
+{
+  "code": "es",
+  "fillers": ["eh", "em", "este", "o sea", "pues", "bueno", "como que"],
+  "setApartFillers": [],
+  "emphasisRepeats": ["muy", "no", "sí"],
+  "verbatimPrompt": "Eh, pues, o sea, déjame pensar, este... Bueno, esto es lo que, eh, pienso. Yo yo creo que, em, funciona."
+}

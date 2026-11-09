@@ -1,0 +1,7 @@
+{
+  "code": "it",
+  "fillers": ["ehm", "eh", "cioè", "insomma", "praticamente", "diciamo", "come dire", "sai"],
+  "setApartFillers": ["tipo", "allora", "ecco"],
+  "emphasisRepeats": ["molto", "no", "sì"],
+  "verbatimPrompt": "Ehm, allora, vediamo, cioè... Ok, ecco cosa, ehm, penso. Io io penso che, eh, funzioni."
+}
