@@ -35,19 +35,52 @@ The Practice tab always uses **Small**. The results of the Practice tab do not d
 
 ## Languages
 
-The **Transcribe** tab can detect the language automatically. You can also select the language. The app is tested with English, Dutch, Arabic and Spanish. The speech model understands many more languages.
+The app shows only the languages that the selected model transcribes well. The list changes when you select a different model.
 
-The **Practice** tab supports **English, Dutch and Spanish**. The lists of filler words and stumbles are written for these languages.
+| Model | Languages in the list |
+| --- | --- |
+| Base | English, Spanish |
+| Small (default) and Small compressed | English, Spanish, Portuguese, Italian, German, Dutch |
+| Medium and Large v3 turbo | The languages above, and French, Polish, Turkish, Indonesian, Swedish and Ukrainian |
+
+Each list also has **Auto-detect**. The app does not show a language when the model makes too many mistakes in it.
+
+### Dutch with the Small model
+
+The Small model makes more mistakes in Dutch than in the other languages of its list. For this reason, the app shows a hint:
+
+- The picker shows **Dutch (Nederlands) - better with Medium**.
+- A message shows under the picker. It tells you to use the Medium model or a larger one.
+- The button **Use the Medium model** selects the Medium model for you. The app asks before it starts the download.
+- After the transcript is ready, the same hint shows with the result.
+
+The hint does not show for the Medium model or the Large v3 turbo model.
+
+### Practice languages
+
+The **Practice** tab supports **English, Spanish and Dutch**. The lists of filler words and stumbles are written for these languages. The Practice tab always uses the Small model. For this reason, a hint shows under the picker when you select Dutch. In Dutch, the counts of filler words and pauses can be less correct.
 
 | Function | Languages |
 | --- | --- |
-| Transcribe | Automatic, or select one. Tested: English, Dutch, Arabic, Spanish. |
+| Transcribe | Automatic, or select one from the list for the model. |
 | Speaker labels | Based on the sound of the voices, not on the words. Tested most with English and Dutch. |
-| Practice measures | English, Dutch, Spanish. |
+| Practice measures | English, Spanish, Dutch. |
+
+### Recordings with more than one language
+
+Auto-detect selects one language for each part of the speech. If one part has two languages, the model can write only one of them. The other language is then missing from the transcript.
+
+The app finds this problem when a large part of the speech has no text. Then the result shows a message that starts with **Some speech may be missing**.
+
+To get a better result:
+
+1. Select the main language. Do not use **Auto-detect**.
+2. Use a larger model.
+3. Transcribe the recording again.
 
 ### Tips for better results
 
-- Select the language yourself if you know it. Automatic detection looks at the first part of the speech. It can select the wrong language for a short recording or a noisy recording.
+- Select the language yourself if you know it. Automatic detection can select the wrong language for a short recording or a noisy recording.
 - Add names and special terms to the **Names or special terms** field.
 - For a recording with more than one language, select the main language. Expect lower accuracy for the other languages.
 

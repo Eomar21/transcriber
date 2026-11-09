@@ -23,7 +23,7 @@ The Practice tab uses the same transcript. Then it measures the text:
 
 1. The app transcribes the recording with the **Small** model. A prompt tells the model to keep "um", "uh" and stutters.
 2. **Pace** is the number of words for each minute of speaking time.
-3. **Fillers** are the words that match the lists for English, Dutch and Spanish.
+3. **Fillers** are the words that match the lists for English, Spanish and Dutch.
 4. **Pauses** are gaps of 0.8 seconds or more between lines.
 5. **Stumbles** are repeated words and stuttered starts.
 6. Rules change the numbers into tips. The app compares the result with your last run in the same language.

@@ -51,7 +51,7 @@ Yes. The app supports mp4, mov, avi, mkv and webm. The app takes the audio from 
 
 ### Which languages does the app support?
 
-You can use automatic detection or select a language. The app is tested with English, Dutch, Arabic and Spanish. The model understands many more languages. Refer to [Models and languages]({{ '/models-and-languages' | relative_url }}).
+The Small model, which is in the app, supports English, Spanish, Portuguese, Italian, German and Dutch. Dutch shows a hint to use the Medium model for better results. Larger models add French, Polish, Turkish, Indonesian, Swedish and Ukrainian. Refer to [Models and languages]({{ '/models-and-languages' | relative_url }}).
 
 ### Can the app make subtitles?
 
@@ -81,7 +81,7 @@ No. The app analyses what you said and when you said it. It does not judge tone,
 
 ### Which languages does the Practice tab support?
 
-English, Dutch and Spanish.
+English, Spanish and Dutch. The Practice tab uses the Small model. Dutch is less accurate with this model.
 
 ### Why did the app not find my "um"?
 

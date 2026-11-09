@@ -43,7 +43,7 @@ Drop in audio or video and get a transcript, without sending it anywhere.
 ### What it does
 
 - **Many formats.** mp3, wav, mp4, mov, avi, mkv, webm, m4a, flac, ogg and aac. Video files have their audio extracted automatically.
-- **Many languages.** Automatic language detection, or pick one. Tested with English, Dutch, Arabic and Spanish.
+- **Languages chosen for accuracy.** The built-in Small model offers English, Spanish, Portuguese, Italian, German and Dutch, plus auto-detect. Dutch shows a hint to use the Medium model for better results. Larger models add French, Polish, Turkish, Indonesian, Swedish and Ukrainian. A recording that mixes languages can lose the minor language, and the app warns when speech looks missing.
 - **Batch.** Select several files and transcribe them in one run.
 - **Four output formats.** Plain text (`.txt`), subtitles (`.srt`, `.vtt`) or JSON with timestamps. The transcript is saved next to the source file as `<name>_transcript.<ext>`.
 - **Speaker labels.** Optionally marks each line as Speaker 1, Speaker 2 and so on, in the list and in every export. Tell it how many people speak, or let it work that out.
@@ -90,7 +90,7 @@ Rehearse a talk, an interview answer or a presentation, then see how you did. No
 - **Progress over time.** Each run of at least 25 words is saved. The next run is compared with your last one in the same language, for example "Fewer fillers than last time".
 - **What was heard.** The full transcript is shown so you can check the numbers against your actual words.
 - **Optional written feedback.** If you run [Ollama](https://ollama.com) on your computer, pick one of your models and get a short written review as well. It is optional and also local.
-- **Languages.** English, Dutch and Spanish.
+- **Languages.** English, Spanish and Dutch (Dutch is less accurate with the built-in Small model, so a hint shows).
 
 ### Using it
 
@@ -105,7 +105,7 @@ Rehearse a talk, an interview answer or a presentation, then see how you did. No
 | Measure | How it is worked out | What counts as good |
 | --- | --- | --- |
 | **Pace** | Words per minute of the time you were actually speaking, not counting long silences. | 120 to 160 words per minute is easy to follow. The tips flag under 110 as slow and over 170 as fast. |
-| **Filler words** | Fillers per 100 words, from lists for English, Dutch and Spanish ("um", "uh", "euh", "eh", "este" and so on). "Like" is only counted when it is set apart by commas, so "I like cats" is never flagged. | 2 or fewer per 100 words is clean. More than 5 is worth working on. |
+| **Filler words** | Fillers per 100 words, from lists for English, Spanish and Dutch ("um", "uh", "euh", "eh", "este" and so on). "Like" is only counted when it is set apart by commas, so "I like cats" is never flagged. | 2 or fewer per 100 words is clean. More than 5 is worth working on. |
 | **Pauses** | Gaps of 0.8 seconds or more between lines. Reported as a count and the longest gap. | A few pauses help listeners. More than about 6 a minute reads as hesitation. |
 | **Stumbles** | Repeated words ("the the") and stuttered starts ("b-b-because"). Emphasis ("very, very") and single letters are not counted. | None is ideal. |
 | **Length** | Duration and word count. | |

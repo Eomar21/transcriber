@@ -20,7 +20,7 @@ Use this mode to record your voice and to see how you can improve your speech.
 - Prepare answers for an interview.
 - Use fewer filler words (for example "um" and "uh") and find a good pace.
 - Check your progress over many weeks.
-- Practise in English, Dutch or Spanish.
+- Practise in English, Spanish or Dutch.
 
 The app does not send anything to the internet. It analyses your recording on your computer.
 
@@ -28,7 +28,7 @@ The app does not send anything to the internet. It analyses your recording on yo
 
 1. Open the **Practice** tab.
 2. Click **Record**. Speak. Click **Stop**. A level bar shows that the microphone hears you. Or click **Choose file** to analyse a recording that you already have.
-3. Select the language that you speak: English, Dutch or Spanish.
+3. Select the language that you speak: English, Spanish or Dutch. A hint shows when you select Dutch. The Small model is less accurate in Dutch.
 4. Click **Analyse my speaking**.
 5. Read the five tiles and the tips under **What to work on**.
 6. Read **What was heard**. Compare the numbers with your words.
@@ -39,7 +39,7 @@ The app does not send anything to the internet. It analyses your recording on yo
 | Measure | How the app calculates it | Good range |
 | --- | --- | --- |
 | **Pace** | The number of words for each minute of speaking time. Long silences do not count. | 120 to 160 words each minute is easy to follow. The app marks a pace below 110 as slow and a pace above 170 as fast. |
-| **Filler words** | The number of filler words for each 100 words. The app uses word lists for English, Dutch and Spanish, for example "um", "uh", "euh", "eh" and "este". The app counts "like" only when commas separate it from the other words. The phrase "I like cats" is not a filler. | Up to 2 for each 100 words is clean. More than 5 needs work. |
+| **Filler words** | The number of filler words for each 100 words. The app uses word lists for English, Spanish and Dutch, for example "um", "uh", "euh", "eh" and "este". The app counts "like" only when commas separate it from the other words. The phrase "I like cats" is not a filler. | Up to 2 for each 100 words is clean. More than 5 needs work. |
 | **Pauses** | Gaps of 0.8 seconds or more between two spoken lines. The app shows the number of pauses and the longest pause. | A few pauses help the listener. More than about 6 pauses each minute shows hesitation. |
 | **Stumbles** | Repeated words (for example "the the") and stuttered starts (for example "b-b-because"). The app does not count words that you repeat for emphasis ("very, very") or single letters. | None is best. |
 | **Length** | The duration and the number of words. | Not applicable. |
@@ -105,6 +105,6 @@ The history is a small file with the name `practice-history.json`. It is in the 
 | **A pause that the app did not count** | The app finds pauses in the gaps between spoken lines. It can miss a very short hesitation inside a line. |
 | **A filler word that the app did not find** | The model can remove a filler word from the text. Read **What was heard**. |
 | **You select a different language than you speak** | The results are poor. Select the language that you speak. |
-| **Your language is not in the list** | The Practice tab supports English, Dutch and Spanish only. For other languages, use the Transcribe tab. |
+| **Your language is not in the list** | The Practice tab supports English, Spanish and Dutch only. For other languages, use the Transcribe tab. |
 | **Background noise or more than one voice** | The app assumes that one person speaks. It counts all voices as yours. |
 | **A very fast speaker** | The app shows the real pace, for example 220 words each minute for a fast conversation. The tip tells you to speak slower. |

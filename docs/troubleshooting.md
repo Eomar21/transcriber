@@ -41,6 +41,7 @@ The recording can have almost no speech, or the speech can be very quiet. Check 
 
 ### The transcript has wrong words, names or numbers
 
+- Check for the hint **Some speech may be missing** or a hint about the Medium model. Follow the hint.
 - Select the language. Do not use **Auto-detect**.
 - Add names and special terms to **Names or special terms**.
 - Select a larger model. Refer to [Models and languages]({{ '/models-and-languages' | relative_url }}).
@@ -117,6 +118,14 @@ The button shows only when Ollama is running on your computer and has at least o
 ### The written feedback fails or takes a long time
 
 The model runs on your computer. A large model on a slow computer can take many minutes. Select a smaller model.
+
+### The result says that some speech may be missing
+
+The recording can have more than one language. Or the audio can be unclear. Auto-detect can write only one language for a part of the speech.
+
+1. Select the main language. Do not use **Auto-detect**.
+2. Use a larger model.
+3. Transcribe the recording again.
 
 ## If the problem stays
 

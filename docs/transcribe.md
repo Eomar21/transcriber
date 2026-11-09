@@ -25,7 +25,7 @@ Use this mode to change speech in a recording into text with time stamps. You ca
 ## Procedure
 
 1. Add your files. Drop them on the window, or click **Choose files**. You can add more than one file and transcribe them in one run.
-2. Set the language. Keep **Auto-detect**, or select the language of the speech. If you know the language, select it. This gives better results for short recordings.
+2. Set the language. Keep **Auto-detect**, or select the language of the speech. If you know the language, select it. This gives better results for short recordings. The list shows the languages that the selected model transcribes well.
 3. Set the model. The default model is **Small (balanced)**. It is already in the app. Refer to [Models and languages]({{ '/models-and-languages' | relative_url }}).
 4. Set the format. Select **Text (.txt)**, **.srt**, **.vtt** or **JSON**. Refer to [Output formats]({{ '/output-formats' | relative_url }}).
 5. Type names or special terms in the **Names or special terms** field (optional). For example, type `Eindhoven, Dr. Haddad`. This helps the app to write these words correctly.
@@ -58,7 +58,7 @@ If you transcribe the same file again in the same format, the app replaces the e
 
 | Setting | Function |
 | --- | --- |
-| **Language** | Sets automatic detection, or the language of the speech. |
+| **Language** | Sets automatic detection, or the language of the speech. The list depends on the model. |
 | **Model** | Sets the speech model. A larger model is more accurate and slower. |
 | **Save as** | Sets the output format. |
 | **Names or special terms** | Helps the app to write names and special words correctly. |
@@ -73,7 +73,8 @@ If you transcribe the same file again in the same format, the app replaces the e
 | **A recording with almost no speech** | The transcript can be empty or very short. This is normal. It is not an error. |
 | **Text that nobody said** | On unclear audio, a speech model can invent phrases. The app removes the clear cases, for example a phrase that repeats. Some mistakes can stay. To check a line, click it and listen. |
 | **A very long recording** | The app processes the recording in parts and joins them. It takes more time. You can cancel at any time. |
-| **More than one language in one recording** | Auto-detect selects one language for the full file. Select the main language yourself. This gives better results. |
+| **More than one language in one recording** | Auto-detect can write only one language for a part of the speech. The result then shows **Some speech may be missing**. Select the main language yourself. Refer to [Models and languages]({{ '/models-and-languages' | relative_url }}#recordings-with-more-than-one-language). |
+| **Dutch with the Small model** | The Small model makes more mistakes in Dutch. A hint shows next to **Language** and with the result. Click **Use the Medium model** to get a better result. |
 | **A name or a technical term is wrong** | Add the term to **Names or special terms**. Or use a larger model. |
 | **Two files with the same name in the same folder** | Their transcripts get the same name. The second transcript replaces the first. Transcribe the files one at a time, or rename one file. |
 | **The app cannot read a file** | The app shows an error for that file. Refer to [Troubleshooting]({{ '/troubleshooting' | relative_url }}). |
