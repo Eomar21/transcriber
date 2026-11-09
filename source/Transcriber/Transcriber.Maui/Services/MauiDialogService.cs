@@ -8,6 +8,6 @@ public class MauiDialogService : IDialogService
     public async Task<bool> ConfirmAsync(string title, string message, string accept, string cancel)
     {
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-        return page is not null && await page.DisplayAlert(title, message, accept, cancel);
+        return page is not null && await page.DisplayAlertAsync(title, message, accept, cancel);
     }
 }
