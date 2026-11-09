@@ -120,7 +120,10 @@ public class WhisperService : IWhisperService
         {
             progress?.Report(new TranscriptionProgress("Identifying speakers", 1));
             var turns = await _speakerDiarizer.DiarizeAsync(audioFilePath, options.SpeakerCount, ct);
-            cleaned = SpeakerAssigner.Assign(cleaned, turns);
+            // With a count chosen by the user the clustering already produced exactly that many voices; otherwise
+            // short fragments that are not real speakers are folded into the nearest real one.
+            if (options.SpeakerCount is null) turns = SpeakerAssigner.MergeMinorSpeakers(turns);
+            cleaned = SpeakerAssigner.RenumberByAppearance(SpeakerAssigner.Assign(cleaned, turns));
         }
 
         progress?.Report(new TranscriptionProgress("Done", 1));
