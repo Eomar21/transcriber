@@ -12,6 +12,8 @@ const int SparkCell = 48, SparkFrames = 6;
 SpriteSheet[] sheets =
 [
     new("runner.png", 32, 8, DrawRunner, Outline: true),
+    new("princess.png", 32, 9, DrawPrincess, Outline: true),
+    new("couple.png", 48, 6, DrawCouple, Outline: false),
     new("surfer.png", 32, 8, DrawSurfer, Outline: true),
     new("marathoner.png", 32, 8, DrawMarathoner, Outline: true),
     new("cowboy.png", 32, 8, DrawCowboy, Outline: true),
@@ -67,40 +69,65 @@ static void DrawRunner(Canvas c, int f)
     }
 
     // The far arm and the far leg are in darker colours, so that they sit behind the body.
-    DrawRunnerArm(c, shoulder, t + Math.PI, far: true);
-    DrawRunnerLeg(c, hip, t + Math.PI, far: true);
+    DrawArmAngles(c, shoulder, ArmUpper(t + Math.PI), ArmUpper(t + Math.PI) + 1.8, far: true, Outfits.Hero);
+    DrawRunnerLeg(c, hip, t + Math.PI, far: true, Outfits.Hero, 6.2, 5.7);
 
-    // Torso: baggy trousers at the hip, a gold sash, then a teal vest that leaves the chest bare in the middle.
+    DrawHeroTorso(c, hip, shoulder);
+    DrawRunnerLeg(c, hip, t, far: false, Outfits.Hero, 6.2, 5.7);
+    DrawHeroHead(c, head, t, eyesClosed: false);
+    DrawArmAngles(c, shoulder, ArmUpper(t), ArmUpper(t) + 1.8, far: false, Outfits.Hero);
+}
+
+static double ArmUpper(double ph) => -1.1 * Math.Sin(ph) - 0.2;
+
+/// <summary>Baggy trousers at the hip, a gold sash, then a teal vest that leaves the chest bare in the middle.</summary>
+static void DrawHeroTorso(Canvas c, (double x, double y) hip, (double x, double y) shoulder)
+{
     c.Ball(hip.x, hip.y + 0.4, 3.7, RunnerTones.Trousers);
     c.Limb(hip.x - 0.5, hip.y - 1.0, shoulder.x - 0.5, shoulder.y + 0.8, 2.9, RunnerTones.Vest);
     c.Line(hip.x - 3.2, hip.y - 1.3, hip.x + 3.4, hip.y - 2.0, 1.0, RunnerTones.Sash.Base);
+}
 
-    DrawRunnerLeg(c, hip, t, far: false);
-
-    // Head: dark hair at the back and the top, a face, a gold headband with a tail, an eye, an eyebrow and a smile.
+/// <summary>Dark hair at the back and the top, a face, a gold headband with a tail, an eye, an eyebrow and a smile.</summary>
+static void DrawHeroHead(Canvas c, (double x, double y) head, double t, bool eyesClosed)
+{
     c.Ball(head.x - 1.0, head.y - 0.7, 3.8, RunnerTones.Hair);
     c.Ball(head.x + 1.1, head.y + 1.0, 3.0, RunnerTones.Skin);
     c.Line(head.x - 2.6, head.y - 0.4, head.x + 3.0, head.y - 1.2, 0.45, RunnerTones.Sash.Base);
     var flutter = Math.Sin(t * 2) * 0.8;
     c.Line(head.x - 2.6, head.y - 0.4, head.x - 5.4, head.y + 0.3 + flutter, 0.4, RunnerTones.Sash.Base);
-    c.Set((int)Math.Round(head.x + 2.0), (int)Math.Round(head.y + 0.5), Palette.Bib);
-    c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y + 0.5), Palette.Outline);
+    DrawEye(c, head, eyesClosed);
     c.Set((int)Math.Round(head.x + 2.4), (int)Math.Round(head.y - 0.5), RunnerTones.Hair.Shade);
     c.Set((int)Math.Round(head.x + 3.0), (int)Math.Round(head.y + 2.5), RunnerTones.Skin.Shade);
-
-    DrawRunnerArm(c, shoulder, t, far: false);
 }
 
-static void DrawRunnerLeg(Canvas c, (double x, double y) hip, double ph, bool far)
+static void DrawEye(Canvas c, (double x, double y) head, bool closed)
 {
-    var trousers = far ? RunnerTones.TrousersFar : RunnerTones.Trousers;
-    var shoe = far ? RunnerTones.ShoeFar : RunnerTones.Shoe;
-    var cuff = far ? RunnerTones.SashFar : RunnerTones.Sash;
+    if (closed)
+    {
+        c.Set((int)Math.Round(head.x + 2.0), (int)Math.Round(head.y + 0.7), Palette.Outline);
+        c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y + 0.7), Palette.Outline);
+        return;
+    }
+    c.Set((int)Math.Round(head.x + 2.0), (int)Math.Round(head.y + 0.5), Palette.Bib);
+    c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y + 0.5), Palette.Outline);
+}
+
+static void DrawRunnerLeg(Canvas c, (double x, double y) hip, double ph, bool far, Outfit o, double thigh, double shin)
+{
     var a1 = 1.05 * Math.Sin(ph) + 0.08;
     // The knee bends most while the leg swings forward, and the foot kicks up behind.
     var a2 = a1 - (0.8 + 0.8 * Math.Max(0, Math.Cos(ph)));
-    var knee = (x: hip.x + 6.2 * Math.Sin(a1), y: hip.y + 6.2 * Math.Cos(a1));
-    var ankle = (x: knee.x + 5.7 * Math.Sin(a2), y: knee.y + 5.7 * Math.Cos(a2));
+    DrawLegAngles(c, hip, a1, a2, far, o, thigh, shin);
+}
+
+static void DrawLegAngles(Canvas c, (double x, double y) hip, double a1, double a2, bool far, Outfit o, double thigh, double shin)
+{
+    var trousers = far ? o.TrousersFar : o.Trousers;
+    var shoe = far ? o.ShoeFar : o.Shoe;
+    var cuff = far ? o.CuffFar : o.Cuff;
+    var knee = (x: hip.x + thigh * Math.Sin(a1), y: hip.y + thigh * Math.Cos(a1));
+    var ankle = (x: knee.x + shin * Math.Sin(a2), y: knee.y + shin * Math.Cos(a2));
     c.Limb(hip.x, hip.y, knee.x, knee.y, 2.3, trousers);
     c.Ball(knee.x, knee.y, 2.4, trousers);                      // the trousers puff out at the knee
     c.Limb(knee.x, knee.y, ankle.x, ankle.y, 1.8, trousers);
@@ -109,16 +136,163 @@ static void DrawRunnerLeg(Canvas c, (double x, double y) hip, double ph, bool fa
     c.Set((int)Math.Round(ankle.x + 4.0), (int)Math.Round(ankle.y + 0.5), shoe.Base); // the curled toe
 }
 
-static void DrawRunnerArm(Canvas c, (double x, double y) shoulder, double ph, bool far)
+static void DrawArmAngles(Canvas c, (double x, double y) shoulder, double b1, double b2, bool far, Outfit o)
 {
-    var skin = far ? RunnerTones.SkinFar : RunnerTones.Skin;
-    var b1 = -1.1 * Math.Sin(ph) - 0.2;
+    var skin = far ? o.SkinFar : o.Skin;
     var elbow = (x: shoulder.x + 4.6 * Math.Sin(b1), y: shoulder.y + 4.6 * Math.Cos(b1));
-    var b2 = b1 + 1.8;
     var hand = (x: elbow.x + 4.0 * Math.Sin(b2), y: elbow.y + 4.0 * Math.Cos(b2));
     c.Limb(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.35, skin);
     c.Limb(elbow.x, elbow.y, hand.x, hand.y, 1.15, skin);
     c.Ball(hand.x, hand.y, 1.3, skin);
+}
+
+/// <summary>An arm that reaches a point: the elbow bends down and out. Used when the two hold each other.</summary>
+static void DrawArmTo(Canvas c, (double x, double y) shoulder, (double x, double y) target, Outfit o)
+{
+    var mid = (x: (shoulder.x + target.x) / 2, y: (shoulder.y + target.y) / 2 + 2.4);
+    c.Limb(shoulder.x, shoulder.y, mid.x, mid.y, 1.35, o.Skin);
+    c.Limb(mid.x, mid.y, target.x, target.y, 1.15, o.Skin);
+    c.Ball(target.x, target.y, 1.3, o.Skin);
+}
+
+// ---- The princess: she runs in front of the hero ------------------------------------------------
+
+static void DrawPrincess(Canvas c, int f)
+{
+    if (f == 8)
+    {
+        // The last frame of the strip is not a run frame. She stands and waits at the finish line.
+        DrawStandingFigure(c, princess: true, hipX: 13.5, ankleY: 30.0, lean: 0.12, reach: null, eyesClosed: false);
+        return;
+    }
+    var t = 2 * Math.PI * f / 8;
+    var bob = Math.Round(-1.0 * Math.Abs(Math.Cos(t)));
+    var hip = (x: 13.5, y: 18.6 + bob);
+    const double lean = 0.26;
+    var shoulder = (x: hip.x + 7.4 * Math.Sin(lean), y: hip.y - 7.4 * Math.Cos(lean));
+    var head = (x: shoulder.x + 1.9, y: shoulder.y - 4.0);
+
+    DrawPonytail(c, head, t);
+    DrawArmAngles(c, shoulder, ArmUpper(t + Math.PI), ArmUpper(t + Math.PI) + 1.8, far: true, Outfits.Princess);
+    DrawRunnerLeg(c, hip, t + Math.PI, far: true, Outfits.Princess, 6.0, 5.5);
+    DrawPrincessTorso(c, hip, shoulder);
+    DrawRunnerLeg(c, hip, t, far: false, Outfits.Princess, 6.0, 5.5);
+    DrawPrincessHead(c, head, eyesClosed: false);
+    DrawArmAngles(c, shoulder, ArmUpper(t), ArmUpper(t) + 1.8, far: false, Outfits.Princess);
+}
+
+/// <summary>A long black ponytail with a gold tie. It streams behind her and waves along its length.</summary>
+static void DrawPonytail(Canvas c, (double x, double y) head, double t)
+{
+    var root = (x: head.x - 3.0, y: head.y - 0.2);
+    var prev = root;
+    for (var i = 1; i <= 7; i++)
+    {
+        var p = (x: root.x - i * 1.9, y: root.y + 1.3 * Math.Sin(t * 2 - i * 0.8) * (0.4 + i * 0.2) + i * 0.3);
+        c.Line(prev.x, prev.y, p.x, p.y, i == 7 ? 0.7 : Math.Max(0.9, 1.5 - i * 0.07), i % 3 == 0 ? RunnerTones.PrincessHair.Shade : RunnerTones.PrincessHair.Base);
+        c.Line(prev.x, prev.y - 0.8, p.x, p.y - 0.8, 0.25, RunnerTones.PrincessHair.Light);
+        prev = p;
+    }
+    c.Ball(root.x - 1.2, root.y + 0.3, 1.0, RunnerTones.Sash);   // the gold tie
+}
+
+/// <summary>A short rose top, a bare waist, a gold belt and baggy lilac trousers.</summary>
+static void DrawPrincessTorso(Canvas c, (double x, double y) hip, (double x, double y) shoulder)
+{
+    c.Ball(hip.x, hip.y + 0.4, 3.5, RunnerTones.PrincessTrousers);
+    c.Limb(hip.x - 0.3, hip.y - 1.0, shoulder.x - 0.3, shoulder.y + 0.8, 2.3, RunnerTones.Skin);
+    // The top covers the upper half of the body.
+    var split = (x: shoulder.x + (hip.x - shoulder.x) * 0.5, y: shoulder.y + (hip.y - shoulder.y) * 0.5);
+    c.Limb(split.x - 0.3, split.y, shoulder.x - 0.5, shoulder.y + 0.8, 2.8, RunnerTones.PrincessTop);
+    c.Line(hip.x - 3.0, hip.y - 1.3, hip.x + 3.2, hip.y - 2.0, 0.9, RunnerTones.Sash.Base);
+}
+
+
+static void DrawPrincessHead(Canvas c, (double x, double y) head, bool eyesClosed)
+{
+    c.Ball(head.x - 1.0, head.y - 0.6, 3.8, RunnerTones.PrincessHair);
+    c.Ball(head.x + 1.1, head.y + 1.0, 3.0, RunnerTones.Skin);
+    c.Line(head.x - 2.4, head.y - 0.3, head.x + 3.0, head.y - 1.2, 0.45, RunnerTones.Sash.Base);
+    c.Set((int)Math.Round(head.x + 1.2), (int)Math.Round(head.y - 0.5), RunnerTones.Jewel);
+    DrawEye(c, head, eyesClosed);
+    if (!eyesClosed) c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y - 0.4), Palette.Outline);   // the lash
+    c.Set((int)Math.Round(head.x + 3.0), (int)Math.Round(head.y + 2.6), RunnerTones.Lips);
+}
+
+// ---- A figure that stands: used for the princess at the finish line and for the kiss ----------------
+
+/// <summary>
+/// One of the two characters standing, leaning forward by <paramref name="lean"/>. The feet are at <paramref name="ankleY"/>.
+/// <paramref name="reach"/> is a point the near arm reaches for, or null to let the arm hang.
+/// </summary>
+static void DrawStandingFigure(Canvas c, bool princess, double hipX, double ankleY, double lean, (double x, double y)? reach, bool eyesClosed)
+{
+    var o = princess ? Outfits.Princess : Outfits.Hero;
+    var thigh = princess ? 6.0 : 6.2;
+    var shin = princess ? 5.5 : 5.7;
+    var torso = princess ? 7.4 : 7.8;
+    var hip = (x: hipX, y: ankleY - (thigh * Math.Cos(0.14) + shin * Math.Cos(0.04)));
+    var shoulder = (x: hip.x + torso * Math.Sin(lean), y: hip.y - torso * Math.Cos(lean));
+    var head = (x: shoulder.x + (princess ? 1.9 : 2.0), y: shoulder.y - (princess ? 4.0 : 4.2));
+
+    DrawArmAngles(c, shoulder, 0.12, 0.3, far: true, o);
+    DrawLegAngles(c, hip, -0.12, -0.05, far: true, o, thigh, shin);
+    if (princess) DrawPrincessTorso(c, hip, shoulder); else DrawHeroTorso(c, hip, shoulder);
+    DrawLegAngles(c, hip, 0.14, 0.04, far: false, o, thigh, shin);
+    if (princess) DrawPrincessHead(c, head, eyesClosed); else DrawHeroHead(c, head, 0, eyesClosed);
+    if (reach is { } target) DrawArmTo(c, shoulder, target, o);
+    else DrawArmAngles(c, shoulder, -0.1, 0.5, far: false, o);
+}
+
+/// <summary>The two of them at the finish line: they step close, lean in, kiss, and a heart floats up.</summary>
+static void DrawCouple(Canvas c, int f)
+{
+    const double HipX = 15.0, AnkleY = 44.0;
+    double[] lean = [0.05, 0.18, 0.30, 0.30, 0.30, 0.30];
+    var l = lean[f];
+    var closed = f >= 2;
+
+    // His head and shoulder in the cell, so that her arm and his arm can reach each other.
+    var heroShoulder = (x: HipX + 7.8 * Math.Sin(l), y: AnkleY - 11.8 - 7.8 * Math.Cos(l));
+    var mirror = 47.0;
+
+    var hero = new Canvas(c.W, c.H);
+    DrawStandingFigure(hero, princess: false, hipX: HipX, ankleY: AnkleY, lean: l, reach: (x: HipX + 9.5, y: AnkleY - 15.0), eyesClosed: closed);
+    hero.Outline(Palette.Outline);
+
+    var princess = new Canvas(c.W, c.H);
+    // Her hand reaches his neck. The picture is drawn facing right and flipped, so the point is measured from the mirror.
+    DrawStandingFigure(princess, princess: true, hipX: HipX, ankleY: AnkleY, lean: l,
+        reach: (x: mirror - heroShoulder.x - 1.0, y: heroShoulder.y - 2.0), eyesClosed: closed);
+    princess.Outline(Palette.Outline);
+
+    c.Paste(hero, 0, 0);
+    c.Paste(princess.Flipped(), 0, 0);
+
+    if (f >= 2)
+    {
+        var kiss = (x: mirror / 2.0, y: AnkleY - 11.8 - 7.8 * Math.Cos(l) - 4.2 + 2.6);
+        c.Set((int)Math.Round(kiss.x - 0.5), (int)Math.Round(kiss.y), RunnerTones.Lips);
+        c.Set((int)Math.Round(kiss.x + 0.5), (int)Math.Round(kiss.y), RunnerTones.Lips);
+    }
+    // A heart rises, grows and fades.
+    if (f >= 3) DrawHeart(c, 24, f switch { 3 => 12, 4 => 9, _ => 5 }, large: f >= 4, fade: f == 5);
+}
+
+static void DrawHeart(Canvas c, int cx, int top, bool large, bool fade)
+{
+    string[] small = [".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."];
+    string[] big = [".XXX.XXX.", "XXXXXXXXX", "XXXXXXXXX", "XXXXXXXXX", ".XXXXXXX.", "..XXXXX..", "...XXX...", "....X...."];
+    var shape = large ? big : small;
+    var heart = new Canvas(c.W, c.H);
+    var fill = fade ? Color.FromArgb(255, 255, 140, 160) : Color.FromArgb(255, 236, 52, 84);
+    var left = cx - shape[0].Length / 2;
+    for (var y = 0; y < shape.Length; y++)
+        for (var x = 0; x < shape[y].Length; x++)
+            if (shape[y][x] == 'X') heart.Set(left + x, top + y, fill);
+    heart.Set(left + 1, top + 1, Color.FromArgb(255, 255, 214, 222));   // the shine
+    heart.Outline(Color.FromArgb(255, 150, 28, 56));
+    c.Paste(heart, 0, 0);
 }
 
 static void DrawSurfer(Canvas c, int f)
@@ -368,6 +542,16 @@ class Canvas
 
     public void Set(int x, int y, Color c) { if (x >= 0 && y >= 0 && x < W && y < H) px[x, y] = c; }
 
+    /// <summary>The same picture turned left to right.</summary>
+    public Canvas Flipped()
+    {
+        var flipped = new Canvas(W, H);
+        for (var y = 0; y < H; y++)
+            for (var x = 0; x < W; x++)
+                flipped.px[W - 1 - x, y] = px[x, y];
+        return flipped;
+    }
+
     public void Circle(double cx, double cy, double r, Color c)
     {
         for (var y = (int)Math.Floor(cy - r); y <= Math.Ceiling(cy + r); y++)
@@ -450,6 +634,13 @@ static class RunnerTones
     public static readonly Tone Shoe = new(Color.FromArgb(144, 86, 48), Color.FromArgb(94, 54, 34), Color.FromArgb(190, 126, 76));
     public static readonly Tone ShoeFar = new(Color.FromArgb(104, 62, 38), Color.FromArgb(70, 40, 28), Color.FromArgb(140, 90, 56));
     public static readonly Color ScarfLight = Color.FromArgb(255, 150, 80);
+    public static readonly Tone PrincessHair = new(Color.FromArgb(34, 28, 52), Color.FromArgb(18, 14, 30), Color.FromArgb(92, 84, 128));
+    public static readonly Tone PrincessTop = new(Color.FromArgb(232, 92, 140), Color.FromArgb(160, 52, 98), Color.FromArgb(255, 160, 192));
+    public static readonly Tone PrincessTrousers = new(Color.FromArgb(192, 156, 232), Color.FromArgb(132, 98, 178), Color.FromArgb(228, 206, 252));
+    public static readonly Tone PrincessTrousersFar = new(Color.FromArgb(150, 122, 190), Color.FromArgb(110, 84, 150), Color.FromArgb(180, 156, 214));
+    public static readonly Tone Slipper = new(Color.FromArgb(240, 190, 56), Color.FromArgb(182, 128, 30), Color.FromArgb(255, 226, 120));
+    public static readonly Tone SlipperFar = new(Color.FromArgb(190, 146, 44), Color.FromArgb(146, 102, 26), Color.FromArgb(212, 176, 84));
+    public static readonly Color Jewel = Color.FromArgb(60, 190, 200), Lips = Color.FromArgb(214, 52, 80);
 }
 
 /// <summary>Shapes that are shaded with a <see cref="Tone"/>: the shade fills the shape, the base moves towards the light, and a small highlight sits on the largest shapes.</summary>
@@ -468,4 +659,17 @@ static class ToneShading
         c.Line(x0 - r * 0.2, y0 - r * 0.25, x1 - r * 0.2, y1 - r * 0.25, r * 0.78, tone.Base);
         if (r >= 2.2) c.Line(x0 - r * 0.4, y0 - r * 0.5, x1 - r * 0.4, y1 - r * 0.5, r * 0.28, tone.Light);
     }
+}
+
+/// <summary>The colours of one character's clothes and skin. The far arm and the far leg use the darker versions.</summary>
+record Outfit(Tone Trousers, Tone TrousersFar, Tone Cuff, Tone CuffFar, Tone Shoe, Tone ShoeFar, Tone Skin, Tone SkinFar);
+
+static class Outfits
+{
+    public static readonly Outfit Hero = new(RunnerTones.Trousers, RunnerTones.TrousersFar, RunnerTones.Sash, RunnerTones.SashFar,
+        RunnerTones.Shoe, RunnerTones.ShoeFar, RunnerTones.Skin, RunnerTones.SkinFar);
+
+    // The princess has lilac trousers, gold cuffs and gold slippers.
+    public static readonly Outfit Princess = new(RunnerTones.PrincessTrousers, RunnerTones.PrincessTrousersFar, RunnerTones.Sash, RunnerTones.SashFar,
+        RunnerTones.Slipper, RunnerTones.SlipperFar, RunnerTones.Skin, RunnerTones.SkinFar);
 }
