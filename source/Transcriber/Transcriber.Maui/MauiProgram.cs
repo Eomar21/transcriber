@@ -1,12 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Transcriber.Coach;
 using Transcriber.Maui.Services;
 using Transcriber.ViewModels;
 
 namespace Transcriber.Maui
 {
-    public static class MauiProgram
+    public static partial class MauiProgram
     {
+        // Speaker detection runs differently on each platform: see Platforms/Windows and Platforms/MacCatalyst.
+        private static partial void RegisterSpeakerDiarizer(IServiceCollection services);
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
@@ -21,12 +25,7 @@ namespace Transcriber.Maui
             // Core services (platform independent).
             builder.Services.AddSingleton<IModelManager, ModelManager>();
             builder.Services.AddSingleton<ISpeechDetector, SileroSpeechDetector>();
-#if MACCATALYST
-            // Mac Catalyst cannot load the native sherpa-onnx library, so run its bundled command-line tool instead.
-            builder.Services.AddSingleton<ISpeakerDiarizer, SherpaCliSpeakerDiarizer>();
-#else
-            builder.Services.AddSingleton<ISpeakerDiarizer, SherpaSpeakerDiarizer>();
-#endif
+            RegisterSpeakerDiarizer(builder.Services);
             builder.Services.AddSingleton<IWhisperService, WhisperService>();
             builder.Services.AddSingleton<IVideoReaderService, VideoReaderService>();
             builder.Services.AddSingleton<IAudioService, AudioService>();
