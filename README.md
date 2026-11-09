@@ -42,7 +42,7 @@ Drop in audio or video and get a transcript, without sending it anywhere.
 
 ### What it does
 
-- **Many formats.** mp3, wav, mp4, mov, avi, mkv, webm, m4a, flac, ogg and aac. Video files have their audio extracted automatically.
+- **Many formats.** 36 audio and video formats, including mp3, wav, m4a, flac, opus, wma, mp4, mov, mkv, webm and avi. Video files have their audio extracted automatically, and a wav or mp3 that the built-in decoder rejects is read with the bundled ffmpeg. See the [supported formats](https://eomar21.github.io/transcriber/supported-formats) for the full list and what cannot be read.
 - **Languages chosen for accuracy.** The built-in Small model offers English, Spanish, Portuguese, Italian, German and Dutch, plus auto-detect. Dutch shows a hint to use the Medium model for better results. Larger models add French, Polish, Turkish, Indonesian, Swedish and Ukrainian. A recording that mixes languages can lose the minor language, and the app warns when speech looks missing.
 - **Batch.** Select several files and transcribe them in one run.
 - **Four output formats.** Plain text (`.txt`), subtitles (`.srt`, `.vtt`) or JSON with timestamps. The transcript is saved next to the source file as `<name>_transcript.<ext>`.

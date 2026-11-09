@@ -36,7 +36,7 @@ When the work is done, the app shows **Transcript saved** and the location of th
 
 ## Supported files
 
-The app supports these formats: mp3, wav, mp4, mov, avi, mkv, webm, m4a, flac, ogg and aac.
+The app supports the common audio formats and video formats, for example mp3, wav, m4a, flac, opus, mp4, mov and mkv. Refer to [Supported formats]({{ '/supported-formats' | relative_url }}) for the full list.
 
 The app takes the audio from a video file. You do not have to convert the file. If you drop many files and the app does not support some of them, the app adds the supported files only. A message shows how many files the app added.
 

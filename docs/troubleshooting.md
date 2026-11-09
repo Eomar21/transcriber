@@ -29,9 +29,18 @@ The file is about 550 MB. It contains the speech model, the voice model, the spe
 
 ## Transcribe
 
-### Nothing happens, or the app cannot read a file
+### The app cannot read a file
 
-- Make sure that the format is mp3, wav, mp4, mov, avi, mkv, webm, m4a, flac, ogg or aac.
+The app shows one of these messages for the file:
+
+| Message | Meaning and action |
+| --- | --- |
+| **This file has no audio track, so there is nothing to transcribe.** | The video has no sound. Select a file that has sound. |
+| **This file could not be read. It may be damaged, or it may not be an audio or video file.** | The file is damaged, or it is not a media file. Play the file in a different player. |
+
+If nothing happens when you add a file, do these checks:
+
+- Make sure that the format is in the list on [Supported formats]({{ '/supported-formats' | relative_url }}).
 - Play the file in a different player. The app cannot transcribe a damaged file.
 - If the file is in a folder that a cloud service synchronises, make sure that the service has downloaded the file.
 

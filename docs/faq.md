@@ -47,7 +47,7 @@ The time depends on your computer. For example, a recording of 6.5 minutes neede
 
 ### Can the app transcribe video?
 
-Yes. The app supports mp4, mov, avi, mkv and webm. The app takes the audio from the video.
+Yes. The app supports mp4, mov, mkv, webm, avi and other video formats. The app takes the audio from the video. Refer to [Supported formats]({{ '/supported-formats' | relative_url }}).
 
 ### Which languages does the app support?
 

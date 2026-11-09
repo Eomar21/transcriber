@@ -27,7 +27,7 @@ Use this mode to get the words from an audio file or a video file.
 
 ![Transcribe mode]({{ '/transcribe.gif' | relative_url }})
 
-- The mode supports many file formats. The language list depends on the model. The built-in model supports six languages.
+- The mode supports [many file formats]({{ '/supported-formats' | relative_url }}). The language list depends on the model. The built-in model supports six languages.
 - You can transcribe one file or many files in one run.
 - The mode can show which person speaks each line (Speaker 1, Speaker 2).
 - You can click a line to hear the recording from that point.
