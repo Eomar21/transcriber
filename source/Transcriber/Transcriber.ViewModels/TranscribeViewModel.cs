@@ -529,6 +529,19 @@ public partial class TranscribeViewModel : ObservableObject
     /// <summary>Player bar text, for example "talk.mp3  00:12".</summary>
     [ObservableProperty] private string _playbackText = string.Empty;
 
+    /// <summary>
+    /// The line the user picked in the list (with the mouse or the keyboard). Picking a line plays it, then the pick is
+    /// cleared so the same line can be picked again.
+    /// </summary>
+    [ObservableProperty] private SegmentItem? _selectedSegment;
+
+    partial void OnSelectedSegmentChanged(SegmentItem? value)
+    {
+        if (value is null) return;
+        PlaySegment(value);
+        SelectedSegment = null;
+    }
+
     [RelayCommand]
     private void PlaySegment(SegmentItem? segment)
     {

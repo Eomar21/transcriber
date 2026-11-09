@@ -198,7 +198,7 @@
                     </Grid>
                     <Label Text="Click a line to play it from there." Style="{StaticResource Caption}" IsVisible="{Binding ShowPlayHint}" />
                     <CollectionView AutomationId="Segments" ItemsSource="{Binding VisibleSegments}" HeightRequest="340"
-                                    SelectionMode="Single" SelectionChanged="OnSegmentSelected">
+                                    SelectionMode="Single" SelectedItem="{Binding SelectedSegment}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:SegmentItem">
                                 <Grid ColumnDefinitions="110,*" ColumnSpacing="8" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">

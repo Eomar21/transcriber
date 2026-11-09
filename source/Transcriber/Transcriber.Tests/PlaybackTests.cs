@@ -84,6 +84,25 @@ public class PlaybackTests : IDisposable
     }
 
     [Fact]
+    public async Task Picking_a_line_plays_it_and_the_same_line_can_be_picked_again()
+    {
+        var (vm, _) = await RunAsync("talk.mp4");
+        var first = vm.VisibleSegments[0];
+        var second = vm.VisibleSegments[1];
+
+        vm.SelectedSegment = second;
+        Assert.Equal(second.Start, _player.PlayedFrom);
+        Assert.Null(vm.SelectedSegment);
+
+        vm.SelectedSegment = first;
+        Assert.Equal(first.Start, _player.PlayedFrom);
+
+        vm.SelectedSegment = first;
+        Assert.Equal(first.Start, _player.PlayedFrom);
+        Assert.Null(vm.SelectedSegment);
+    }
+
+    [Fact]
     public async Task In_a_batch_each_line_plays_its_own_file()
     {
         var (vm, reader) = await RunAsync("a.mp3", "b.mp3");
