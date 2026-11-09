@@ -144,7 +144,7 @@ static void DrawArmAngles(Canvas c, (double x, double y) shoulder, double b1, do
     var hand = (x: elbow.x + 4.0 * Math.Sin(b2), y: elbow.y + 4.0 * Math.Cos(b2));
     c.Limb(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.35, skin);
     c.Limb(elbow.x, elbow.y, hand.x, hand.y, 1.15, skin);
-    c.Ball(hand.x, hand.y, 1.3, skin);
+    c.Ball(hand.x, hand.y, 1.2, skin);
 }
 
 /// <summary>An arm that reaches a point: the elbow bends down and out. Used when the two hold each other.</summary>
@@ -356,59 +356,68 @@ static void DrawMarathoner(Canvas c, int f)
 {
     var t = 2 * Math.PI * f / 8;
     var bob = Math.Round(-1.0 * Math.Abs(Math.Cos(t)));
-    var hip = (x: 14.0, y: 17.6 + bob);
-    const double lean = 0.18;
-    var shoulder = (x: hip.x + 8.5 * Math.Sin(lean), y: hip.y - 8.5 * Math.Cos(lean));
-    var head = (x: shoulder.x + 1.6, y: shoulder.y - 4.2);
+    var hip = (x: 13.5, y: 18.0 + bob);
+    const double lean = 0.24;                                 // a long-distance runner leans a little
+    var shoulder = (x: hip.x + 8.0 * Math.Sin(lean), y: hip.y - 8.0 * Math.Cos(lean));
+    var head = (x: shoulder.x + 1.9, y: shoulder.y - 4.1);
 
-    // The back arm and the back leg are drawn first, in darker tones.
-    DrawMarathonArm(c, shoulder, t + Math.PI, back: true);
-    DrawMarathonLeg(c, hip, t + Math.PI, back: true);
+    // The far arm and the far leg are in darker tones, so that they sit behind the body.
+    DrawMarathonArm(c, shoulder, t + Math.PI, far: true);
+    DrawMarathonLeg(c, hip, t + Math.PI, far: true);
 
-    // Torso: an orange singlet with a white race bib, and navy shorts.
-    c.Line(hip.x, hip.y, shoulder.x, shoulder.y, 2.4, Palette.Singlet);
-    var mx = (int)Math.Round((hip.x + shoulder.x) / 2 + 0.6);
-    var my = (int)Math.Round((hip.y + shoulder.y) / 2 - 0.5);
-    for (var dy = -1; dy <= 2; dy++)
-        for (var dx = -1; dx <= 1; dx++)
-            c.Set(mx + dx, my + dy, (dx + dy) % 2 == 0 && dy is > -1 and < 2 ? Palette.BibInk : Palette.Bib);
-    c.Circle(hip.x, hip.y + 0.2, 3.1, Palette.RunShorts);
-    c.Line(hip.x - 2.8, hip.y - 1.6, hip.x + 2.8, hip.y - 1.6, 0.45, Palette.Singlet);
+    // Torso: an orange singlet with a white race bib. The near leg comes next, and the navy shorts cover the top of both legs.
+    c.Limb(hip.x - 0.4, hip.y - 1.2, shoulder.x - 0.4, shoulder.y + 0.8, 3.3, MarathonTones.Singlet);
+    var mx = (shoulder.x + hip.x) / 2 - 0.4;
+    var my = (shoulder.y + hip.y) / 2 - 0.4;
+    for (var dy = 0; dy < 4; dy++)
+        for (var dx = 0; dx < 3; dx++)
+            c.Set((int)Math.Round(mx) + dx - 1, (int)Math.Round(my) + dy - 1, dy == 1 && dx != 1 || dy == 2 && dx == 1 ? MarathonTones.BibInk : MarathonTones.Bib);
 
-    DrawMarathonLeg(c, hip, t, back: false);
+    DrawMarathonLeg(c, hip, t, far: false);
+    c.Ball(hip.x - 0.2, hip.y + 0.9, 3.7, MarathonTones.Shorts);
+    c.Line(hip.x - 3.0, hip.y + 1.4, hip.x + 3.0, hip.y + 0.9, 0.4, MarathonTones.Bib);
 
-    // Head: a face under a red cap with a short brim, and an eye.
-    c.Circle(head.x + 0.8, head.y + 0.6, 3.0, Palette.Skin);
-    c.Circle(head.x - 0.3, head.y - 1.4, 3.0, Palette.Cap);
-    c.Line(head.x + 1.2, head.y - 1.2, head.x + 4.4, head.y - 0.6, 0.5, Palette.CapDark);
-    c.Set((int)Math.Round(head.x + 2.2), (int)Math.Round(head.y + 0.6), Palette.Outline);
+    // Head: short brown hair, a face, a red cap with a brim, an eye with a brow, and a smile.
+    c.Ball(head.x - 0.9, head.y - 0.2, 3.5, MarathonTones.Hair);
+    c.Ball(head.x + 1.1, head.y + 1.2, 3.2, RunnerTones.Skin);
+    c.Ball(head.x - 0.4, head.y - 2.5, 3.0, MarathonTones.Cap);
+    c.Line(head.x + 1.0, head.y - 1.5, head.x + 4.6, head.y - 0.9, 0.6, MarathonTones.Cap.Shade);
+    c.Set((int)Math.Round(head.x + 2.2), (int)Math.Round(head.y + 1.0), Palette.Bib);
+    c.Set((int)Math.Round(head.x + 2.9), (int)Math.Round(head.y + 1.0), Palette.Outline);
+    c.Set((int)Math.Round(head.x + 2.7), (int)Math.Round(head.y + 0.1), RunnerTones.Hair.Shade);
+    c.Set((int)Math.Round(head.x + 3.0), (int)Math.Round(head.y + 3.0), RunnerTones.Skin.Shade);
 
-    DrawMarathonArm(c, shoulder, t, back: false);
+    DrawMarathonArm(c, shoulder, t, far: false);
 }
 
-static void DrawMarathonLeg(Canvas c, (double x, double y) hip, double ph, bool back)
+static void DrawMarathonLeg(Canvas c, (double x, double y) hip, double ph, bool far)
 {
-    var skin = back ? Palette.SkinShade : Palette.Skin;
-    var shoe = back ? Palette.ShoeBack : Palette.ShoeBright;
-    var a1 = 1.0 * Math.Sin(ph);
+    var skin = far ? RunnerTones.SkinFar : RunnerTones.Skin;
+    var shoe = far ? MarathonTones.ShoeFar : MarathonTones.Shoe;
+    var sock = far ? MarathonTones.SockFar : MarathonTones.Sock;
+    var a1 = 1.05 * Math.Sin(ph) + 0.06;
+    // The knee bends most while the leg swings forward, and the foot kicks up behind.
     var a2 = a1 - (0.8 + 0.8 * Math.Max(0, Math.Cos(ph)));
-    var knee = (x: hip.x + 6.3 * Math.Sin(a1), y: hip.y + 6.3 * Math.Cos(a1));
-    var foot = (x: knee.x + 6.0 * Math.Sin(a2), y: knee.y + 6.0 * Math.Cos(a2));
-    c.Line(hip.x, hip.y, knee.x, knee.y, 1.7, skin);
-    c.Line(knee.x, knee.y, foot.x, foot.y, 1.35, skin);
-    c.Circle(foot.x + 0.9, foot.y + 0.2, 1.6, shoe);
-    if (!back) c.Line(foot.x - 0.2, foot.y + 1.0, foot.x + 2.0, foot.y + 1.0, 0.35, Palette.ShoeAccent);
+    var knee = (x: hip.x + 6.2 * Math.Sin(a1), y: hip.y + 6.2 * Math.Cos(a1));
+    var ankle = (x: knee.x + 5.6 * Math.Sin(a2), y: knee.y + 5.6 * Math.Cos(a2));
+    c.Limb(hip.x, hip.y, knee.x, knee.y, 2.2, skin);
+    c.Limb(knee.x, knee.y, ankle.x, ankle.y, 1.7, skin);
+    c.Ball(ankle.x, ankle.y, 1.2, sock);                                           // a white sock
+    c.Limb(ankle.x + 0.2, ankle.y + 0.9, ankle.x + 2.8, ankle.y + 1.2, 1.5, shoe);  // a running shoe
+    if (!far) c.Line(ankle.x - 0.1, ankle.y + 1.9, ankle.x + 2.9, ankle.y + 2.1, 0.3, MarathonTones.ShoeSole);
 }
 
-static void DrawMarathonArm(Canvas c, (double x, double y) shoulder, double ph, bool back)
+static void DrawMarathonArm(Canvas c, (double x, double y) shoulder, double ph, bool far)
 {
-    var skin = back ? Palette.SkinShade : Palette.Skin;
-    var b1 = -1.0 * Math.Sin(ph);
-    var elbow = (x: shoulder.x + 4.8 * Math.Sin(b1), y: shoulder.y + 4.8 * Math.Cos(b1));
-    var b2 = b1 + 1.7;                                  // the elbow stays bent, like a runner's
-    var hand = (x: elbow.x + 4.2 * Math.Sin(b2), y: elbow.y + 4.2 * Math.Cos(b2));
-    c.Line(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.0, skin);
-    c.Line(elbow.x, elbow.y, hand.x, hand.y, 0.9, skin);
+    var skin = far ? RunnerTones.SkinFar : RunnerTones.Skin;
+    var b1 = -1.1 * Math.Sin(ph) - 0.15;
+    var elbow = (x: shoulder.x + 4.6 * Math.Sin(b1), y: shoulder.y + 4.6 * Math.Cos(b1));
+    var b2 = b1 + 1.8;                                  // the elbow stays bent, like a runner's
+    var hand = (x: elbow.x + 4.0 * Math.Sin(b2), y: elbow.y + 4.0 * Math.Cos(b2));
+    c.Limb(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.25, skin);
+    c.Limb(elbow.x, elbow.y, hand.x, hand.y, 1.05, skin);
+    c.Ball(hand.x, hand.y, 1.2, skin);
+    c.Set((int)Math.Round(elbow.x + 2.3 * Math.Sin(b2)), (int)Math.Round(elbow.y + 2.3 * Math.Cos(b2)), far ? MarathonTones.SockFar.Base : MarathonTones.Bib);   // a white wristband
 }
 
 static void DrawCowboy(Canvas c, int f)
@@ -740,4 +749,20 @@ static class Outfits
     // The princess has lilac trousers, gold cuffs and gold slippers.
     public static readonly Outfit Princess = new(RunnerTones.PrincessTrousers, RunnerTones.PrincessTrousersFar, RunnerTones.Sash, RunnerTones.SashFar,
         RunnerTones.Slipper, RunnerTones.SlipperFar, RunnerTones.Skin, RunnerTones.SkinFar);
+}
+
+/// <summary>The colours of the marathon runner.</summary>
+static class MarathonTones
+{
+    public static readonly Tone Singlet = new(Color.FromArgb(255, 132, 40), Color.FromArgb(206, 84, 24), Color.FromArgb(255, 188, 110));
+    public static readonly Tone Shorts = new(Color.FromArgb(46, 70, 150), Color.FromArgb(26, 40, 98), Color.FromArgb(104, 134, 214));
+    public static readonly Tone Cap = new(Color.FromArgb(228, 52, 56), Color.FromArgb(156, 28, 40), Color.FromArgb(255, 124, 116));
+    public static readonly Tone Hair = new(Color.FromArgb(104, 66, 40), Color.FromArgb(68, 40, 26), Color.FromArgb(150, 104, 70));
+    public static readonly Tone Shoe = new(Color.FromArgb(244, 246, 250), Color.FromArgb(176, 184, 204), Color.FromArgb(255, 255, 255));
+    public static readonly Tone ShoeFar = new(Color.FromArgb(188, 194, 210), Color.FromArgb(140, 148, 170), Color.FromArgb(214, 220, 232));
+    public static readonly Tone Sock = new(Color.FromArgb(250, 250, 250), Color.FromArgb(200, 204, 214), Color.FromArgb(255, 255, 255));
+    public static readonly Tone SockFar = new(Color.FromArgb(206, 210, 222), Color.FromArgb(166, 172, 190), Color.FromArgb(224, 228, 238));
+    public static readonly Color ShoeSole = Color.FromArgb(56, 190, 110);
+    public static readonly Color Bib = Color.FromArgb(252, 252, 250);
+    public static readonly Color BibInk = Color.FromArgb(40, 52, 110);
 }
