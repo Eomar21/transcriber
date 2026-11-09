@@ -13,6 +13,7 @@ SpriteSheet[] sheets =
 [
     new("runner.png", 32, 8, DrawRunner, Outline: true),
     new("princess.png", 32, 9, DrawPrincess, Outline: true),
+    new("carpet.png", 48, 8, DrawCarpet, Outline: true),
     new("couple.png", 48, 6, DrawCouple, Outline: false),
     new("surfer.png", 32, 8, DrawSurfer, Outline: true),
     new("marathoner.png", 32, 8, DrawMarathoner, Outline: true),
@@ -502,6 +503,73 @@ static void DrawSpark(Canvas c, int f)
         var size = f < 3 ? 1.0 : 0.5;
         c.Circle(mid + r * Math.Cos(a), mid + r * Math.Sin(a), size, rnd.Next(2) == 0 ? colour : Palette.Yellow);
     }
+}
+
+// ---- The magic carpet: the hero and the princess sit on a carpet that ripples in the wind -----------
+
+static double CarpetY(double x, double t) => 38.0 + 1.7 * Math.Sin(2 * Math.PI * x / 38.0 - t);
+
+static void DrawCarpet(Canvas c, int f)
+{
+    var t = 2 * Math.PI * f / 8;
+    var crimson = new Tone(Color.FromArgb(214, 52, 76), Color.FromArgb(138, 28, 64), Color.FromArgb(244, 110, 120));
+    var gold = RunnerTones.Sash;
+
+    // The carpet is drawn column by column: a gold edge, a crimson body with a pattern, a dark underside.
+    for (var x = 3; x <= 44; x++)
+    {
+        var y = (int)Math.Round(CarpetY(x, t));
+        c.Set(x, y, gold.Light);
+        c.Set(x, y + 1, (x / 3) % 2 == 0 ? crimson.Base : crimson.Light);
+        c.Set(x, y + 2, x % 6 < 3 ? crimson.Base : crimson.Shade);
+        c.Set(x, y + 3, crimson.Shade);
+        c.Set(x, y + 4, gold.Base);
+    }
+    // Tassels at both ends. They sway a little.
+    foreach (var (x, dir) in new[] { (2, -1), (45, 1) })
+    {
+        var y = (int)Math.Round(CarpetY(x, t));
+        for (var i = 0; i < 3; i++)
+        {
+            c.Set(x, y + i, gold.Base);
+            c.Set(x + dir * (i == 2 ? (int)Math.Round(Math.Sin(t + i)) + 1 : 0), y + 4 + (i == 2 ? 1 : 0), gold.Shade);
+        }
+    }
+
+    // The two sit on the carpet and ride the ripple. The hero sits behind the princess.
+    DrawSitting(c, 16, CarpetY(16, t), princess: false, t);
+    DrawSitting(c, 31, CarpetY(31, t), princess: true, t);
+}
+
+static void DrawSitting(Canvas c, double hipX, double carpetY, bool princess, double t)
+{
+    var o = princess ? Outfits.Princess : Outfits.Hero;
+    var hip = (x: hipX, y: carpetY - 2.2);
+    var torso = princess ? 7.0 : 7.4;
+    var shoulder = (x: hip.x + torso * Math.Sin(0.12), y: hip.y - torso * Math.Cos(0.12));
+    var head = (x: shoulder.x + 1.8, y: shoulder.y - (princess ? 4.0 : 4.2));
+
+    // The wind: the scarf or the ponytail streams behind.
+    if (princess) DrawPonytail(c, head, t);
+    else
+    {
+        var neck = (x: shoulder.x - 1.0, y: shoulder.y - 0.8);
+        var prev = neck;
+        for (var i = 1; i <= 5; i++)
+        {
+            var p = (x: neck.x - i * 2.0, y: neck.y + 1.1 * Math.Sin(t - i * 0.9) * (0.4 + i * 0.2) + i * 0.15);
+            c.Line(prev.x, prev.y, p.x, p.y, i == 5 ? 0.8 : 1.1, i % 2 == 0 ? Palette.ScarfDark : Palette.Scarf);
+            prev = p;
+        }
+    }
+
+    // The legs stretch forward. The knee bends a little and the foot hangs.
+    DrawLegAngles(c, hip, 1.35, 1.9, far: true, o, 4.8, 4.4);
+    if (princess) DrawPrincessTorso(c, hip, shoulder); else DrawHeroTorso(c, hip, shoulder);
+    DrawLegAngles(c, hip, 1.45, 2.2, far: false, o, 4.8, 4.4);
+    if (princess) DrawPrincessHead(c, head, eyesClosed: false); else DrawHeroHead(c, head, t, eyesClosed: false);
+    // The hero holds the carpet at the side. The princess holds it in front.
+    DrawArmAngles(c, shoulder, 0.5, 1.2, far: false, o);
 }
 
 record SpriteSheet(string File, int Cell, int Frames, Action<Canvas, int> Draw, bool Outline);
