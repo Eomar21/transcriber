@@ -173,6 +173,10 @@ public sealed class RunnerProgress : ContentView
             DrawWave(canvas, paint, wave, pad + trackHeight / 2, fillRight, trackTop, trackHeight, fill);
             lift = wave.Height(x - Wave.RiderOffset * density, pad + trackHeight / 2, fillRight);
         }
+        else if (look.Decoration == TrackDecoration.StartAndFinish)
+        {
+            DrawStartAndFinish(canvas, paint, density, seconds, pad, pad + trackWidth, trackTop, trackHeight);
+        }
 
         if (!s_sprites.TryGetValue(look.Sprite, out var sprite)) return;
 
@@ -240,6 +244,70 @@ public sealed class RunnerProgress : ContentView
         paint.Color = SKColors.White.WithAlpha(150);
         canvas.DrawPath(crest, paint);
         paint.Style = SKPaintStyle.Fill;
+    }
+
+    /// <summary>
+    /// A white start line with a green flag at the beginning of the bar, and a checkered finish line with a checkered flag at the end.
+    /// The lines cross the bar. They are drawn under the runner, so the runner passes in front of them.
+    /// </summary>
+    private static void DrawStartAndFinish(SKCanvas canvas, SKPaint paint, float d, float seconds, float startX, float finishX, float trackTop, float trackHeight)
+    {
+        var overhang = 3 * d;
+        var top = trackTop - overhang;
+        var bottom = trackTop + trackHeight + overhang;
+        var pole = SKColor.Parse("#7A7F8E");
+        var dark = SKColor.Parse("#22222E");
+        var poleHeight = 30 * d;
+        var flagW = 13 * d;
+        var flagH = 8 * d;
+
+        void Pole(float x)
+        {
+            paint.Style = SKPaintStyle.Fill;
+            paint.Color = pole;
+            canvas.DrawRect(x - 0.75f * d, top - poleHeight, 1.5f * d, poleHeight + (bottom - top), paint);
+        }
+
+        // A flag that waves: its free edge moves up and down a little.
+        void Flag(float x, Action<float, float, float, float> paintFlag)
+        {
+            var flagTop = top - poleHeight;
+            paintFlag(x + 0.75f * d, flagTop, flagW, flagH + 1.2f * d * MathF.Sin(seconds * 6));
+        }
+
+        // Start line: a white stripe with a dark edge, and a green flag.
+        Pole(startX);
+        paint.Color = dark;
+        canvas.DrawRect(startX - 2.2f * d, top, 4.4f * d, bottom - top, paint);
+        paint.Color = SKColors.White;
+        canvas.DrawRect(startX - 1.5f * d, top + 0.7f * d, 3f * d, bottom - top - 1.4f * d, paint);
+        Flag(startX, (x, y, w, h) =>
+        {
+            paint.Color = SKColor.Parse("#2FB35A");
+            canvas.DrawRect(x, y, w, h, paint);
+        });
+
+        // Finish line: two columns of black and white squares across the bar, and a checkered flag.
+        Pole(finishX);
+        var squares = 4;
+        var cell = (bottom - top) / squares;
+        for (var column = 0; column < 2; column++)
+            for (var row = 0; row < squares; row++)
+            {
+                paint.Color = (row + column) % 2 == 0 ? dark : SKColors.White;
+                canvas.DrawRect(finishX - cell + column * cell, top + row * cell, cell, cell, paint);
+            }
+        Flag(finishX, (x, y, w, h) =>
+        {
+            var cols = 4;
+            var rows = 3;
+            for (var column = 0; column < cols; column++)
+                for (var row = 0; row < rows; row++)
+                {
+                    paint.Color = (row + column) % 2 == 0 ? dark : SKColors.White;
+                    canvas.DrawRect(x + column * w / cols, y + row * h / rows, w / cols + 0.5f, h / rows + 0.5f, paint);
+                }
+        });
     }
 
     private static SKColor ParseColor(string hex) => Color.FromArgb(hex).ToSKColor();

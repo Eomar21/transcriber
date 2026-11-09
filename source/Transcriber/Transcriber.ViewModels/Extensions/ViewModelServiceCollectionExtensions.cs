@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Transcriber.ViewModels.Practice;
 using Transcriber.ViewModels.Progress;
 using Transcriber.ViewModels.Transcribe;
@@ -13,7 +14,7 @@ public static class ViewModelServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddTranscribeScreen(this IServiceCollection services)
     {
-        services.AddSingleton<IProgressLookPicker>(_ => new ProgressLookPicker(ProgressLooks.All));
+        services.AddProgressLooks();
         services.AddSingleton<RunState>();
         services.AddSingleton<FilesViewModel>();
         services.AddSingleton<OptionsViewModel>();
@@ -32,6 +33,7 @@ public static class ViewModelServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddPracticeScreen(this IServiceCollection services)
     {
+        services.AddProgressLooks();
         services.AddSingleton<PracticeState>();
         services.AddSingleton<MicrophoneViewModel>();
         services.AddSingleton<SourceViewModel>();
@@ -40,6 +42,13 @@ public static class ViewModelServiceCollectionExtensions
         services.AddSingleton<FeedbackViewModel>();
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<PracticeViewModel>();
+        return services;
+    }
+
+    /// <summary>One picker for the whole app, so two runs in a row never get the same look, on any tab.</summary>
+    private static IServiceCollection AddProgressLooks(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IProgressLookPicker>(_ => new ProgressLookPicker(ProgressLooks.All));
         return services;
     }
 }

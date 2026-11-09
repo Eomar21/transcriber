@@ -18,5 +18,10 @@ public static class ProgressLooks
         Id: "surfer", Sprite: "surfer.png", Cell: 32, Frames: 8, FramesPerSecond: 8,
         Fill: "#1B9AAA", FillDark: "#4FD1D9", Decoration: TrackDecoration.Wave);
 
-    public static IReadOnlyList<ProgressLook> All { get; } = [Runner, Surfer];
+    /// <summary>The marathon runner between a start line and a finish line.</summary>
+    public static ProgressLook Marathoner { get; } = new(
+        Id: "marathoner", Sprite: "marathoner.png", Cell: 32, Frames: 8, FramesPerSecond: 10,
+        Fill: "#E8590C", FillDark: "#FF8A4C", Decoration: TrackDecoration.StartAndFinish);
+
+    public static IReadOnlyList<ProgressLook> All { get; } = [Runner, Surfer, Marathoner];
 }

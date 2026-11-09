@@ -13,6 +13,7 @@ SpriteSheet[] sheets =
 [
     new("runner.png", 32, 8, DrawRunner, Outline: true),
     new("surfer.png", 32, 8, DrawSurfer, Outline: true),
+    new("marathoner.png", 32, 8, DrawMarathoner, Outline: true),
     new("spark.png", SparkCell, SparkFrames, DrawSpark, Outline: false),
 ];
 
@@ -164,6 +165,65 @@ static void DrawSurfLeg(Canvas c, (double x, double y) hip, (double x, double y)
     c.Circle(foot.x, foot.y + 0.9, 1.1, skin);
 }
 
+static void DrawMarathoner(Canvas c, int f)
+{
+    var t = 2 * Math.PI * f / 8;
+    var bob = Math.Round(-1.0 * Math.Abs(Math.Cos(t)));
+    var hip = (x: 14.0, y: 17.6 + bob);
+    const double lean = 0.18;
+    var shoulder = (x: hip.x + 8.5 * Math.Sin(lean), y: hip.y - 8.5 * Math.Cos(lean));
+    var head = (x: shoulder.x + 1.6, y: shoulder.y - 4.2);
+
+    // The back arm and the back leg are drawn first, in darker tones.
+    DrawMarathonArm(c, shoulder, t + Math.PI, back: true);
+    DrawMarathonLeg(c, hip, t + Math.PI, back: true);
+
+    // Torso: an orange singlet with a white race bib, and navy shorts.
+    c.Line(hip.x, hip.y, shoulder.x, shoulder.y, 2.4, Palette.Singlet);
+    var mx = (int)Math.Round((hip.x + shoulder.x) / 2 + 0.6);
+    var my = (int)Math.Round((hip.y + shoulder.y) / 2 - 0.5);
+    for (var dy = -1; dy <= 2; dy++)
+        for (var dx = -1; dx <= 1; dx++)
+            c.Set(mx + dx, my + dy, (dx + dy) % 2 == 0 && dy is > -1 and < 2 ? Palette.BibInk : Palette.Bib);
+    c.Circle(hip.x, hip.y + 0.2, 3.1, Palette.RunShorts);
+    c.Line(hip.x - 2.8, hip.y - 1.6, hip.x + 2.8, hip.y - 1.6, 0.45, Palette.Singlet);
+
+    DrawMarathonLeg(c, hip, t, back: false);
+
+    // Head: a face under a red cap with a short brim, and an eye.
+    c.Circle(head.x + 0.8, head.y + 0.6, 3.0, Palette.Skin);
+    c.Circle(head.x - 0.3, head.y - 1.4, 3.0, Palette.Cap);
+    c.Line(head.x + 1.2, head.y - 1.2, head.x + 4.4, head.y - 0.6, 0.5, Palette.CapDark);
+    c.Set((int)Math.Round(head.x + 2.2), (int)Math.Round(head.y + 0.6), Palette.Outline);
+
+    DrawMarathonArm(c, shoulder, t, back: false);
+}
+
+static void DrawMarathonLeg(Canvas c, (double x, double y) hip, double ph, bool back)
+{
+    var skin = back ? Palette.SkinShade : Palette.Skin;
+    var shoe = back ? Palette.ShoeBack : Palette.ShoeBright;
+    var a1 = 1.0 * Math.Sin(ph);
+    var a2 = a1 - (0.8 + 0.8 * Math.Max(0, Math.Cos(ph)));
+    var knee = (x: hip.x + 6.3 * Math.Sin(a1), y: hip.y + 6.3 * Math.Cos(a1));
+    var foot = (x: knee.x + 6.0 * Math.Sin(a2), y: knee.y + 6.0 * Math.Cos(a2));
+    c.Line(hip.x, hip.y, knee.x, knee.y, 1.7, skin);
+    c.Line(knee.x, knee.y, foot.x, foot.y, 1.35, skin);
+    c.Circle(foot.x + 0.9, foot.y + 0.2, 1.6, shoe);
+    if (!back) c.Line(foot.x - 0.2, foot.y + 1.0, foot.x + 2.0, foot.y + 1.0, 0.35, Palette.ShoeAccent);
+}
+
+static void DrawMarathonArm(Canvas c, (double x, double y) shoulder, double ph, bool back)
+{
+    var skin = back ? Palette.SkinShade : Palette.Skin;
+    var b1 = -1.0 * Math.Sin(ph);
+    var elbow = (x: shoulder.x + 4.8 * Math.Sin(b1), y: shoulder.y + 4.8 * Math.Cos(b1));
+    var b2 = b1 + 1.7;                                  // the elbow stays bent, like a runner's
+    var hand = (x: elbow.x + 4.2 * Math.Sin(b2), y: elbow.y + 4.2 * Math.Cos(b2));
+    c.Line(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.0, skin);
+    c.Line(elbow.x, elbow.y, hand.x, hand.y, 0.9, skin);
+}
+
 static void DrawSpark(Canvas c, int f)
 {
     var prog = f / (double)(SparkFrames - 1);
@@ -204,6 +264,9 @@ static class Palette
     public static readonly Color SurfHair = Color.FromArgb(236, 200, 96);
     public static readonly Color Board = Color.FromArgb(250, 244, 226), BoardRail = Color.FromArgb(24, 110, 140), BoardStripe = Color.FromArgb(240, 112, 52);
     public static readonly Color Shorts = Color.FromArgb(232, 70, 96), ShortsStripe = Color.FromArgb(255, 226, 120);
+    public static readonly Color Singlet = Color.FromArgb(242, 120, 40), Bib = Color.FromArgb(250, 250, 246), BibInk = Color.FromArgb(40, 44, 120);
+    public static readonly Color RunShorts = Color.FromArgb(36, 52, 110), Cap = Color.FromArgb(214, 52, 52), CapDark = Color.FromArgb(150, 34, 38);
+    public static readonly Color ShoeBright = Color.FromArgb(248, 248, 250), ShoeBack = Color.FromArgb(188, 190, 202), ShoeAccent = Color.FromArgb(110, 214, 84);
     public static readonly Color Outline = Color.FromArgb(34, 22, 34);
     public static readonly Color White = Color.FromArgb(255, 255, 240), Yellow = Color.FromArgb(255, 232, 90);
     public static readonly Color Gold = Color.FromArgb(255, 196, 40), Orange = Color.FromArgb(255, 130, 30), Ember = Color.FromArgb(200, 70, 30);

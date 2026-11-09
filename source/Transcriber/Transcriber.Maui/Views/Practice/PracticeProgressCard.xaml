@@ -10,7 +10,7 @@
     <!-- The page shows this view only while an analysis is running. -->
     <Border Style="{StaticResource Card}">
         <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
-            <controls:RunnerProgress Progress="{Binding Progress}" FillColor="{StaticResource Primary}"
+            <controls:RunnerProgress Progress="{Binding Progress}" Look="{Binding Look}" FillColor="{StaticResource Primary}"
                                      TrackColor="{AppThemeBinding Light={StaticResource CardStrokeLight}, Dark={StaticResource CardStrokeDark}}" />
             <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
         </VerticalStackLayout>

@@ -1,3 +1,4 @@
+using Transcriber.ViewModels.Progress;
 using Transcriber.ViewModels;
 using Transcriber.ViewModels.Practice;
 
@@ -20,7 +21,7 @@ internal static class PracticeFixture
         return new PracticeViewModel(
             state,
             new SourceViewModel(picker, ServicesFixture.Languages, microphone, state),
-            new PracticeStatusViewModel(state),
+            new PracticeStatusViewModel(state, new ProgressLookPicker(ProgressLooks.All)),
             analysis,
             new FeedbackViewModel(feedback, analysis, state),
             new HistoryViewModel(history),

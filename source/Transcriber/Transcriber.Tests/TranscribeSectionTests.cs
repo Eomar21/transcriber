@@ -208,7 +208,7 @@ public class ProgressVisibilityTests
     [Fact]
     public async Task The_practice_bar_follows_the_same_rules()
     {
-        var status = new Transcriber.ViewModels.Practice.PracticeStatusViewModel(new Transcriber.ViewModels.Practice.PracticeState());
+        var status = new Transcriber.ViewModels.Practice.PracticeStatusViewModel(new Transcriber.ViewModels.Practice.PracticeState(), new Transcriber.ViewModels.Progress.ProgressLookPicker(Transcriber.ViewModels.Progress.ProgressLooks.All));
         status.BeginProgress();
         status.Progress = 1;
 

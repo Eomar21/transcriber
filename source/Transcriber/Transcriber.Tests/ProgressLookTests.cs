@@ -61,6 +61,32 @@ public class ProgressLookTests
     }
 
     [Fact]
+    public void Each_practice_analysis_starts_with_a_new_look()
+    {
+        var picker = new ProgressLookPicker([Look("a"), Look("b")], new Random(4));
+        var status = new Transcriber.ViewModels.Practice.PracticeStatusViewModel(new Transcriber.ViewModels.Practice.PracticeState(), picker);
+
+        var seen = new List<string>();
+        for (var i = 0; i < 6; i++)
+        {
+            status.BeginProgress();
+            seen.Add(status.Look.Id);
+        }
+
+        Assert.All(seen.Zip(seen.Skip(1)), pair => Assert.NotEqual(pair.First, pair.Second));
+    }
+
+    [Fact]
+    public void Both_tabs_share_one_picker()
+    {
+        var services = new ServiceCollection();
+        services.AddTranscribeScreen();
+        services.AddPracticeScreen();
+
+        Assert.Single(services, d => d.ServiceType == typeof(IProgressLookPicker));
+    }
+
+    [Fact]
     public void The_app_container_provides_the_picker_and_the_screen()
     {
         var services = new ServiceCollection();

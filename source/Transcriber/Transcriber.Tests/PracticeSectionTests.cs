@@ -3,6 +3,7 @@ using Transcriber.Coach.Extensions;
 using Transcriber.Coach.Interfaces;
 using Transcriber.Coach.Models;
 using Transcriber.Services.Extensions;
+using Transcriber.ViewModels.Progress;
 using Transcriber.ViewModels;
 using Transcriber.ViewModels.Extensions;
 using Transcriber.ViewModels.Practice;
@@ -100,7 +101,7 @@ public class PracticeSectionTests
     public void Other_sections_see_that_a_recording_is_running()
     {
         var state = new PracticeState();
-        var status = new PracticeStatusViewModel(state);
+        var status = new PracticeStatusViewModel(state, new ProgressLookPicker(ProgressLooks.All));
         var history = new HistoryViewModel(new NoHistory());
 
         state.IsRecording = true;
@@ -121,7 +122,7 @@ public class PracticeSectionTests
     [Fact]
     public void The_status_section_says_when_there_is_an_error_to_show()
     {
-        var status = new PracticeStatusViewModel(new PracticeState());
+        var status = new PracticeStatusViewModel(new PracticeState(), new ProgressLookPicker(ProgressLooks.All));
         Assert.False(status.HasError);
 
         status.ErrorMessage = "Stopped.";

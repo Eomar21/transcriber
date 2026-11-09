@@ -8,6 +8,9 @@ public enum TrackDecoration
 
     /// <summary>The filled part of the bar has a moving wave on top. The sprite rides the wave.</summary>
     Wave,
+
+    /// <summary>A start line at the beginning of the bar and a finish line with a flag at the end.</summary>
+    StartAndFinish,
 }
 
 /// <summary>
