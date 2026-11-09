@@ -48,3 +48,5 @@ The models and tools in the app have fixed versions. When the app is built, a SH
 ## Source code
 
 The source code is open: [github.com/Eomar21/transcriber](https://github.com/Eomar21/transcriber). The README explains how to build the app and how it is tested.
+
+The default settings are in a file in the app. You can change them with a [settings file]({{ '/settings' | relative_url }}).

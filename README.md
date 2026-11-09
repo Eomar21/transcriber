@@ -203,10 +203,10 @@ The first build downloads ffmpeg and the models (about 600 MB in total). Everyth
 
 | Project | Purpose |
 | --- | --- |
-| `Transcriber.Services` | Audio, video, Whisper, voice activity, speaker detection, model management and export. No UI dependencies. |
+| `Transcriber.Services` | Audio, video, Whisper, speech detection, speaker detection, model management and export. No UI dependencies. The classes are internal. The public parts are the interfaces and models. One call, `AddTranscriberServices()`, registers them. Default settings are in `appsettings.json`. A user file can change them: see [Settings file](https://eomar21.github.io/transcriber/settings). |
 | `Transcriber.Coach` | Speech analysis for Practice mode: pace, pauses, filler words, stumbles, tips, history, optional Ollama feedback. No UI dependencies. Interfaces, models, exceptions and services each have their own folder. Each language is a JSON profile in `Languages/Profiles`, so a new language needs a data file and no code. |
-| `Transcriber.ViewModels` | MVVM view models (CommunityToolkit.Mvvm) behind small interfaces for platform services such as file pickers, playback and the microphone. |
-| `Transcriber.Maui` | The .NET MAUI app: pages, styles and platform implementations for Windows and macOS. |
+| `Transcriber.ViewModels` | MVVM view models (CommunityToolkit.Mvvm). Each screen has one coordinator view model. It owns one view model for each section of the screen: `Transcribe/` has Files, Options, Status, Saved, Playback and Results, and `Practice/` has Source, Microphone, Analysis, History and Feedback. The sections share one state object and tell each other about changes through events. Platform services such as file pickers, playback and the microphone are small interfaces. |
+| `Transcriber.Maui` | The .NET MAUI app. Each section has its own view in `Views/Transcribe` and `Views/Practice`. The page only places the views. `Resources/Styles` has the spacing scale and the shared control styles. Platform code is in `Platforms/Windows` and `Platforms/MacCatalyst`. |
 | `Transcriber.Tests` | xUnit tests, including end-to-end transcription of real recordings. |
 | `Transcriber.UiTests` | Drives the real Windows app through UI Automation. |
 | `build/` | MSBuild targets that fetch and verify the bundled tools and models. |
