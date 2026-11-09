@@ -28,16 +28,6 @@
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
-
-		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
-		<WindowsPackageType>None</WindowsPackageType>
-
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -63,11 +53,6 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
 
-	<!-- Microphone capture on Windows (the macOS build uses AVFoundation instead). -->
-	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-		<PackageReference Include="NAudio.WinMM" Version="3.3.0" />
-	</ItemGroup>
-
 	<ItemGroup>
 	  <ProjectReference Include="..\Transcriber.Services\Transcriber.Services.csproj" />
 	  <ProjectReference Include="..\Transcriber.ViewModels\Transcriber.ViewModels.csproj" />
@@ -79,53 +64,11 @@
 	</PropertyGroup>
 	<Import Project="..\build\BundledAssets.targets" />
 
-
-	<!--
-		Whisper.net.Runtime ships native libraries for every OS. The Mac Catalyst toolchain tries to
-		post-process them and fails. Whisper.net links its static Mac Catalyst libraries itself, so drop all of them.
-	-->
-	<Target Name="DropDynamicWhisperRuntimesOnMac" BeforeTargets="_ComputeDynamicLibrariesToReidentify"
-	        Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
-		<ItemGroup>
-			<_OtherOsNative Include="@(_FileNativeReference);@(ResolvedFileToPublish)"
-			                Condition="('%(Extension)' == '.dylib' Or '%(Extension)' == '.so' Or '%(Extension)' == '.dll') And ($([System.String]::Copy('%(Filename)').StartsWith('libwhisper')) Or $([System.String]::Copy('%(Filename)').StartsWith('libggml')) Or $([System.String]::Copy('%(Filename)').StartsWith('whisper')) Or $([System.String]::Copy('%(Filename)').StartsWith('ggml')))" />
-			<_FileNativeReference Remove="@(_OtherOsNative)" />
-			<ResolvedFileToPublish Remove="@(_OtherOsNative)" />
-		</ItemGroup>
-	</Target>
-
-
-	<!--
-		Whisper.net ships static Mac Catalyst libraries. Reference them here so they are always linked into the app
-		(the package's own build targets are not picked up through the class library reference).
-	-->
-	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
-		<WhisperMacLibDir>$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/maccatalyst/</WhisperMacLibDir>
+	<!-- Everything that only one platform needs lives next to that platform's code. -->
+	<PropertyGroup>
+		<AppPlatform>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</AppPlatform>
 	</PropertyGroup>
-	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' And Exists('$(WhisperMacLibDir)libwhisper.a')">
-		<NativeReference Include="$(WhisperMacLibDir)libwhisper.a">
-			<Kind>Static</Kind>
-			<SmartLink>true</SmartLink>
-			<ForceLoad>true</ForceLoad>
-			<Frameworks>Accelerate</Frameworks>
-		</NativeReference>
-		<NativeReference Include="$(WhisperMacLibDir)libggml-whisper.a">
-			<Kind>Static</Kind>
-			<SmartLink>true</SmartLink>
-		</NativeReference>
-		<NativeReference Include="$(WhisperMacLibDir)libggml-base-whisper.a">
-			<Kind>Static</Kind>
-			<SmartLink>true</SmartLink>
-		</NativeReference>
-		<NativeReference Include="$(WhisperMacLibDir)libggml-cpu-whisper.a">
-			<Kind>Static</Kind>
-			<SmartLink>true</SmartLink>
-		</NativeReference>
-		<NativeReference Include="$(WhisperMacLibDir)libggml-blas-whisper.a">
-			<Kind>Static</Kind>
-			<SmartLink>true</SmartLink>
-			<Frameworks>Accelerate</Frameworks>
-		</NativeReference>
-	</ItemGroup>
+	<Import Project="Platforms/Windows/Windows.props" Condition="'$(AppPlatform)' == 'windows'" />
+	<Import Project="Platforms/MacCatalyst/MacCatalyst.props" Condition="'$(AppPlatform)' == 'maccatalyst'" />
 
 </Project>

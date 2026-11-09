@@ -1,0 +1,17 @@
+<Project>
+
+	<!-- Settings that apply only to the Windows build. Imported by Transcriber.Maui.csproj. -->
+
+	<PropertyGroup>
+		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+		<WindowsPackageType>None</WindowsPackageType>
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+	</PropertyGroup>
+
+	<!-- Microphone capture (the macOS build uses AVFoundation instead). -->
+	<ItemGroup>
+		<PackageReference Include="NAudio.WinMM" Version="3.3.0" />
+	</ItemGroup>
+
+</Project>

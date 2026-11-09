@@ -1,0 +1,53 @@
+<Project>
+
+	<!-- Settings that apply only to the Mac Catalyst build. Imported by Transcriber.Maui.csproj. -->
+
+	<PropertyGroup>
+		<SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+		<WhisperMacLibDir>$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/maccatalyst/</WhisperMacLibDir>
+	</PropertyGroup>
+
+	<!--
+		Whisper.net.Runtime ships native libraries for every OS. The Mac Catalyst toolchain tries to
+		post-process them and fails. Whisper.net links its static Mac Catalyst libraries itself, so drop all of them.
+	-->
+	<Target Name="DropDynamicWhisperRuntimesOnMac" BeforeTargets="_ComputeDynamicLibrariesToReidentify">
+		<ItemGroup>
+			<_OtherOsNative Include="@(_FileNativeReference);@(ResolvedFileToPublish)"
+			                Condition="('%(Extension)' == '.dylib' Or '%(Extension)' == '.so' Or '%(Extension)' == '.dll') And ($([System.String]::Copy('%(Filename)').StartsWith('libwhisper')) Or $([System.String]::Copy('%(Filename)').StartsWith('libggml')) Or $([System.String]::Copy('%(Filename)').StartsWith('whisper')) Or $([System.String]::Copy('%(Filename)').StartsWith('ggml')))" />
+			<_FileNativeReference Remove="@(_OtherOsNative)" />
+			<ResolvedFileToPublish Remove="@(_OtherOsNative)" />
+		</ItemGroup>
+	</Target>
+
+	<!--
+		Whisper.net ships static Mac Catalyst libraries. Reference them here so they are always linked into the app
+		(the package's own build targets are not picked up through the class library reference).
+	-->
+	<ItemGroup Condition="Exists('$(WhisperMacLibDir)libwhisper.a')">
+		<NativeReference Include="$(WhisperMacLibDir)libwhisper.a">
+			<Kind>Static</Kind>
+			<SmartLink>true</SmartLink>
+			<ForceLoad>true</ForceLoad>
+			<Frameworks>Accelerate</Frameworks>
+		</NativeReference>
+		<NativeReference Include="$(WhisperMacLibDir)libggml-whisper.a">
+			<Kind>Static</Kind>
+			<SmartLink>true</SmartLink>
+		</NativeReference>
+		<NativeReference Include="$(WhisperMacLibDir)libggml-base-whisper.a">
+			<Kind>Static</Kind>
+			<SmartLink>true</SmartLink>
+		</NativeReference>
+		<NativeReference Include="$(WhisperMacLibDir)libggml-cpu-whisper.a">
+			<Kind>Static</Kind>
+			<SmartLink>true</SmartLink>
+		</NativeReference>
+		<NativeReference Include="$(WhisperMacLibDir)libggml-blas-whisper.a">
+			<Kind>Static</Kind>
+			<SmartLink>true</SmartLink>
+			<Frameworks>Accelerate</Frameworks>
+		</NativeReference>
+	</ItemGroup>
+
+</Project>
