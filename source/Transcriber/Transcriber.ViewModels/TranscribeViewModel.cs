@@ -194,7 +194,7 @@ public partial class TranscribeViewModel : ObservableObject
         if (supported.Count == 0)
         {
             if (dropped.Count > 0)
-                DropMessage = "Those files can't be transcribed. Try mp3, wav, mp4, mov, m4a or another audio or video file.";
+                DropMessage = "Those files can't be transcribed. Try mp3, wav, m4a, mp4, mov or another common audio or video file.";
             return 0;
         }
 
