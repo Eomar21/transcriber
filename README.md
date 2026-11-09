@@ -15,6 +15,8 @@ Transcriber has two modes, each on its own tab:
 | You give it | One or more recordings | A recording of yourself, or a live microphone take |
 | You get | A transcript with timestamps and optional speaker labels, saved as text, subtitles or JSON | Pace, pauses, filler words and stumbles, plain-language tips, and your progress over time |
 
+**Full documentation: [eomar21.github.io/transcriber](https://eomar21.github.io/transcriber/)** with guides for each mode, speaker labels, output formats, privacy, troubleshooting and an FAQ.
+
 Both use [OpenAI Whisper](https://github.com/openai/whisper) through [Whisper.net](https://github.com/sandrohanea/whisper.net), running locally.
 
 ## Contents
