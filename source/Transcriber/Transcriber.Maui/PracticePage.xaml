@@ -9,7 +9,7 @@
     Title="Practice">
 
     <!-- The page only arranges the sections. Each section is a view with its own view model. -->
-    <ScrollView>
+    <ScrollView x:Name="Scroller">
         <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
         <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="{StaticResource SpaceLg}">
 
@@ -29,7 +29,7 @@
                         Command="{Binding AnalyzeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
 
-            <views:PracticeProgressCard BindingContext="{Binding Status}" IsVisible="{Binding IsBusy, x:DataType=vm:PracticeStatusViewModel}" />
+            <views:PracticeProgressCard x:Name="ProgressView" AutomationId="RunProgress" BindingContext="{Binding Status}" IsVisible="{Binding ShowProgress, x:DataType=vm:PracticeStatusViewModel}" />
 
             <views:PracticeErrorLine BindingContext="{Binding Status}" IsVisible="{Binding HasError, x:DataType=vm:PracticeStatusViewModel}" />
 

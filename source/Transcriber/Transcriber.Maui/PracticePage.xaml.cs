@@ -14,6 +14,7 @@ public partial class PracticePage : ContentPage
     {
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
+        Controls.ScrollToProgress.When(_viewModel.Status, () => _viewModel.Status.ShowProgress, Scroller, ProgressView);
     }
 
     // Look for Ollama each time the tab is shown, so starting it later is picked up without restarting the app.

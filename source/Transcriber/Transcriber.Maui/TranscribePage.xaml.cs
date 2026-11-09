@@ -16,6 +16,7 @@ public partial class TranscribePage : ContentPage
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
 
+        Controls.ScrollToProgress.When(_viewModel.Status, () => _viewModel.Status.ShowProgress, Scroller, ProgressView);
         ConfigureFileDrop();
     }
 

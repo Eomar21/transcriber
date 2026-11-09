@@ -61,6 +61,32 @@ public class AppTests
     }
 
     [UiFact]
+    public void Starting_a_run_scrolls_the_progress_bar_into_view()
+    {
+        var file = CopyToTemp("en-01.mp3", out var dir);
+        using var app = new AppDriver(file);
+        try
+        {
+            AppDriver.Wait(() => app.Get("TranscribeButton").IsEnabled, TimeSpan.FromSeconds(10), "the file to be added");
+            Assert.Null(app.Find("RunProgress"));
+            var scroller = app.Window.FindAllDescendants().First(e =>
+                e.Patterns.Scroll.IsSupported && e.Patterns.Scroll.Pattern.VerticallyScrollable.ValueOrDefault);
+            Assert.Equal(0, scroller.Patterns.Scroll.Pattern.VerticalScrollPercent.Value);
+
+            app.Click("TranscribeButton");
+
+            AppDriver.Wait(() => app.Find("RunProgress") is not null, TimeSpan.FromSeconds(10), "the progress bar to appear");
+            // The page scrolls down to the bar. At the start the page is at the top.
+            AppDriver.Wait(() => scroller.Patterns.Scroll.Pattern.VerticalScrollPercent.Value > 0, TimeSpan.FromSeconds(5), "the page to scroll to the progress bar");
+            AppDriver.SaveScreen("progress-running");
+
+            AppDriver.Wait(() => app.TextOf("ResultMessage") == "Transcript saved", TimeSpan.FromMinutes(5), "the transcript to be saved");
+        }
+        catch { app.SaveScreenshot(nameof(Starting_a_run_scrolls_the_progress_bar_into_view)); throw; }
+        finally { app.Dispose(); Directory.Delete(dir, true); }
+    }
+
+    [UiFact]
     public void Labelling_speakers_names_who_said_each_line_in_the_saved_transcript()
     {
         var file = CopyToTemp("two-speakers-en.wav", out var dir);

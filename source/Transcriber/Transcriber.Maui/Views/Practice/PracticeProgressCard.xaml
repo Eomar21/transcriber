@@ -2,6 +2,7 @@
 <ContentView
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:Transcriber.Maui.Controls"
     xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
     x:Class="Transcriber.Maui.Views.Practice.PracticeProgressCard"
     x:DataType="vm:PracticeStatusViewModel">
@@ -9,7 +10,8 @@
     <!-- The page shows this view only while an analysis is running. -->
     <Border Style="{StaticResource Card}">
         <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
-            <ProgressBar Progress="{Binding Progress}" ProgressColor="{StaticResource Primary}" />
+            <controls:RunnerProgress Progress="{Binding Progress}" FillColor="{StaticResource Primary}"
+                                     TrackColor="{AppThemeBinding Light={StaticResource CardStrokeLight}, Dark={StaticResource CardStrokeDark}}" />
             <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
         </VerticalStackLayout>
     </Border>

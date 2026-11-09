@@ -30,7 +30,7 @@ Use this mode to change speech in a recording into text with time stamps. You ca
 4. Set the format. Select **Text (.txt)**, **.srt**, **.vtt** or **JSON**. Refer to [Output formats]({{ '/output-formats' | relative_url }}).
 5. Type names or special terms in the **Names or special terms** field (optional). For example, type `Eindhoven, Dr. Haddad`. This helps the app to write these words correctly.
 6. Turn on **Label who is speaking** (optional). Refer to [Speaker labels]({{ '/speaker-labels' | relative_url }}).
-7. Click **Transcribe**. The app shows the progress. To stop the work, click **Cancel**.
+7. Click **Transcribe**. The page scrolls to the progress bar. A small runner moves along the bar. One bar covers all the files. A burst of sparks shows when the work is complete. To stop the work, click **Cancel**.
 
 When the work is done, the app shows **Transcript saved** and the location of the file. Two buttons show: **Open transcript** and **Show in folder**. The text also shows in the list below.
 

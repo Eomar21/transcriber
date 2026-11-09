@@ -9,7 +9,7 @@
     Title="Transcribe">
 
     <!-- The page only arranges the sections. Each section is a view with its own view model. -->
-    <ScrollView>
+    <ScrollView x:Name="Scroller">
       <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
       <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="{StaticResource SpaceLg}">
 
@@ -33,7 +33,7 @@
             </Grid>
 
             <!-- Progress: only while a run is in progress. -->
-            <views:ProgressCard BindingContext="{Binding Status}" IsVisible="{Binding IsBusy, x:DataType=vm:RunStatusViewModel}" />
+            <views:ProgressCard x:Name="ProgressView" AutomationId="RunProgress" BindingContext="{Binding Status}" IsVisible="{Binding ShowProgress, x:DataType=vm:RunStatusViewModel}" />
 
             <!-- Result: the status line and notes, then the buttons for the saved transcript. -->
             <VerticalStackLayout IsVisible="{Binding Status.HasResultMessage}" Spacing="{StaticResource SpaceSm}">

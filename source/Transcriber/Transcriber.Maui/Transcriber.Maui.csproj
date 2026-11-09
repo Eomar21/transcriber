@@ -50,6 +50,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="3.0.0" />
+		<!-- SkiaSharp.Views.Maui.Controls asks for version 9. Use the same version as MAUI, or the Windows build cannot copy its files. -->
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
 
