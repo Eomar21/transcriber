@@ -3,6 +3,8 @@ using System.Diagnostics;
 
 public class VideoReaderService : IVideoReaderService
 {
+    private const string CouldNotBeRead = "This file could not be read. It may be damaged, or it may not be an audio or video file.";
+
     private readonly string _ffmpegPath;
     private readonly string _tempDirectory;
 
@@ -15,6 +17,12 @@ public class VideoReaderService : IVideoReaderService
 
     public async Task<string> ConvertVideoToAudioAsync(string videoFilePath)
     {
+        if (!File.Exists(videoFilePath))
+            throw new InvalidOperationException("This file was not found. It may have been moved or deleted.");
+        // ffmpeg reports an empty file as a file without audio, which would mislead.
+        if (new FileInfo(videoFilePath).Length == 0)
+            throw new InvalidOperationException(CouldNotBeRead);
+
         // Temp file, so a video "talk.wav"-style name collision can never overwrite the user's files.
         var outputFile = Path.Combine(_tempDirectory, $"transcriber_{Guid.NewGuid():N}.wav");
 
@@ -75,7 +83,7 @@ public class VideoReaderService : IVideoReaderService
         if (cannotOpen
             || ffmpegOutput.Contains("Invalid data found when processing input", StringComparison.OrdinalIgnoreCase)
             || ffmpegOutput.Contains("moov atom not found", StringComparison.OrdinalIgnoreCase))
-            return "This file could not be read. It may be damaged, or it may not be an audio or video file.";
+            return CouldNotBeRead;
 
         var tail = string.Join(Environment.NewLine, ffmpegOutput.Split('\n').TakeLast(3));
         return $"ffmpeg failed (exit code {exitCode}): {tail}";

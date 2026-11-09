@@ -142,9 +142,15 @@ public class VideoReaderServiceTests
     [Fact]
     public async Task Missing_ffmpeg_gives_a_helpful_error()
     {
-        var service = new VideoReaderService(Path.Combine(Path.GetTempPath(), "definitely-not-ffmpeg.exe"));
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ConvertVideoToAudioAsync("x.mp4"));
-        Assert.Contains("ffmpeg was not found", ex.Message);
+        var input = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".mp4");
+        await File.WriteAllTextAsync(input, "not empty");
+        try
+        {
+            var service = new VideoReaderService(Path.Combine(Path.GetTempPath(), "definitely-not-ffmpeg.exe"));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ConvertVideoToAudioAsync(input));
+            Assert.Contains("ffmpeg was not found", ex.Message);
+        }
+        finally { File.Delete(input); }
     }
 }
 

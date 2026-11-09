@@ -47,9 +47,8 @@ public class FileReaderService : IFileReaderService
             return await _videoReaderService.ConvertVideoToAudioAsync(filePath);
         }
 
-        if (FfmpegAudio.Contains(ext) || FfmpegVideo.Contains(ext))
-            return await _videoReaderService.ConvertVideoToAudioAsync(filePath);
-
-        throw new NotSupportedException($"File type '{ext}' is not supported.");
+        // Listed formats and unlisted ones take the same road. A file with another extension only gets here when the
+        // person chose it on purpose ("Any file type"), so ffmpeg gets to try, and a file it cannot read gets a clear message.
+        return await _videoReaderService.ConvertVideoToAudioAsync(filePath);
     }
 }

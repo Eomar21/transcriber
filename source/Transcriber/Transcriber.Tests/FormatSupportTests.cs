@@ -70,11 +70,42 @@ public class FormatSupportTests : IDisposable
     }
 
     [Fact]
-    public async Task An_unknown_extension_is_still_refused()
+    public async Task An_unlisted_extension_that_is_not_media_says_it_could_not_be_read()
     {
         var path = Path.Combine(_dir, "notes.txt");
         File.WriteAllText(path, "hello");
-        await Assert.ThrowsAsync<NotSupportedException>(() => Reader().GetAudioFileFromFileAsync(path));
+
+        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => Reader().GetAudioFileFromFileAsync(path));
+
+        Assert.StartsWith("This file could not be read.", e.Message);
+    }
+
+    [Fact]
+    public async Task An_unlisted_extension_with_real_audio_is_read_when_the_person_chooses_it()
+    {
+        var path = await EncodeAsync("voice.xyz", "-c:a", "libvorbis", "-f", "ogg");
+
+        await AssertConvertsAsync(path);
+    }
+
+    [Fact]
+    public async Task A_missing_file_says_it_was_not_found()
+    {
+        var e = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => Reader().GetAudioFileFromFileAsync(Path.Combine(_dir, "gone.mp4")));
+
+        Assert.Equal("This file was not found. It may have been moved or deleted.", e.Message);
+    }
+
+    [Fact]
+    public async Task An_empty_file_says_it_could_not_be_read()
+    {
+        var path = Path.Combine(_dir, "empty.dat");
+        File.WriteAllBytes(path, []);
+
+        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => Reader().GetAudioFileFromFileAsync(path));
+
+        Assert.StartsWith("This file could not be read.", e.Message);
     }
 
     // ---- new formats, through ffmpeg ---------------------------------------------------
