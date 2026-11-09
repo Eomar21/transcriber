@@ -98,7 +98,9 @@ public sealed class AppDriver : IDisposable
         var until = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < until)
         {
-            if (condition()) return;
+            // The app can be too busy to answer one UI Automation call, for example while it draws for the first time.
+            try { if (condition()) return; }
+            catch (System.Runtime.InteropServices.COMException) { }
             Thread.Sleep(250);
         }
         throw new TimeoutException($"Timed out waiting for {what}.");
