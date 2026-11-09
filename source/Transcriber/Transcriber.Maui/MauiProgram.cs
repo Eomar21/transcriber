@@ -13,6 +13,9 @@ namespace Transcriber.Maui
         // Speaker detection runs differently on each platform: see Platforms/Windows and Platforms/MacCatalyst.
         private static partial void RegisterSpeakerDetection(IServiceCollection services);
 
+        // Gives the text boxes and drop-down lists one shape: see Platforms/Windows and Platforms/MacCatalyst.
+        private static partial void ConfigureFieldShape();
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
@@ -27,6 +30,7 @@ namespace Transcriber.Maui
             // Core services: reading media, transcribing, saving transcripts. The settings are in the services project.
             builder.Services.AddTranscriberServices();
             RegisterSpeakerDetection(builder.Services);
+            ConfigureFieldShape();
 
             // Platform services the view models depend on through interfaces.
             builder.Services.AddSingleton<IFilePickerService, MauiFilePickerService>();
