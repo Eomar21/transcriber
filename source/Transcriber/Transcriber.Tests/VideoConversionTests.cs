@@ -84,7 +84,7 @@ public class VideoConversionTests : IDisposable
     }
 
     [Fact]
-    public async Task A_corrupt_video_reports_an_ffmpeg_failure_and_leaves_no_temp_file()
+    public async Task A_corrupt_video_reports_that_it_cannot_be_read_and_leaves_no_temp_file()
     {
         var bad = Path.Combine(_dir, "broken.mp4");
         await File.WriteAllTextAsync(bad, "this is not a video");
@@ -94,7 +94,7 @@ public class VideoConversionTests : IDisposable
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => new VideoReaderService(tempDirectory: tempDir).ConvertVideoToAudioAsync(bad));
 
-        Assert.Contains("ffmpeg failed", ex.Message);
+        Assert.StartsWith("This file could not be read.", ex.Message);
         Assert.Empty(Directory.GetFiles(tempDir));
     }
 }

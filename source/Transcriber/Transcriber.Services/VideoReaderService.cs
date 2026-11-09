@@ -53,11 +53,31 @@ public class VideoReaderService : IVideoReaderService
             if (process.ExitCode != 0)
             {
                 try { File.Delete(outputFile); } catch { /* best effort */ }
-                var tail = string.Join(Environment.NewLine, errorText.Split('\n').TakeLast(3));
-                throw new InvalidOperationException($"ffmpeg failed (exit code {process.ExitCode}): {tail}");
+                throw new InvalidOperationException(DescribeFailure(process.ExitCode, errorText));
             }
         }
 
         return outputFile;
+    }
+
+    /// <summary>Turns what ffmpeg printed into a message a person can act on.</summary>
+    public static string DescribeFailure(int exitCode, string ffmpegOutput)
+    {
+        // A video with no sound leaves nothing to write: ffmpeg says the output has no stream.
+        if (ffmpegOutput.Contains("does not contain any stream", StringComparison.OrdinalIgnoreCase)
+            || ffmpegOutput.Contains("matches no streams", StringComparison.OrdinalIgnoreCase))
+            return "This file has no audio track, so there is nothing to transcribe.";
+
+        // Damaged files, and files that only carry a media extension.
+        var cannotOpen = ffmpegOutput.Contains("Error opening input", StringComparison.OrdinalIgnoreCase)
+            && !ffmpegOutput.Contains("No such file", StringComparison.OrdinalIgnoreCase)
+            && !ffmpegOutput.Contains("Permission denied", StringComparison.OrdinalIgnoreCase);
+        if (cannotOpen
+            || ffmpegOutput.Contains("Invalid data found when processing input", StringComparison.OrdinalIgnoreCase)
+            || ffmpegOutput.Contains("moov atom not found", StringComparison.OrdinalIgnoreCase))
+            return "This file could not be read. It may be damaged, or it may not be an audio or video file.";
+
+        var tail = string.Join(Environment.NewLine, ffmpegOutput.Split('\n').TakeLast(3));
+        return $"ffmpeg failed (exit code {exitCode}): {tail}";
     }
 }
