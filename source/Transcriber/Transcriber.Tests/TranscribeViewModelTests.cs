@@ -31,6 +31,8 @@ public class TranscribeViewModelTests : IDisposable
         public string? LastRuntime => "Fake";
         public SpeechCoverage? Coverage { get; set; }
         public SpeechCoverage? LastCoverage => Coverage;
+        /// <summary>Called before the handler, so a test can report progress the way the real service does.</summary>
+        public Action<IProgress<TranscriptionProgress>?>? OnProgress { get; set; }
         public Func<string, CancellationToken, Task<List<TranscriptSegment>>> Handler { get; set; } = (_, _) =>
             Task.FromResult(new List<TranscriptSegment>
             {
@@ -40,7 +42,13 @@ public class TranscribeViewModelTests : IDisposable
 
         public Task<List<TranscriptSegment>> TranscribeAsync(string audioFilePath, TranscriptionOptions? options = null,
             IProgress<TranscriptionProgress>? progress = null, CancellationToken ct = default) =>
-            Handler(audioFilePath, ct);
+            RunAsync(audioFilePath, progress, ct);
+
+        private Task<List<TranscriptSegment>> RunAsync(string audioFilePath, IProgress<TranscriptionProgress>? progress, CancellationToken ct)
+        {
+            OnProgress?.Invoke(progress);
+            return Handler(audioFilePath, ct);
+        }
     }
 
     private sealed class FakePicker : IFilePickerService
@@ -351,6 +359,50 @@ public class TranscribeViewModelTests : IDisposable
         Assert.Contains("2 transcripts saved", vm.Status.ResultMessage);
         Assert.Equal(4, vm.Results.VisibleSegments.Count);
         Assert.Contains(vm.Results.VisibleSegments, s => s.Source == "two.mp3");
+    }
+
+    [Fact]
+    public async Task One_progress_bar_covers_all_the_files_of_a_run()
+    {
+        var (vm, _, whisper, _, _) = Create();
+        var seen = new List<double>();
+        vm.Status.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(RunStatusViewModel.Progress)) lock (seen) seen.Add(vm.Status.Progress);
+        };
+        whisper.OnProgress = progress => progress?.Report(new TranscriptionProgress("Transcribing", 0.5));
+        whisper.Handler = async (_, _) =>
+        {
+            await Task.Delay(150); // lets the progress report arrive before the file ends
+            return [new TranscriptSegment { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(1), Text = "Hello" }];
+        };
+        vm.Files.AddFiles([MakeInput("one.mp3"), MakeInput("two.mp3")]);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        double[] values;
+        lock (seen) values = [.. seen];
+        Assert.Contains(0.25, values); // half way through the first of two files
+        Assert.Contains(0.75, values); // half way through the second
+        Assert.Equal(1, values[^1]);
+        Assert.Equal(values.OrderBy(v => v), values); // the bar never goes back during a run
+    }
+
+    [Fact]
+    public async Task The_progress_bar_stays_for_a_moment_after_a_finished_run_and_goes_at_once_after_a_failure()
+    {
+        var (vm, _, whisper, _, _) = Create();
+        vm.Files.AddFiles([MakeInput()]);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+        Assert.True(vm.Status.ShowProgress); // the finish can be seen
+        Assert.False(vm.IsBusy);
+
+        whisper.Handler = (_, _) => throw new InvalidOperationException("boom");
+        vm.Files.AddFiles([MakeInput("again.mp3")]);
+        await vm.TranscribeCommand.ExecuteAsync(null);
+        await Task.Delay(100);
+        Assert.False(vm.Status.ShowProgress);
     }
 
     [Fact]

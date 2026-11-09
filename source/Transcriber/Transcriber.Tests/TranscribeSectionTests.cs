@@ -153,3 +153,72 @@ public class TranscribeSectionTests
 provider.GetRequiredService<RunState>().IsBusy = true;        Assert.True(screen.IsBusy);        Assert.True(screen.Files.IsBusy);        Assert.True(screen.Options.IsBusy);        Assert.True(screen.Status.IsBusy);
     }
 }
+
+/// <summary>The progress bar of a run: when it shows, and how long it stays after the end.</summary>
+public class ProgressVisibilityTests
+{
+    private sealed class NoSuggestion : IModelSuggestion
+    {
+        public string UseSuggestedModelText => "";
+        public CommunityToolkit.Mvvm.Input.IRelayCommand UseSuggestedModelCommand { get; } = new CommunityToolkit.Mvvm.Input.RelayCommand(() => { });
+    }
+
+    [Fact]
+    public async Task A_run_that_did_not_finish_hides_the_bar_at_once()
+    {
+        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        status.BeginProgress();
+        status.Progress = 0.4;
+
+        await status.EndProgressAsync(TimeSpan.FromSeconds(30));
+
+        Assert.False(status.ShowProgress);
+    }
+
+    [Fact]
+    public async Task A_run_that_finished_keeps_the_bar_for_the_linger_time_and_then_hides_it()
+    {
+        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        status.BeginProgress();
+        status.Progress = 1;
+
+        var ending = status.EndProgressAsync(TimeSpan.FromMilliseconds(200));
+        Assert.True(status.ShowProgress);
+        await ending;
+
+        Assert.False(status.ShowProgress);
+    }
+
+    [Fact]
+    public async Task A_new_run_during_the_linger_keeps_the_bar_visible()
+    {
+        var status = new RunStatusViewModel(new NoSuggestion(), new RunState());
+        status.BeginProgress();
+        status.Progress = 1;
+
+        var ending = status.EndProgressAsync(TimeSpan.FromMilliseconds(150));
+        status.BeginProgress();
+        await ending;
+
+        Assert.True(status.ShowProgress);
+        Assert.Equal(0, status.Progress);
+    }
+
+    [Fact]
+    public async Task The_practice_bar_follows_the_same_rules()
+    {
+        var status = new Transcriber.ViewModels.Practice.PracticeStatusViewModel(new Transcriber.ViewModels.Practice.PracticeState());
+        status.BeginProgress();
+        status.Progress = 1;
+
+        var ending = status.EndProgressAsync(TimeSpan.FromMilliseconds(100));
+        Assert.True(status.ShowProgress);
+        await ending;
+        Assert.False(status.ShowProgress);
+
+        status.BeginProgress();
+        status.Progress = 0.5;
+        await status.EndProgressAsync(TimeSpan.FromSeconds(30));
+        Assert.False(status.ShowProgress);
+    }
+}

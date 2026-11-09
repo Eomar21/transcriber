@@ -92,7 +92,7 @@ public sealed partial class PracticeViewModel : ObservableObject
 
         ClearResult();
         _state.IsBusy = true;
-        Status.Progress = 0;
+        Status.BeginProgress();
         Status.StatusText = "Preparing audio";
         string? audio = null;
         try
@@ -114,6 +114,7 @@ public sealed partial class PracticeViewModel : ObservableObject
                 Prompt = _verbatimPrompts.For(language),
             }, progress, ct);
 
+            Status.Progress = 1;
             var report = _analyzer.Analyze(segments, language);
             var previous = History.LastReport(language);
             Analysis.Show(
@@ -142,6 +143,7 @@ public sealed partial class PracticeViewModel : ObservableObject
                 try { File.Delete(audio); } catch (IOException) { }
             }
             _state.IsBusy = false;
+            _ = Status.EndProgressAsync(PracticeStatusViewModel.FinishLinger);
             Status.StatusText = "";
         }
     }

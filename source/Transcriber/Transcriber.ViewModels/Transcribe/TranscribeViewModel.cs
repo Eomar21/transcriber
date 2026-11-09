@@ -108,8 +108,8 @@ public sealed partial class TranscribeViewModel : ObservableObject
         var newPlayback = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         _run.IsBusy = true;
-        Status.Progress = 0;
         ClearResult();
+        Status.BeginProgress();
         Playback.Release();
         try
         {
@@ -120,7 +120,8 @@ public sealed partial class TranscribeViewModel : ObservableObject
                 var progress = new Progress<TranscriptionProgress>(p =>
                 {
                     Status.StatusText = prefix + p.Stage;
-                    Status.Progress = Math.Clamp(p.Fraction, 0, 1);
+                    // One bar for the whole run: each file is an equal share.
+                    Status.Progress = (i + Math.Clamp(p.Fraction, 0, 1)) / files.Count;
                 });
 
                 Status.StatusText = prefix + "Preparing audio";
@@ -133,6 +134,7 @@ public sealed partial class TranscribeViewModel : ObservableObject
                 {
                     // One file that cannot be read must not stop the others. It is reported when the run ends.
                     failed.Add((Path.GetFileName(file), ex.Message));
+                    Status.Progress = (i + 1d) / files.Count;
                     continue;
                 }
                 var keepForPlayback = false;
@@ -159,6 +161,7 @@ public sealed partial class TranscribeViewModel : ObservableObject
 
             if (saved.Count == 0)
             {
+                Status.Progress = 0; // no finish for a run that saved nothing
                 // Nothing could be read. A single file gets its reason as the headline; several files get one line each.
                 if (failed.Count == 1) Status.SetResult(ResultKind.Error, "Failed: " + failed[0].Reason);
                 else
@@ -169,6 +172,7 @@ public sealed partial class TranscribeViewModel : ObservableObject
                 return;
             }
 
+            Status.Progress = 1;
             Playback.SetSource(rows, newPlayback);
             newPlayback = [];
             Results.Show(rows);
@@ -198,6 +202,7 @@ public sealed partial class TranscribeViewModel : ObservableObject
             PlaybackViewModel.DeleteTempAudio(PlaybackViewModel.ConvertedCopies(newPlayback));
             Options.RefreshInstalledModels();
             _run.IsBusy = false;
+            _ = Status.EndProgressAsync(RunStatusViewModel.FinishLinger);
             Status.StatusText = string.Empty;
         }
     }

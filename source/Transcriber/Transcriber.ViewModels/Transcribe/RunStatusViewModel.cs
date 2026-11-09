@@ -14,6 +14,28 @@ public sealed partial class RunStatusViewModel : SectionViewModel
     // ---- Progress ------------------------------------------------------------------------
 
     [ObservableProperty] private double _progress;
+
+    /// <summary>True while a run is in progress, and for a moment after a run that reached 100 percent, so the finish can be seen.</summary>
+    [ObservableProperty] private bool _showProgress;
+
+    private int _runId;
+
+    /// <summary>How long the bar stays after a run that finished.</summary>
+    public static TimeSpan FinishLinger { get; } = TimeSpan.FromMilliseconds(2000);
+
+    public void BeginProgress()
+    {
+        _runId++;
+        Progress = 0;
+        ShowProgress = true;
+    }
+
+    public async Task EndProgressAsync(TimeSpan linger)
+    {
+        var id = _runId;
+        if (Progress >= 1 && linger > TimeSpan.Zero) await Task.Delay(linger);
+        if (id == _runId) ShowProgress = false;
+    }
     [ObservableProperty] private string _statusText = string.Empty;
 
     // ---- Outcome -------------------------------------------------------------------------
