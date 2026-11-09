@@ -105,7 +105,7 @@ Rehearse a talk, an interview answer or a presentation, then see how you did. No
 | Measure | How it is worked out | What counts as good |
 | --- | --- | --- |
 | **Pace** | Words per minute of the time you were actually speaking, not counting long silences. | 120 to 160 words per minute is easy to follow. The tips flag under 110 as slow and over 170 as fast. |
-| **Filler words** | Fillers per 100 words, from lists for English, Spanish and Dutch ("um", "uh", "euh", "eh", "este" and so on). "Like" is only counted when it is set apart by commas, so "I like cats" is never flagged. | 2 or fewer per 100 words is clean. More than 5 is worth working on. |
+| **Filler words** | Fillers per 100 words, from a word list for each language: English, Spanish, Portuguese, Italian, German and Dutch ("um", "uh", "ehm", "äh", "este" and so on). "Like" is only counted when it is set apart by commas, so "I like cats" is never flagged. | 2 or fewer per 100 words is clean. More than 5 is worth working on. |
 | **Pauses** | Gaps of 0.8 seconds or more between lines. Reported as a count and the longest gap. | A few pauses help listeners. More than about 6 a minute reads as hesitation. |
 | **Stumbles** | Repeated words ("the the") and stuttered starts ("b-b-because"). Emphasis ("very, very") and single letters are not counted. | None is ideal. |
 | **Length** | Duration and word count. | |
@@ -204,7 +204,7 @@ The first build downloads ffmpeg and the models (about 600 MB in total). Everyth
 | Project | Purpose |
 | --- | --- |
 | `Transcriber.Services` | Audio, video, Whisper, voice activity, speaker detection, model management and export. No UI dependencies. |
-| `Transcriber.Coach` | Speech analysis for Practice mode: pace, pauses, filler words, stumbles, tips, history, optional Ollama feedback. No UI dependencies. |
+| `Transcriber.Coach` | Speech analysis for Practice mode: pace, pauses, filler words, stumbles, tips, history, optional Ollama feedback. No UI dependencies. Interfaces, models, exceptions and services each have their own folder. Each language is a JSON profile in `Languages/Profiles`, so a new language needs a data file and no code. |
 | `Transcriber.ViewModels` | MVVM view models (CommunityToolkit.Mvvm) behind small interfaces for platform services such as file pickers, playback and the microphone. |
 | `Transcriber.Maui` | The .NET MAUI app: pages, styles and platform implementations for Windows and macOS. |
 | `Transcriber.Tests` | xUnit tests, including end-to-end transcription of real recordings. |

@@ -58,13 +58,13 @@ The hint does not show for the Medium model or the Large v3 turbo model.
 
 ### Practice languages
 
-The **Practice** tab supports **English, Spanish and Dutch**. The lists of filler words and stumbles are written for these languages. The Practice tab always uses the Small model. For this reason, a hint shows under the picker when you select Dutch. In Dutch, the counts of filler words and pauses can be less correct.
+The **Practice** tab supports **English, Spanish, Portuguese, Italian, German and Dutch**. Each language has its own list of filler words and its own list of words that can repeat for emphasis. The Practice tab always uses the Small model. For this reason, a hint shows under the picker when you select Dutch. In Dutch, the counts of filler words and pauses can be less correct.
 
 | Function | Languages |
 | --- | --- |
 | Transcribe | Automatic, or select one from the list for the model. |
 | Speaker labels | Based on the sound of the voices, not on the words. Tested most with English and Dutch. |
-| Practice measures | English, Spanish, Dutch. |
+| Practice measures | English, Spanish, Portuguese, Italian, German, Dutch. |
 
 ### Recordings with more than one language
 

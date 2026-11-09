@@ -81,7 +81,7 @@ No. The app analyses what you said and when you said it. It does not judge tone,
 
 ### Which languages does the Practice tab support?
 
-English, Spanish and Dutch. The Practice tab uses the Small model. Dutch is less accurate with this model.
+English, Spanish, Portuguese, Italian, German and Dutch. The Practice tab uses the Small model. Dutch is less accurate with this model.
 
 ### Why did the app not find my "um"?
 
