@@ -59,7 +59,7 @@ Drop in audio or video and get a transcript, without sending it anywhere.
 1. Drop files on the window, or choose them with **Choose files**. You can also pass a file on the command line.
 2. Pick the language (or leave it on auto-detect), the model and the output format.
 3. Optionally turn on **Label who is speaking** and choose how many people speak.
-4. Press **Transcribe**. The page scrolls to the progress bar. A small runner moves along it. One bar covers all the files, and sparks show at the end. The result appears below with the saved path.
+4. Press **Transcribe**. The page scrolls to the progress bar. A small character moves along it. The look changes in each run. One bar covers all the files, and sparks show at the end. The result appears below with the saved path.
 
 ### Speaker labels, in short
 
@@ -226,4 +226,4 @@ Continuous integration runs the tests and builds the app on every push. Pushing 
 - Whisper and the ggml models: MIT, by OpenAI and the whisper.cpp project.
 - Voice activity detection uses the [Silero VAD](https://github.com/snakers4/silero-vad) model (MIT). Speaker labels use [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (Apache 2.0, with ONNX Runtime, MIT; on macOS its command-line tool is bundled and run as a separate program) with the pyannote segmentation 3.0 model (MIT) and the 3D-Speaker CAM++ embedding model (Apache 2.0).
 - **ffmpeg** is bundled unmodified as a separate executable from [eugeneware/ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) (release b6.1.1). The Windows build is licensed under the GPL. Its licence text ships in the app's `licenses` folder, and the source is available from [ffmpeg.org](https://ffmpeg.org/download.html#get-sources).
-- The progress bar uses [SkiaSharp](https://github.com/mono/SkiaSharp) and SkiaSharp.Extended (MIT). The runner, the surfer, the marathon runner, the cowboy, the volcano and the sparks are original pixel art. `tools/sprites/sprites.cs` draws them. Each run shows a random look (a sprite with its own bar colours). To add a look, see `ProgressLooks.cs` in the ViewModels project.
+- The progress bar uses [SkiaSharp](https://github.com/mono/SkiaSharp) and SkiaSharp.Extended (MIT). The hero, the princess, the surfer, the marathon runner, the cowboy, the volcano, the magic carpet and the sparks are original pixel art. `tools/sprites/sprites.cs` draws them. Each run shows a random look (a sprite with its own bar colours). To add a look, see `ProgressLooks.cs` in the ViewModels project.

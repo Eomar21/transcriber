@@ -29,7 +29,7 @@ The app does not send anything to the internet. It analyses your recording on yo
 1. Open the **Practice** tab.
 2. Click **Record**. Speak. Click **Stop**. A level bar shows that the microphone hears you. Or click **Choose file** to analyse a recording that you already have.
 3. Select the language that you speak: English, Spanish, Portuguese, Italian, German or Dutch. A hint shows when you select Dutch. The Small model is less accurate in Dutch.
-4. Click **Analyse my speaking**.
+4. Click **Analyse my speaking**. A progress bar shows with one of the looks from [Transcribe]({{ '/transcribe#progress-bar-looks' | relative_url }}).
 5. Read the five tiles and the tips under **What to work on**.
 6. Read **What was heard**. Compare the numbers with your words.
 7. Find your earlier runs under **Your progress**.

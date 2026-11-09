@@ -30,9 +30,25 @@ Use this mode to change speech in a recording into text with time stamps. You ca
 4. Set the format. Select **Text (.txt)**, **.srt**, **.vtt** or **JSON**. Refer to [Output formats]({{ '/output-formats' | relative_url }}).
 5. Type names or special terms in the **Names or special terms** field (optional). For example, type `Eindhoven, Dr. Haddad`. This helps the app to write these words correctly.
 6. Turn on **Label who is speaking** (optional). Refer to [Speaker labels]({{ '/speaker-labels' | relative_url }}).
-7. Click **Transcribe**. The page scrolls to the progress bar. A small runner moves along the bar. One bar covers all the files. A burst of sparks shows when the work is complete. To stop the work, click **Cancel**.
+7. Click **Transcribe**. The page scrolls to the progress bar. A small character moves along the bar. One bar covers all the files. A burst of sparks shows when the work is complete. Refer to [Progress bar looks](#progress-bar-looks). To stop the work, click **Cancel**.
 
 When the work is done, the app shows **Transcript saved** and the location of the file. Two buttons show: **Open transcript** and **Show in folder**. The text also shows in the list below.
+
+## Progress bar looks
+
+The progress bar has five looks. The app picks a new look for each run. It does not pick the same look two times in a row.
+
+| Look | What you see |
+| --- | --- |
+| Hero and princess | The hero runs after the princess. The princess leads. At the end of the bar they kiss, and sparks show. |
+| Surfer | A surfer rides a wave on the bar. |
+| Marathon runner | A runner goes from a start line to a finish line. |
+| Cowboy | A cowboy runs from a volcano. The bar is the lava that follows him. |
+| Magic carpet | The hero and the princess sit on a carpet. The carpet floats on a wave. |
+
+The bar stays on the screen for 3 seconds after a finished run. This gives the look time to end.
+
+If you turn off animations in Windows, the bar does not move on its own. It still shows the progress.
 
 ## Supported files
 
