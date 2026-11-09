@@ -129,7 +129,14 @@ public class TranscriptionTests(ITestOutputHelper output)
             File.Copy(Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav"), sample);
             var historyFile = Path.Combine(dir, "history.json");
             var whisper = ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector());
-var vm = PracticeFixture.Create(                ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader()),                new CpuOnly(whisper),                new NoPicker(),                new Transcriber.Coach.History.JsonPracticeHistory(historyFile),                new NoFeedback(),                new NoRecorder());
+            var vm = PracticeFixture.Create(
+                ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader()),
+                new CpuOnly(whisper),
+                new NoPicker(),
+                new Transcriber.Coach.History.JsonPracticeHistory(historyFile),
+                new NoFeedback(),
+                new NoRecorder());
+            vm.Source.SetFile(sample);
 
             await vm.AnalyzeCommand.ExecuteAsync(null);
 
