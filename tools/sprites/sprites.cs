@@ -14,6 +14,7 @@ SpriteSheet[] sheets =
     new("runner.png", 32, 8, DrawRunner, Outline: true),
     new("surfer.png", 32, 8, DrawSurfer, Outline: true),
     new("marathoner.png", 32, 8, DrawMarathoner, Outline: true),
+    new("cowboy.png", 32, 8, DrawCowboy, Outline: true),
     new("spark.png", SparkCell, SparkFrames, DrawSpark, Outline: false),
 ];
 
@@ -224,6 +225,74 @@ static void DrawMarathonArm(Canvas c, (double x, double y) shoulder, double ph, 
     c.Line(elbow.x, elbow.y, hand.x, hand.y, 0.9, skin);
 }
 
+static void DrawCowboy(Canvas c, int f)
+{
+    var t = 2 * Math.PI * f / 8;
+    var bob = Math.Round(-1.0 * Math.Abs(Math.Cos(t)));
+    var hip = (x: 14.0, y: 18.2 + bob);
+    const double lean = 0.3;                                  // leans forward: the lava is close behind
+    var shoulder = (x: hip.x + 7.8 * Math.Sin(lean), y: hip.y - 7.8 * Math.Cos(lean));
+    var head = (x: shoulder.x + 1.8, y: shoulder.y - 3.8);
+
+    // The bandana streams behind the neck.
+    var neck = (x: shoulder.x - 0.8, y: shoulder.y - 0.6);
+    var prev = neck;
+    for (var i = 1; i <= 5; i++)
+    {
+        var p = (x: neck.x - i * 1.9, y: neck.y + 1.0 * Math.Sin(t * 2 - i * 0.9) * (0.4 + i * 0.2) + i * 0.15);
+        c.Line(prev.x, prev.y, p.x, p.y, 1.0, i % 2 == 0 ? Palette.BandanaDark : Palette.Bandana);
+        prev = p;
+    }
+
+    DrawCowboyArm(c, shoulder, t + Math.PI, back: true);
+    DrawCowboyLeg(c, hip, t + Math.PI, back: true);
+
+    // Torso: a cream shirt under a tan vest, and a belt.
+    c.Line(hip.x, hip.y, shoulder.x, shoulder.y, 2.3, Palette.Shirt);
+    c.Line(hip.x - 0.4, hip.y - 1.0, shoulder.x - 0.4, shoulder.y + 0.8, 1.2, Palette.Vest2);
+    c.Circle(hip.x, hip.y + 0.3, 3.1, Palette.Jeans);
+    c.Line(hip.x - 2.8, hip.y - 1.8, hip.x + 2.8, hip.y - 1.8, 0.5, Palette.Belt);
+
+    DrawCowboyLeg(c, hip, t, back: false);
+
+    // Head: a wide-eyed face, a bandana at the chin, and a brown hat with a band and a wide brim.
+    c.Circle(head.x + 0.8, head.y + 0.8, 2.9, Palette.Skin);
+    c.Line(head.x - 5.4, head.y - 1.4, head.x + 5.6, head.y - 2.0, 0.9, Palette.Hat);
+    c.Circle(head.x - 0.2, head.y - 3.0, 2.5, Palette.Hat);
+    c.Line(head.x - 2.2, head.y - 1.9, head.x + 1.8, head.y - 2.2, 0.4, Palette.HatBand);
+    c.Set((int)Math.Round(head.x + 2.2), (int)Math.Round(head.y + 0.3), Palette.Bib);
+    c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y + 0.4), Palette.Outline);
+    c.Set((int)Math.Round(head.x + 2.8), (int)Math.Round(head.y + 2.4), Palette.Outline);
+
+    DrawCowboyArm(c, shoulder, t, back: false);
+}
+
+static void DrawCowboyLeg(Canvas c, (double x, double y) hip, double ph, bool back)
+{
+    var jeans = back ? Palette.JeansShade : Palette.Jeans;
+    var boot = back ? Palette.BootShade : Palette.Boot;
+    var a1 = 1.05 * Math.Sin(ph);
+    var a2 = a1 - (0.8 + 0.8 * Math.Max(0, Math.Cos(ph)));
+    var knee = (x: hip.x + 6.2 * Math.Sin(a1), y: hip.y + 6.2 * Math.Cos(a1));
+    var foot = (x: knee.x + 5.9 * Math.Sin(a2), y: knee.y + 5.9 * Math.Cos(a2));
+    c.Line(hip.x, hip.y, knee.x, knee.y, 1.8, jeans);
+    c.Line(knee.x, knee.y, foot.x, foot.y, 1.5, jeans);
+    c.Circle(foot.x + 0.9, foot.y + 0.1, 1.6, boot);
+    c.Set((int)Math.Round(foot.x - 0.6), (int)Math.Round(foot.y + 1.6), boot);   // the boot heel
+}
+
+static void DrawCowboyArm(Canvas c, (double x, double y) shoulder, double ph, bool back)
+{
+    var sleeve = back ? Palette.ShirtShade : Palette.Shirt;
+    var skin = back ? Palette.SkinShade : Palette.Skin;
+    var b1 = -1.1 * Math.Sin(ph) - 0.2;
+    var elbow = (x: shoulder.x + 4.6 * Math.Sin(b1), y: shoulder.y + 4.6 * Math.Cos(b1));
+    var b2 = b1 + 1.8;
+    var hand = (x: elbow.x + 4.0 * Math.Sin(b2), y: elbow.y + 4.0 * Math.Cos(b2));
+    c.Line(shoulder.x, shoulder.y, elbow.x, elbow.y, 1.1, sleeve);
+    c.Line(elbow.x, elbow.y, hand.x, hand.y, 0.9, skin);
+}
+
 static void DrawSpark(Canvas c, int f)
 {
     var prog = f / (double)(SparkFrames - 1);
@@ -267,6 +336,11 @@ static class Palette
     public static readonly Color Singlet = Color.FromArgb(242, 120, 40), Bib = Color.FromArgb(250, 250, 246), BibInk = Color.FromArgb(40, 44, 120);
     public static readonly Color RunShorts = Color.FromArgb(36, 52, 110), Cap = Color.FromArgb(214, 52, 52), CapDark = Color.FromArgb(150, 34, 38);
     public static readonly Color ShoeBright = Color.FromArgb(248, 248, 250), ShoeBack = Color.FromArgb(188, 190, 202), ShoeAccent = Color.FromArgb(110, 214, 84);
+    public static readonly Color Hat = Color.FromArgb(150, 94, 52), HatBand = Color.FromArgb(232, 190, 70);
+    public static readonly Color Bandana = Color.FromArgb(210, 52, 60), BandanaDark = Color.FromArgb(152, 34, 46);
+    public static readonly Color Shirt = Color.FromArgb(242, 232, 206), ShirtShade = Color.FromArgb(196, 184, 156), Vest2 = Color.FromArgb(176, 120, 70);
+    public static readonly Color Jeans = Color.FromArgb(52, 92, 168), JeansShade = Color.FromArgb(34, 62, 120), Belt = Color.FromArgb(120, 70, 36);
+    public static readonly Color Boot = Color.FromArgb(120, 70, 40), BootShade = Color.FromArgb(84, 48, 30);
     public static readonly Color Outline = Color.FromArgb(34, 22, 34);
     public static readonly Color White = Color.FromArgb(255, 255, 240), Yellow = Color.FromArgb(255, 232, 90);
     public static readonly Color Gold = Color.FromArgb(255, 196, 40), Orange = Color.FromArgb(255, 130, 30), Ember = Color.FromArgb(200, 70, 30);

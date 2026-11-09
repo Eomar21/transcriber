@@ -23,5 +23,10 @@ public static class ProgressLooks
         Id: "marathoner", Sprite: "marathoner.png", Cell: 32, Frames: 8, FramesPerSecond: 10,
         Fill: "#E8590C", FillDark: "#FF8A4C", Decoration: TrackDecoration.StartAndFinish);
 
-    public static IReadOnlyList<ProgressLook> All { get; } = [Runner, Surfer, Marathoner];
+    /// <summary>A cowboy who runs from a volcano. The bar is the lava that follows him.</summary>
+    public static ProgressLook Volcano { get; } = new(
+        Id: "volcano", Sprite: "cowboy.png", Cell: 32, Frames: 8, FramesPerSecond: 12,
+        Fill: "#FF6A1A", FillDark: "#FF8A4C", Decoration: TrackDecoration.Volcano);
+
+    public static IReadOnlyList<ProgressLook> All { get; } = [Runner, Surfer, Marathoner, Volcano];
 }

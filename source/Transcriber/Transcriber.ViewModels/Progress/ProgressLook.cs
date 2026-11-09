@@ -11,6 +11,9 @@ public enum TrackDecoration
 
     /// <summary>A start line at the beginning of the bar and a finish line with a flag at the end.</summary>
     StartAndFinish,
+
+    /// <summary>A volcano at the start of the bar. The filled part of the bar is lava that follows the runner.</summary>
+    Volcano,
 }
 
 /// <summary>
