@@ -9,7 +9,7 @@
     Title="Transcribe">
 
     <!-- The page only arranges the sections. Each section is a view with its own view model. -->
-    <ScrollView x:Name="Scroller">
+    <ScrollView x:Name="Scroller" AutomationId="PageScroller">
       <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
       <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="{StaticResource SpaceLg}">
 

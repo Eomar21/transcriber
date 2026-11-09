@@ -69,8 +69,7 @@ public class AppTests
         {
             AppDriver.Wait(() => app.Get("TranscribeButton").IsEnabled, TimeSpan.FromSeconds(10), "the file to be added");
             Assert.Null(app.Find("RunProgress"));
-            var scroller = app.Window.FindAllDescendants().First(e =>
-                e.Patterns.Scroll.IsSupported && e.Patterns.Scroll.Pattern.VerticallyScrollable.ValueOrDefault);
+            var scroller = app.Get("PageScroller");
             Assert.Equal(0, scroller.Patterns.Scroll.Pattern.VerticalScrollPercent.Value);
 
             app.Click("TranscribeButton");
