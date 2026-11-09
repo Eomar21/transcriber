@@ -2,6 +2,7 @@ using Transcriber.Coach.Exceptions;
 using Transcriber.Coach.Interfaces;
 using Transcriber.Coach.Models;
 using Transcriber.ViewModels;
+using Transcriber.ViewModels.Practice;
 
 /// <summary>The practice tab: pick a recording, get it analysed, track progress, optionally ask Ollama.</summary>
 public class PracticeViewModelTests : IDisposable
@@ -128,7 +129,7 @@ public class PracticeViewModelTests : IDisposable
     private PracticeViewModel Create(bool convert = true)
     {
         _reader = new Reader(_dir, convert);
-        return new PracticeViewModel(_reader, _whisper, ServicesFixture.Models, ServicesFixture.Languages, _picker, _history, CoachFixture.Analyzer, CoachFixture.Advisor, CoachFixture.VerbatimPrompts, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
+        return PracticeFixture.Create(_reader, _whisper, _picker, _history, _feedback, _recorder, () => _clock += TimeSpan.FromDays(1), _dir);
     }
 
     private string MakeFile(string name = "talk.mp3")
@@ -147,7 +148,7 @@ public class PracticeViewModelTests : IDisposable
     {
         var vm = Create();
 
-        Assert.False(vm.HasFile);
+        Assert.False(vm.Source.HasFile);
         Assert.False(vm.AnalyzeCommand.CanExecute(null));
     }
 
@@ -157,9 +158,9 @@ public class PracticeViewModelTests : IDisposable
         var vm = Create();
         _picker.Files = [MakeFile("my talk.mp3")];
 
-        await vm.ChooseFileCommand.ExecuteAsync(null);
+        await vm.Source.ChooseFileCommand.ExecuteAsync(null);
 
-        Assert.Equal("my talk.mp3", vm.FileName);
+        Assert.Equal("my talk.mp3", vm.Source.FileName);
         Assert.True(vm.AnalyzeCommand.CanExecute(null));
     }
 
@@ -169,9 +170,9 @@ public class PracticeViewModelTests : IDisposable
         var vm = Create();
         _picker.Files = [];
 
-        await vm.ChooseFileCommand.ExecuteAsync(null);
+        await vm.Source.ChooseFileCommand.ExecuteAsync(null);
 
-        Assert.False(vm.HasFile);
+        Assert.False(vm.Source.HasFile);
     }
 
     [Fact]
@@ -179,15 +180,15 @@ public class PracticeViewModelTests : IDisposable
     {
         var vm = Create();
 
-        vm.SetFile(Path.Combine(_dir, "missing.mp3"));
+        vm.Source.SetFile(Path.Combine(_dir, "missing.mp3"));
 
-        Assert.False(vm.HasFile);
+        Assert.False(vm.Source.HasFile);
     }
 
     [Fact]
     public void Only_languages_with_a_coach_profile_are_offered()
     {
-        var offered = Create().Languages.Select(l => l.Code).ToList();
+        var offered = Create().Source.Languages.Select(l => l.Code).ToList();
 
         Assert.Equal(["en", "es", "pt", "it", "de", "nl"], offered);
         Assert.All(offered, code => Assert.NotNull(CoachFixture.Profiles.Find(code)));
@@ -199,25 +200,25 @@ public class PracticeViewModelTests : IDisposable
     public async Task Analysing_shows_numbers_advice_and_what_was_heard()
     {
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
 
         await Analyze(vm);
 
-        Assert.True(vm.HasResult);
-        Assert.Equal(["Pace", "Filler words", "Pauses", "Stumbles", "Length"], vm.Metrics.Select(m => m.Label));
-        Assert.Contains("wpm", vm.Metrics[0].Value);
-        Assert.NotEmpty(vm.Tips);
-        Assert.StartsWith("um word", vm.Transcript);
+        Assert.True(vm.Analysis.HasResult);
+        Assert.Equal(["Pace", "Filler words", "Pauses", "Stumbles", "Length"], vm.Analysis.Metrics.Select(m => m.Label));
+        Assert.Contains("wpm", vm.Analysis.Metrics[0].Value);
+        Assert.NotEmpty(vm.Analysis.Tips);
+        Assert.StartsWith("um word", vm.Analysis.Transcript);
         Assert.False(vm.IsBusy);
-        Assert.Equal("", vm.ErrorMessage);
+        Assert.Equal("", vm.Status.ErrorMessage);
     }
 
     [Fact]
     public async Task The_recording_is_transcribed_in_the_chosen_language_with_a_prompt_that_keeps_fillers()
     {
         var vm = Create();
-        vm.SetFile(MakeFile());
-        vm.SelectedLanguage = vm.Languages.First(l => l.Code == "nl");
+        vm.Source.SetFile(MakeFile());
+        vm.Source.SelectedLanguage = vm.Source.Languages.First(l => l.Code == "nl");
 
         await Analyze(vm);
 
@@ -231,12 +232,12 @@ public class PracticeViewModelTests : IDisposable
     {
         _whisper.Segments = [new TranscriptSegment { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(20), Text = string.Join(' ', Enumerable.Repeat("eh dat is gewoon een woord", 6)) }];
         var vm = Create();
-        vm.SetFile(MakeFile());
-        vm.SelectedLanguage = vm.Languages.First(l => l.Code == "nl");
+        vm.Source.SetFile(MakeFile());
+        vm.Source.SelectedLanguage = vm.Source.Languages.First(l => l.Code == "nl");
 
         await Analyze(vm);
 
-        Assert.Contains("per 100 words", vm.Metrics[1].Hint);
+        Assert.Contains("per 100 words", vm.Analysis.Metrics[1].Hint);
 
     }
 
@@ -244,13 +245,13 @@ public class PracticeViewModelTests : IDisposable
     public async Task A_converted_copy_is_removed_but_a_file_used_in_place_is_kept()
     {
         var converting = Create();
-        converting.SetFile(MakeFile("a.mp3"));
+        converting.Source.SetFile(MakeFile("a.mp3"));
         await Analyze(converting);
         Assert.False(File.Exists(_reader.Converted[0]));
 
         var inPlace = Create(convert: false);
         var own = MakeFile("own.wav");
-        inPlace.SetFile(own);
+        inPlace.Source.SetFile(own);
         await Analyze(inPlace);
         Assert.True(File.Exists(own));
     }
@@ -259,13 +260,13 @@ public class PracticeViewModelTests : IDisposable
     public async Task A_failure_is_shown_in_words_and_the_tab_is_usable_again()
     {
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
         _reader.Fail = new IOException("disk gone");
 
         await Analyze(vm);
 
-        Assert.Contains("disk gone", vm.ErrorMessage);
-        Assert.False(vm.HasResult);
+        Assert.Contains("disk gone", vm.Status.ErrorMessage);
+        Assert.False(vm.Analysis.HasResult);
         Assert.False(vm.IsBusy);
         Assert.True(vm.AnalyzeCommand.CanExecute(null));
     }
@@ -275,14 +276,14 @@ public class PracticeViewModelTests : IDisposable
     {
         _whisper.WaitForCancel = true;
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
 
         var run = Analyze(vm);
         await Task.Delay(50);
         vm.AnalyzeCancelCommand.Execute(null);
         await run;
 
-        Assert.Equal("Stopped.", vm.ErrorMessage);
+        Assert.Equal("Stopped.", vm.Status.ErrorMessage);
         Assert.False(vm.IsBusy);
         Assert.Empty(_history.Sessions);
     }
@@ -291,15 +292,15 @@ public class PracticeViewModelTests : IDisposable
     public async Task Choosing_another_recording_clears_the_previous_result()
     {
         var vm = Create();
-        vm.SetFile(MakeFile("one.mp3"));
+        vm.Source.SetFile(MakeFile("one.mp3"));
         await Analyze(vm);
 
-        vm.SetFile(MakeFile("two.mp3"));
+        vm.Source.SetFile(MakeFile("two.mp3"));
 
-        Assert.False(vm.HasResult);
-        Assert.Empty(vm.Metrics);
-        Assert.Empty(vm.Tips);
-        Assert.Equal("", vm.Transcript);
+        Assert.False(vm.Analysis.HasResult);
+        Assert.Empty(vm.Analysis.Metrics);
+        Assert.Empty(vm.Analysis.Tips);
+        Assert.Equal("", vm.Analysis.Transcript);
     }
 
     // ---- history and progress ----
@@ -308,15 +309,15 @@ public class PracticeViewModelTests : IDisposable
     public async Task A_finished_run_is_saved_to_the_history()
     {
         var vm = Create();
-        vm.SetFile(MakeFile("talk.mp3"));
+        vm.Source.SetFile(MakeFile("talk.mp3"));
 
         await Analyze(vm);
 
         var saved = Assert.Single(_history.Sessions);
         Assert.Equal("talk.mp3", saved.Title);
         Assert.Equal("en", saved.Language);
-        Assert.True(vm.HasHistory);
-        Assert.Equal("talk.mp3", Assert.Single(vm.Sessions).Title);
+        Assert.True(vm.History.HasHistory);
+        Assert.Equal("talk.mp3", Assert.Single(vm.History.Sessions).Title);
     }
 
     [Fact]
@@ -324,60 +325,60 @@ public class PracticeViewModelTests : IDisposable
     {
         _whisper.Segments = [new TranscriptSegment { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(3), Text = "Just a few words" }];
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
 
         await Analyze(vm);
 
-        Assert.True(vm.HasResult);
+        Assert.True(vm.Analysis.HasResult);
         Assert.Empty(_history.Sessions);
-        Assert.Contains("Too short", vm.Tips[0].Title);
+        Assert.Contains("Too short", vm.Analysis.Tips[0].Title);
     }
 
     [Fact]
     public async Task The_second_run_is_compared_with_the_first()
     {
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
         _whisper.Segments = Talk(fillers: 12);
         await Analyze(vm);
 
         _whisper.Segments = Talk(fillers: 1);
         await Analyze(vm);
 
-        Assert.Contains(vm.Tips, t => t.Title == "Fewer fillers than last time");
+        Assert.Contains(vm.Analysis.Tips, t => t.Title == "Fewer fillers than last time");
     }
 
     [Fact]
     public async Task Only_a_run_in_the_same_language_is_used_for_comparison()
     {
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
         _whisper.Segments = Talk(fillers: 12);
         await Analyze(vm);
 
-        vm.SelectedLanguage = vm.Languages.First(l => l.Code == "nl");
+        vm.Source.SelectedLanguage = vm.Source.Languages.First(l => l.Code == "nl");
         _whisper.Segments = Talk(fillers: 1);
         await Analyze(vm);
 
-        Assert.DoesNotContain(vm.Tips, t => t.Title.Contains("than last time"));
+        Assert.DoesNotContain(vm.Analysis.Tips, t => t.Title.Contains("than last time"));
     }
 
     [Fact]
     public async Task History_lists_the_newest_first_and_can_delete_one_or_all()
     {
         var vm = Create();
-        vm.SetFile(MakeFile("first.mp3"));
+        vm.Source.SetFile(MakeFile("first.mp3"));
         await Analyze(vm);
-        vm.SetFile(MakeFile("second.mp3"));
+        vm.Source.SetFile(MakeFile("second.mp3"));
         await Analyze(vm);
 
-        Assert.Equal(["second.mp3", "first.mp3"], vm.Sessions.Select(s => s.Title));
+        Assert.Equal(["second.mp3", "first.mp3"], vm.History.Sessions.Select(s => s.Title));
 
-        vm.DeleteSessionCommand.Execute(vm.Sessions[0]);
-        Assert.Equal(["first.mp3"], vm.Sessions.Select(s => s.Title));
+        vm.History.DeleteSessionCommand.Execute(vm.History.Sessions[0]);
+        Assert.Equal(["first.mp3"], vm.History.Sessions.Select(s => s.Title));
 
-        vm.ClearHistoryCommand.Execute(null);
-        Assert.False(vm.HasHistory);
+        vm.History.ClearHistoryCommand.Execute(null);
+        Assert.False(vm.History.HasHistory);
         Assert.Empty(_history.Sessions);
     }
 
@@ -388,8 +389,8 @@ public class PracticeViewModelTests : IDisposable
 
         var vm = Create();
 
-        Assert.True(vm.HasHistory);
-        Assert.Contains("150 wpm", vm.Sessions[0].Summary);
+        Assert.True(vm.History.HasHistory);
+        Assert.Contains("150 wpm", vm.History.Sessions[0].Summary);
     }
 
     // ---- written feedback ----
@@ -399,9 +400,9 @@ public class PracticeViewModelTests : IDisposable
     {
         var vm = Create();
 
-        await vm.RefreshFeedbackModelsCommand.ExecuteAsync(null);
+        await vm.Feedback.RefreshFeedbackModelsCommand.ExecuteAsync(null);
 
-        Assert.False(vm.CanAskForFeedback);
+        Assert.False(vm.Feedback.CanAskForFeedback);
     }
 
     [Fact]
@@ -409,16 +410,16 @@ public class PracticeViewModelTests : IDisposable
     {
         _feedback.Models = ["llama3.2:3b", "qwen2.5:7b"];
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
 
-        await vm.RefreshFeedbackModelsCommand.ExecuteAsync(null);
+        await vm.Feedback.RefreshFeedbackModelsCommand.ExecuteAsync(null);
 
-        Assert.True(vm.CanAskForFeedback);
-        Assert.Equal("llama3.2:3b", vm.SelectedFeedbackModel);
-        Assert.False(vm.GetFeedbackCommand.CanExecute(null));
+        Assert.True(vm.Feedback.CanAskForFeedback);
+        Assert.Equal("llama3.2:3b", vm.Feedback.SelectedFeedbackModel);
+        Assert.False(vm.Feedback.GetFeedbackCommand.CanExecute(null));
 
         await Analyze(vm);
-        Assert.True(vm.GetFeedbackCommand.CanExecute(null));
+        Assert.True(vm.Feedback.GetFeedbackCommand.CanExecute(null));
     }
 
     [Fact]
@@ -426,17 +427,17 @@ public class PracticeViewModelTests : IDisposable
     {
         _feedback.Models = ["llama3.2:3b"];
         var vm = Create();
-        vm.SetFile(MakeFile());
-        await vm.RefreshFeedbackModelsCommand.ExecuteAsync(null);
+        vm.Source.SetFile(MakeFile());
+        await vm.Feedback.RefreshFeedbackModelsCommand.ExecuteAsync(null);
         await Analyze(vm);
 
-        await vm.GetFeedbackCommand.ExecuteAsync(null);
+        await vm.Feedback.GetFeedbackCommand.ExecuteAsync(null);
 
-        Assert.Equal("Good job.", vm.FeedbackText);
-        Assert.Equal("", vm.FeedbackError);
+        Assert.Equal("Good job.", vm.Feedback.FeedbackText);
+        Assert.Equal("", vm.Feedback.FeedbackError);
         Assert.Equal("llama3.2:3b", _feedback.Asked!.Value.Model);
         Assert.StartsWith("um word", _feedback.Asked.Value.Transcript);
-        Assert.False(vm.IsGettingFeedback);
+        Assert.False(vm.Feedback.IsGettingFeedback);
     }
 
     [Fact]
@@ -445,16 +446,16 @@ public class PracticeViewModelTests : IDisposable
         _feedback.Models = ["llama3.2:3b"];
         _feedback.Fail = true;
         var vm = Create();
-        vm.SetFile(MakeFile());
-        await vm.RefreshFeedbackModelsCommand.ExecuteAsync(null);
+        vm.Source.SetFile(MakeFile());
+        await vm.Feedback.RefreshFeedbackModelsCommand.ExecuteAsync(null);
         await Analyze(vm);
 
-        await vm.GetFeedbackCommand.ExecuteAsync(null);
+        await vm.Feedback.GetFeedbackCommand.ExecuteAsync(null);
 
-        Assert.Contains("Is it running", vm.FeedbackError);
-        Assert.Equal("", vm.FeedbackText);
-        Assert.True(vm.HasResult);
-        Assert.True(vm.GetFeedbackCommand.CanExecute(null));
+        Assert.Contains("Is it running", vm.Feedback.FeedbackError);
+        Assert.Equal("", vm.Feedback.FeedbackText);
+        Assert.True(vm.Analysis.HasResult);
+        Assert.True(vm.Feedback.GetFeedbackCommand.CanExecute(null));
     }
 
     [Fact]
@@ -462,14 +463,14 @@ public class PracticeViewModelTests : IDisposable
     {
         _feedback.Models = ["m"];
         var vm = Create();
-        vm.SetFile(MakeFile("one.mp3"));
-        await vm.RefreshFeedbackModelsCommand.ExecuteAsync(null);
+        vm.Source.SetFile(MakeFile("one.mp3"));
+        await vm.Feedback.RefreshFeedbackModelsCommand.ExecuteAsync(null);
         await Analyze(vm);
-        await vm.GetFeedbackCommand.ExecuteAsync(null);
+        await vm.Feedback.GetFeedbackCommand.ExecuteAsync(null);
 
-        vm.SetFile(MakeFile("two.mp3"));
+        vm.Source.SetFile(MakeFile("two.mp3"));
 
-        Assert.Equal("", vm.FeedbackText);
+        Assert.Equal("", vm.Feedback.FeedbackText);
     }
 
     // ---- microphone ----
@@ -477,54 +478,54 @@ public class PracticeViewModelTests : IDisposable
     private async Task Record(PracticeViewModel vm, double seconds = 5)
     {
         _recorder.Seconds = seconds;
-        await vm.StartRecordingCommand.ExecuteAsync(null);
-        vm.StopRecordingCommand.Execute(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
+        vm.Microphone.StopRecordingCommand.Execute(null);
     }
 
     [Fact]
     public async Task Recording_starts_into_a_new_wav_and_locks_the_rest_of_the_tab()
     {
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
 
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
-        Assert.True(vm.IsRecording);
+        Assert.True(vm.Microphone.IsRecording);
         Assert.False(vm.IsIdle);
         Assert.False(vm.AnalyzeCommand.CanExecute(null));
-        Assert.False(vm.StartRecordingCommand.CanExecute(null));
-        Assert.True(vm.StopRecordingCommand.CanExecute(null));
+        Assert.False(vm.Microphone.StartRecordingCommand.CanExecute(null));
+        Assert.True(vm.Microphone.StopRecordingCommand.CanExecute(null));
         Assert.Equal(_dir, Path.GetDirectoryName(_recorder.Path));
         Assert.EndsWith(".wav", _recorder.Path);
-        Assert.Equal("Recording 0:00", vm.RecordingText);
+        Assert.Equal("Recording 0:00", vm.Microphone.RecordingText);
     }
 
     [Fact]
     public async Task Choosing_a_file_is_ignored_while_recording()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
         _picker.Files = [MakeFile("other.mp3")];
 
-        await vm.ChooseFileCommand.ExecuteAsync(null);
-        vm.SetFile(MakeFile("dropped.mp3"));
+        await vm.Source.ChooseFileCommand.ExecuteAsync(null);
+        vm.Source.SetFile(MakeFile("dropped.mp3"));
 
-        Assert.False(vm.HasFile);
+        Assert.False(vm.Source.HasFile);
     }
 
     [Fact]
     public async Task The_clock_and_level_follow_the_recording()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
         _recorder.Tick(TimeSpan.FromSeconds(65.4), 0.37);
 
-        Assert.Equal("Recording 1:05", vm.RecordingText);
-        Assert.Equal(0.37, vm.RecordingLevel, precision: 3);
+        Assert.Equal("Recording 1:05", vm.Microphone.RecordingText);
+        Assert.Equal(0.37, vm.Microphone.RecordingLevel, precision: 3);
 
         _recorder.Tick(TimeSpan.FromSeconds(66), 3.0);
-        Assert.Equal(1, vm.RecordingLevel);
+        Assert.Equal(1, vm.Microphone.RecordingLevel);
     }
 
     [Fact]
@@ -535,8 +536,8 @@ public class PracticeViewModelTests : IDisposable
 
         _recorder.Tick(TimeSpan.FromSeconds(99), 0.9);
 
-        Assert.Equal(0, vm.RecordingLevel);
-        Assert.DoesNotContain("1:39", vm.RecordingText);
+        Assert.Equal(0, vm.Microphone.RecordingLevel);
+        Assert.DoesNotContain("1:39", vm.Microphone.RecordingText);
     }
 
     [Fact]
@@ -546,9 +547,9 @@ public class PracticeViewModelTests : IDisposable
 
         await Record(vm, seconds: 5);
 
-        Assert.False(vm.IsRecording);
-        Assert.True(vm.HasFile);
-        Assert.StartsWith("Recording ", vm.FileName);
+        Assert.False(vm.Microphone.IsRecording);
+        Assert.True(vm.Source.HasFile);
+        Assert.StartsWith("Recording ", vm.Source.FileName);
         Assert.True(File.Exists(_recorder.Path));
         Assert.True(vm.AnalyzeCommand.CanExecute(null));
         Assert.True(vm.IsIdle);
@@ -562,12 +563,12 @@ public class PracticeViewModelTests : IDisposable
 
         await Analyze(vm);
 
-        Assert.True(vm.HasResult);
+        Assert.True(vm.Analysis.HasResult);
         Assert.True(File.Exists(_recorder.Path));
         Assert.StartsWith("Recording ", _history.Sessions[0].Title);
 
         await Analyze(vm); // for example after switching the language
-        Assert.True(vm.HasResult);
+        Assert.True(vm.Analysis.HasResult);
     }
 
     [Fact]
@@ -577,10 +578,10 @@ public class PracticeViewModelTests : IDisposable
 
         await Record(vm, seconds: 0.3);
 
-        Assert.False(vm.HasFile);
-        Assert.Contains("too short", vm.ErrorMessage);
+        Assert.False(vm.Source.HasFile);
+        Assert.Contains("too short", vm.Status.ErrorMessage);
         Assert.False(File.Exists(_recorder.Path));
-        Assert.True(vm.StartRecordingCommand.CanExecute(null));
+        Assert.True(vm.Microphone.StartRecordingCommand.CanExecute(null));
     }
 
     [Fact]
@@ -589,11 +590,11 @@ public class PracticeViewModelTests : IDisposable
         _recorder.Fail = new RecordingException("No microphone was found.");
         var vm = Create();
 
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
-        Assert.False(vm.IsRecording);
-        Assert.Equal("No microphone was found.", vm.ErrorMessage);
-        Assert.True(vm.StartRecordingCommand.CanExecute(null));
+        Assert.False(vm.Microphone.IsRecording);
+        Assert.Equal("No microphone was found.", vm.Status.ErrorMessage);
+        Assert.True(vm.Microphone.StartRecordingCommand.CanExecute(null));
     }
 
     [Fact]
@@ -601,11 +602,11 @@ public class PracticeViewModelTests : IDisposable
     {
         var vm = Create();
         await Record(vm, seconds: 0.2);
-        Assert.NotEqual("", vm.ErrorMessage);
+        Assert.NotEqual("", vm.Status.ErrorMessage);
 
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
-        Assert.Equal("", vm.ErrorMessage);
+        Assert.Equal("", vm.Status.ErrorMessage);
     }
 
     [Fact]
@@ -629,10 +630,10 @@ public class PracticeViewModelTests : IDisposable
         await Record(vm);
         var recording = _recorder.Path!;
 
-        vm.SetFile(MakeFile("mine.mp3"));
+        vm.Source.SetFile(MakeFile("mine.mp3"));
 
         Assert.False(File.Exists(recording));
-        Assert.Equal("mine.mp3", vm.FileName);
+        Assert.Equal("mine.mp3", vm.Source.FileName);
     }
 
     [Fact]
@@ -640,7 +641,7 @@ public class PracticeViewModelTests : IDisposable
     {
         var vm = Create();
         var mine = MakeFile("mine.mp3");
-        vm.SetFile(mine);
+        vm.Source.SetFile(mine);
 
         await Record(vm);
 
@@ -651,15 +652,15 @@ public class PracticeViewModelTests : IDisposable
     public async Task Recording_stops_by_itself_at_the_limit()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
         _recorder.Seconds = 5;
-        _recorder.Tick(PracticeViewModel.MaxRecording, 0.5);
+        _recorder.Tick(MicrophoneViewModel.MaxRecording, 0.5);
 
-        Assert.False(vm.IsRecording);
+        Assert.False(vm.Microphone.IsRecording);
         Assert.False(_recorder.IsRecording);
-        Assert.True(vm.HasFile);
-        Assert.Contains("30 minutes", vm.ErrorMessage);
+        Assert.True(vm.Source.HasFile);
+        Assert.Contains("30 minutes", vm.Status.ErrorMessage);
     }
 
     [Fact]
@@ -667,21 +668,21 @@ public class PracticeViewModelTests : IDisposable
     {
         _whisper.WaitForCancel = true;
         var vm = Create();
-        vm.SetFile(MakeFile());
+        vm.Source.SetFile(MakeFile());
 
         var run = Analyze(vm);
         await Task.Delay(50);
-        Assert.False(vm.StartRecordingCommand.CanExecute(null));
+        Assert.False(vm.Microphone.StartRecordingCommand.CanExecute(null));
 
         vm.AnalyzeCancelCommand.Execute(null);
         await run;
-        Assert.True(vm.StartRecordingCommand.CanExecute(null));
+        Assert.True(vm.Microphone.StartRecordingCommand.CanExecute(null));
     }
 
     [Fact]
     public void Stopping_when_nothing_is_recording_is_not_offered()
     {
-        Assert.False(Create().StopRecordingCommand.CanExecute(null));
+        Assert.False(Create().Microphone.StopRecordingCommand.CanExecute(null));
     }
 
     [Fact]
@@ -705,54 +706,54 @@ public class PracticeViewModelTests : IDisposable
     public async Task A_microphone_that_stays_silent_is_flagged_after_a_few_seconds()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
         _recorder.Tick(TimeSpan.FromSeconds(1), 0);
-        Assert.False(vm.MicrophoneSilent); // too early to say
+        Assert.False(vm.Microphone.MicrophoneSilent); // too early to say
 
         _recorder.Tick(TimeSpan.FromSeconds(3.5), 0);
-        Assert.True(vm.MicrophoneSilent);
+        Assert.True(vm.Microphone.MicrophoneSilent);
     }
 
     [Fact]
     public async Task Any_sound_at_all_clears_the_silence_warning_for_good()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
         _recorder.Tick(TimeSpan.FromSeconds(3.5), 0);
-        Assert.True(vm.MicrophoneSilent);
+        Assert.True(vm.Microphone.MicrophoneSilent);
 
         _recorder.Tick(TimeSpan.FromSeconds(4), 0.02);
         _recorder.Tick(TimeSpan.FromSeconds(5), 0);
 
-        Assert.False(vm.MicrophoneSilent);
+        Assert.False(vm.Microphone.MicrophoneSilent);
     }
 
     [Fact]
     public async Task A_quiet_but_live_microphone_is_not_flagged()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
 
         _recorder.Tick(TimeSpan.FromSeconds(1), 0.004);
         _recorder.Tick(TimeSpan.FromSeconds(6), 0.002);
 
-        Assert.False(vm.MicrophoneSilent);
+        Assert.False(vm.Microphone.MicrophoneSilent);
     }
 
     [Fact]
     public async Task The_silence_warning_does_not_carry_over_to_the_next_recording()
     {
         var vm = Create();
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
         _recorder.Tick(TimeSpan.FromSeconds(4), 0);
-        Assert.True(vm.MicrophoneSilent);
-        vm.StopRecordingCommand.Execute(null);
-        Assert.False(vm.MicrophoneSilent);
+        Assert.True(vm.Microphone.MicrophoneSilent);
+        vm.Microphone.StopRecordingCommand.Execute(null);
+        Assert.False(vm.Microphone.MicrophoneSilent);
 
-        await vm.StartRecordingCommand.ExecuteAsync(null);
+        await vm.Microphone.StartRecordingCommand.ExecuteAsync(null);
         _recorder.Tick(TimeSpan.FromSeconds(1), 0);
 
-        Assert.False(vm.MicrophoneSilent);
+        Assert.False(vm.Microphone.MicrophoneSilent);
     }
 }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
+    x:Class="Transcriber.Maui.Views.Practice.FeedbackCard"
+    x:DataType="vm:FeedbackViewModel">
+
+    <!-- Written feedback: only when Ollama is running on this computer. -->
+    <Border Style="{StaticResource Card}">
+        <VerticalStackLayout Spacing="10">
+            <Label Text="Written feedback" Style="{StaticResource SectionTitle}" />
+            <Label Style="{StaticResource Caption}"
+                   Text="Want a short written review as well? Install Ollama (ollama.com) and download a model, then reopen this tab. It runs on your computer, so nothing is uploaded.">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding CanAskForFeedback}" Value="True">
+                        <Setter Property="IsVisible" Value="False" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding CanAskForFeedback}">
+                <Picker AutomationId="FeedbackModelPicker" ItemsSource="{Binding FeedbackModels}" SelectedItem="{Binding SelectedFeedbackModel}"
+                        WidthRequest="260" HorizontalOptions="Start" />
+                <Button AutomationId="FeedbackButton" Text="Get written feedback" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding GetFeedbackCommand}" HorizontalOptions="Start" />
+                <ActivityIndicator IsRunning="{Binding IsGettingFeedback}" IsVisible="{Binding IsGettingFeedback}" HorizontalOptions="Start" Color="{StaticResource Primary}" />
+                <Label AutomationId="FeedbackText" Text="{Binding FeedbackText}" Style="{StaticResource Body}" LineBreakMode="WordWrap" />
+                <Label AutomationId="FeedbackError" Text="{Binding FeedbackError}" TextColor="{StaticResource ErrorColor}" FontSize="13" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

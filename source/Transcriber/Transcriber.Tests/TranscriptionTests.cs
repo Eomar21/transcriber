@@ -129,27 +129,17 @@ public class TranscriptionTests(ITestOutputHelper output)
             File.Copy(Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav"), sample);
             var historyFile = Path.Combine(dir, "history.json");
             var whisper = ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector());
-            var vm = new Transcriber.ViewModels.PracticeViewModel(
-                ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader()),
-                new CpuOnly(whisper), ServicesFixture.Models, ServicesFixture.Languages,
-                new NoPicker(),
-                new Transcriber.Coach.History.JsonPracticeHistory(historyFile),
-                CoachFixture.Analyzer,
-                CoachFixture.Advisor,
-                CoachFixture.VerbatimPrompts,
-                new NoFeedback(),
-                new NoRecorder());
-            vm.SetFile(sample);
+var vm = PracticeFixture.Create(                ServicesFixture.FileReader(ServicesFixture.AudioService, ServicesFixture.VideoReader()),                new CpuOnly(whisper),                new NoPicker(),                new Transcriber.Coach.History.JsonPracticeHistory(historyFile),                new NoFeedback(),                new NoRecorder());
 
             await vm.AnalyzeCommand.ExecuteAsync(null);
 
-            output.WriteLine(string.Join(" | ", vm.Metrics.Select(m => $"{m.Label}={m.Value}")) + "\n" + vm.Transcript);
-            Assert.True(vm.HasResult, vm.ErrorMessage);
-            Assert.Contains("wpm", vm.Metrics[0].Value);
-            var wpm = int.Parse(vm.Metrics[0].Value.Split(' ')[0]);
+            output.WriteLine(string.Join(" | ", vm.Analysis.Metrics.Select(m => $"{m.Label}={m.Value}")) + "\n" + vm.Analysis.Transcript);
+            Assert.True(vm.Analysis.HasResult, vm.Status.ErrorMessage);
+            Assert.Contains("wpm", vm.Analysis.Metrics[0].Value);
+            var wpm = int.Parse(vm.Analysis.Metrics[0].Value.Split(' ')[0]);
             Assert.InRange(wpm, 100, 300); // fast conversational speech, but never absurd
-            Assert.NotEmpty(vm.Tips);
-            Assert.Single(vm.Sessions);
+            Assert.NotEmpty(vm.Analysis.Tips);
+            Assert.Single(vm.History.Sessions);
             Assert.True(File.Exists(sample), "the user's own wav must be left alone");
         }
         finally { Directory.Delete(dir, true); }

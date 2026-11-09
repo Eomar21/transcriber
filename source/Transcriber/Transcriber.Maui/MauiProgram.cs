@@ -41,7 +41,7 @@ namespace Transcriber.Maui
 
             // Practice tab: history stays in the user's app data; written feedback is optional and local (Ollama).
             builder.Services.AddCoach();
-            builder.Services.AddSingleton<PracticeViewModel>();
+            builder.Services.AddPracticeScreen();
             builder.Services.AddTransient<PracticePage>();
 
 #if DEBUG

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
+    xmlns:models="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
+    xmlns:views="clr-namespace:Transcriber.Maui.Views.Practice"
+    x:Class="Transcriber.Maui.Views.Practice.SourceCard"
+    x:DataType="vm:SourceViewModel">
+
+    <!-- 1. Recording -->
+    <Border Style="{StaticResource Card}">
+        <VerticalStackLayout Spacing="14">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                    <Label Text="Your recording" Style="{StaticResource SectionTitle}" />
+                    <Label AutomationId="PracticeFileName" Text="{Binding FileName}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding HasFile}" Value="False">
+                                <Setter Property="Text" Value="No recording chosen" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Record yourself with the microphone, or choose an audio or video file, for example a presentation rehearsal." Style="{StaticResource Caption}" />
+                </VerticalStackLayout>
+                <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Start">
+                    <Button AutomationId="RecordButton" Text="&#x25CF;  Record" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding Microphone.StartRecordingCommand}" />
+                    <Button AutomationId="PracticeChooseButton" Text="Choose file" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding ChooseFileCommand}" IsEnabled="{Binding IsIdle}" />
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Shown while the microphone is recording. -->
+            <views:MicrophonePanel BindingContext="{Binding Microphone}" IsVisible="{Binding IsRecording, x:DataType=vm:MicrophoneViewModel}" />
+
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Language spoken" Style="{StaticResource Caption}" />
+                <Picker AutomationId="PracticeLanguagePicker" ItemsSource="{Binding Languages}"
+                        ItemDisplayBinding="{Binding Label, x:DataType=models:LanguageOption}"
+                        SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"
+                        WidthRequest="260" HorizontalOptions="Start" />
+                <Label AutomationId="PracticeLanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}"
+                       TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasLanguageAdvice}" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

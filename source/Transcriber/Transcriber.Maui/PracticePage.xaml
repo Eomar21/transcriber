@@ -2,11 +2,13 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
+    xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
+    xmlns:views="clr-namespace:Transcriber.Maui.Views.Practice"
     x:Class="Transcriber.Maui.PracticePage"
     x:DataType="vm:PracticeViewModel"
     Title="Practice">
 
+    <!-- The page only arranges the sections. Each section is a view with its own view model. -->
     <ScrollView>
         <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
         <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="16">
@@ -18,55 +20,7 @@
             </VerticalStackLayout>
 
             <!-- 1. Recording -->
-            <Border Style="{StaticResource Card}">
-                <VerticalStackLayout Spacing="14">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <VerticalStackLayout VerticalOptions="Center" Spacing="2">
-                            <Label Text="Your recording" Style="{StaticResource SectionTitle}" />
-                            <Label AutomationId="PracticeFileName" Text="{Binding FileName}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation">
-                                <Label.Triggers>
-                                    <DataTrigger TargetType="Label" Binding="{Binding HasFile}" Value="False">
-                                        <Setter Property="Text" Value="No recording chosen" />
-                                    </DataTrigger>
-                                </Label.Triggers>
-                            </Label>
-                            <Label Text="Record yourself with the microphone, or choose an audio or video file, for example a presentation rehearsal." Style="{StaticResource Caption}" />
-                        </VerticalStackLayout>
-                        <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Start">
-                            <Button AutomationId="RecordButton" Text="&#x25CF;  Record" Style="{StaticResource SecondaryButton}"
-                                    Command="{Binding StartRecordingCommand}" />
-                            <Button AutomationId="PracticeChooseButton" Text="Choose file" Style="{StaticResource PrimaryButton}"
-                                    Command="{Binding ChooseFileCommand}" IsEnabled="{Binding IsIdle}" />
-                        </HorizontalStackLayout>
-                    </Grid>
-
-                    <!-- Shown while the microphone is recording. -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding IsRecording}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
-                                <Label AutomationId="RecordingText" Text="{Binding RecordingText}" TextColor="{StaticResource ErrorColor}"
-                                       FontAttributes="Bold" Style="{StaticResource Body}" />
-                                <ProgressBar AutomationId="RecordingLevel" Progress="{Binding RecordingLevel}" ProgressColor="{StaticResource SuccessColor}"
-                                             SemanticProperties.Description="Microphone level" />
-                            </VerticalStackLayout>
-                            <Button AutomationId="StopRecordingButton" Grid.Column="1" Text="Stop" Style="{StaticResource PrimaryButton}"
-                                    Command="{Binding StopRecordingCommand}" />
-                        </Grid>
-                        <Label AutomationId="MicrophoneSilentWarning" IsVisible="{Binding MicrophoneSilent}" TextColor="{StaticResource WarningColor}" FontSize="13"
-                               Text="&#x26A0;  No sound is coming in. Check the microphone is connected, not muted, and allowed in your system's privacy settings." />
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Language spoken" Style="{StaticResource Caption}" />
-                        <Picker AutomationId="PracticeLanguagePicker" ItemsSource="{Binding Languages}"
-                                ItemDisplayBinding="{Binding Label, x:DataType=vm:LanguageOption}"
-                                SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"
-                                WidthRequest="260" HorizontalOptions="Start" />
-                        <Label AutomationId="PracticeLanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}"
-                               TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasLanguageAdvice}" />
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
+            <views:SourceCard BindingContext="{Binding Source}" />
 
             <!-- 2. Action -->
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
@@ -75,120 +29,20 @@
                         Command="{Binding AnalyzeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
 
-            <Border Style="{StaticResource Card}" IsVisible="{Binding IsBusy}">
-                <VerticalStackLayout Spacing="8">
-                    <ProgressBar Progress="{Binding Progress}" ProgressColor="{StaticResource Primary}" />
-                    <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
-                </VerticalStackLayout>
-            </Border>
+            <views:PracticeProgressCard BindingContext="{Binding Status}" IsVisible="{Binding IsBusy, x:DataType=vm:PracticeStatusViewModel}" />
 
-            <Label AutomationId="PracticeError" Text="{Binding ErrorMessage}" TextColor="{StaticResource ErrorColor}" FontSize="13">
-                <Label.Triggers>
-                    <DataTrigger TargetType="Label" Binding="{Binding ErrorMessage}" Value="">
-                        <Setter Property="IsVisible" Value="False" />
-                    </DataTrigger>
-                </Label.Triggers>
-            </Label>
+            <views:PracticeErrorLine BindingContext="{Binding Status}" IsVisible="{Binding HasError, x:DataType=vm:PracticeStatusViewModel}" />
 
             <!-- 3. Results -->
-            <VerticalStackLayout Spacing="16" IsVisible="{Binding HasResult}">
-
-                <!-- The tiles are built in the code-behind so they can reflow between 5 and 3 columns. -->
-                <Grid x:Name="MetricsGrid" AutomationId="PracticeMetrics" ColumnSpacing="12" RowSpacing="12" />
-
-                <Border Style="{StaticResource Card}">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="What to work on" Style="{StaticResource SectionTitle}" />
-                        <VerticalStackLayout AutomationId="PracticeTips" Spacing="12" BindableLayout.ItemsSource="{Binding Tips}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vm:TipItem">
-                                    <Grid ColumnDefinitions="28,*" ColumnSpacing="8">
-                                        <Label Text="{Binding Symbol}" FontAttributes="Bold" FontSize="16" VerticalOptions="Start" HorizontalTextAlignment="Center"
-                                               SemanticProperties.Description="{Binding Kind}">
-                                            <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Good">
-                                                    <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Improve">
-                                                    <Setter Property="TextColor" Value="{StaticResource WarningColor}" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Info">
-                                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
-                                        <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                            <Label Text="{Binding Title}" FontAttributes="Bold" Style="{StaticResource Body}" />
-                                            <Label Text="{Binding Detail}" Style="{StaticResource Caption}" LineBreakMode="WordWrap" />
-                                        </VerticalStackLayout>
-                                    </Grid>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- Written feedback: only when Ollama is running on this computer. -->
-                <Border Style="{StaticResource Card}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Written feedback" Style="{StaticResource SectionTitle}" />
-                        <Label Style="{StaticResource Caption}"
-                               Text="Want a short written review as well? Install Ollama (ollama.com) and download a model, then reopen this tab. It runs on your computer, so nothing is uploaded.">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding CanAskForFeedback}" Value="True">
-                                    <Setter Property="IsVisible" Value="False" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                        <VerticalStackLayout Spacing="10" IsVisible="{Binding CanAskForFeedback}">
-                            <Picker AutomationId="FeedbackModelPicker" ItemsSource="{Binding FeedbackModels}" SelectedItem="{Binding SelectedFeedbackModel}"
-                                    WidthRequest="260" HorizontalOptions="Start" />
-                            <Button AutomationId="FeedbackButton" Text="Get written feedback" Style="{StaticResource SecondaryButton}"
-                                    Command="{Binding GetFeedbackCommand}" HorizontalOptions="Start" />
-                            <ActivityIndicator IsRunning="{Binding IsGettingFeedback}" IsVisible="{Binding IsGettingFeedback}" HorizontalOptions="Start" Color="{StaticResource Primary}" />
-                            <Label AutomationId="FeedbackText" Text="{Binding FeedbackText}" Style="{StaticResource Body}" LineBreakMode="WordWrap" />
-                            <Label AutomationId="FeedbackError" Text="{Binding FeedbackError}" TextColor="{StaticResource ErrorColor}" FontSize="13" />
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Style="{StaticResource Card}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="What was heard" Style="{StaticResource SectionTitle}" />
-                        <Label Text="Check the numbers against your words. Filler words only count if the transcript kept them." Style="{StaticResource Caption}" />
-                        <Label AutomationId="PracticeTranscript" Text="{Binding Transcript}" Style="{StaticResource Body}" LineBreakMode="WordWrap" />
-                    </VerticalStackLayout>
-                </Border>
+            <VerticalStackLayout Spacing="16" IsVisible="{Binding Analysis.HasResult}">
+                <views:MetricsPanel BindingContext="{Binding Analysis}" />
+                <views:TipsCard BindingContext="{Binding Analysis}" />
+                <views:FeedbackCard BindingContext="{Binding Feedback}" />
+                <views:TranscriptCard BindingContext="{Binding Analysis}" />
             </VerticalStackLayout>
 
             <!-- 4. History -->
-            <Border Style="{StaticResource Card}" IsVisible="{Binding HasHistory}">
-                <VerticalStackLayout Spacing="10">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <VerticalStackLayout VerticalOptions="Center" Spacing="2">
-                            <Label Text="Your progress" Style="{StaticResource SectionTitle}" />
-                            <Label Text="Past practice runs, newest first. Saved only on this computer." Style="{StaticResource Caption}" />
-                        </VerticalStackLayout>
-                        <Button Grid.Column="1" Text="Clear all" Style="{StaticResource SecondaryButton}" Command="{Binding ClearHistoryCommand}" />
-                    </Grid>
-                    <VerticalStackLayout AutomationId="PracticeHistory" Spacing="8" BindableLayout.ItemsSource="{Binding Sessions}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="vm:SessionItem">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="0,4">
-                                    <VerticalStackLayout Spacing="1">
-                                        <Label Text="{Binding Title}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
-                                        <Label Text="{Binding When}" Style="{StaticResource Caption}" />
-                                        <Label Text="{Binding Summary}" Style="{StaticResource Caption}" />
-                                    </VerticalStackLayout>
-                                    <Button Grid.Column="1" Text="Delete" Style="{StaticResource SecondaryButton}" Padding="12,6" VerticalOptions="Center"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PracticeViewModel}}, Path=DeleteSessionCommand, x:DataType=vm:PracticeViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                </Grid>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
+            <views:HistoryCard BindingContext="{Binding History}" IsVisible="{Binding HasHistory, x:DataType=vm:HistoryViewModel}" />
 
         </VerticalStackLayout>
     </ScrollView>
