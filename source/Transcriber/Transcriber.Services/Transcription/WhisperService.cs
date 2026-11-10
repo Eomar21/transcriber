@@ -127,6 +127,10 @@ internal sealed class WhisperService : IWhisperService, IDisposable
             }
         }
 
+        // With speaker labels, the last part of the bar is for the speaker step. Without this, the bar is full while
+        // that step still works.
+        var transcribeShare = options.IdentifySpeakers && _speakerDiarizer is { IsAvailable: true } ? 1 - SpeakerShare : 1.0;
+
         var chunkOffset = 0.0;  // share of the work finished before the current chunk
         var chunkShare = 1.0;   // share of the work the current chunk represents
 
@@ -135,7 +139,7 @@ internal sealed class WhisperService : IWhisperService, IDisposable
             .WithNoSpeechThreshold(options.NoSpeechThreshold ?? _settings.NoSpeechThreshold)
             .WithThreads(_settings.Threads > 0 ? _settings.Threads : AutomaticThreads(Environment.ProcessorCount))
             .WithProgressHandler(p => progress?.Report(
-                new TranscriptionProgress($"Transcribing ({LastRuntime})", chunkOffset + chunkShare * p / 100.0)));
+                new TranscriptionProgress($"Transcribing ({LastRuntime})", transcribeShare * (chunkOffset + chunkShare * p / 100.0))));
 
         if (!string.IsNullOrWhiteSpace(options.Prompt))
             builder = builder.WithPrompt(options.Prompt);
@@ -178,8 +182,10 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         // Speaker labels: who talks when is worked out from the audio, then matched to each line by time.
         if (options.IdentifySpeakers && cleaned.Count > 0 && _speakerDiarizer is { IsAvailable: true })
         {
-            progress?.Report(new TranscriptionProgress("Identifying speakers", 1));
-            var turns = await _speakerDiarizer.DiarizeAsync(audioFilePath, options.SpeakerCount, ct);
+            progress?.Report(new TranscriptionProgress("Identifying speakers", transcribeShare));
+            var speakerProgress = new Relay(share => progress?.Report(
+                new TranscriptionProgress("Identifying speakers", transcribeShare + (1 - transcribeShare) * share)));
+            var turns = await _speakerDiarizer.DiarizeAsync(audioFilePath, options.SpeakerCount, speakerProgress, ct);
             // With a count chosen by the user the clustering already produced exactly that many voices; otherwise
             // short fragments that are not real speakers are folded into the nearest real one.
             if (options.SpeakerCount is null) turns = _speakerAssigner.MergeMinorSpeakers(turns);
@@ -202,6 +208,15 @@ internal sealed class WhisperService : IWhisperService, IDisposable
     }
 
     private const int MaxAutomaticThreads = 16;
+
+    /// <summary>The part of the progress bar that the speaker step gets when speaker labels are on.</summary>
+    public const double SpeakerShare = 0.3;
+
+    /// <summary>Passes a progress report on in the thread that makes it, so the reports keep their order.</summary>
+    private sealed class Relay(Action<double> onReport) : IProgress<double>
+    {
+        public void Report(double value) => onReport(value);
+    }
 
     private static TimeSpan WavDuration(string path)
     {

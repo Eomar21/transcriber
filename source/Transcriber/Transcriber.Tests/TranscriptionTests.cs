@@ -103,6 +103,7 @@ public class TranscriptionTests(ITestOutputHelper output)
     {
         var wav = Path.Combine(AppContext.BaseDirectory, "TestData", "two-speakers-en.wav");
         var whisper = ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector(), ServicesFixture.Diarizer());
+        var reports = new List<TranscriptionProgress>();
 
         var segments = await whisper.TranscribeAsync(wav, new TranscriptionOptions
         {
@@ -111,7 +112,16 @@ public class TranscriptionTests(ITestOutputHelper output)
             UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
             IdentifySpeakers = true,
             SpeakerCount = 2,
-        });
+        }, new DirectProgress(p => { lock (reports) reports.Add(p); }));
+
+        // The bar never goes back, and the speaker step moves it through its own last part.
+        Assert.Equal(reports.Select(r => r.Fraction).Order(), reports.Select(r => r.Fraction));
+        Assert.All(reports.Where(r => r.Stage.StartsWith("Transcribing", StringComparison.Ordinal)),
+            r => Assert.InRange(r.Fraction, 0, 1 - WhisperService.SpeakerShare + 1e-9));
+        var speakerSteps = reports.Where(r => r.Stage == "Identifying speakers").Select(r => r.Fraction).ToList();
+        Assert.True(speakerSteps.Count >= 2, "the speaker step reports its own progress");
+        Assert.Equal(1 - WhisperService.SpeakerShare, speakerSteps[0], 6);
+        Assert.Equal(1, speakerSteps[^1], 6);
 
         output.WriteLine(string.Join("\n", segments.Select(s => $"{s.Start.TotalSeconds:F1}s Speaker {s.Speaker}: {s.Text}")));
         Assert.NotEmpty(segments);

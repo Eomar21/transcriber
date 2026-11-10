@@ -9,5 +9,6 @@ internal interface ISpeakerDiarizer
     bool IsAvailable { get; }
 
     /// <param name="speakerCount">How many people speak, or null to work it out from the audio.</param>
-    Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, CancellationToken ct = default);
+    /// <param name="progress">Gets the share of the work that is done, from 0 to 1. It can be called from another thread.</param>
+    Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, IProgress<double>? progress = null, CancellationToken ct = default);
 }

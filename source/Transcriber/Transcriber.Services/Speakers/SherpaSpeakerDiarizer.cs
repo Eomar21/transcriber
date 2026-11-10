@@ -33,7 +33,7 @@ internal sealed class SherpaSpeakerDiarizer : ISpeakerDiarizer
     private static readonly Lazy<bool> NativeLibraryLoads = new(() =>
         System.Runtime.InteropServices.NativeLibrary.TryLoad("sherpa-onnx-c-api", typeof(OfflineSpeakerDiarization).Assembly, null, out _));
 
-    public Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, CancellationToken ct = default) =>
+    public Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, IProgress<double>? progress = null, CancellationToken ct = default) =>
         Task.Run(() =>
         {
             ct.ThrowIfCancellationRequested();
@@ -52,7 +52,16 @@ internal sealed class SherpaSpeakerDiarizer : ISpeakerDiarizer
             var samples = ReadSamples(wavPath, diarization.SampleRate);
             ct.ThrowIfCancellationRequested();
 
-            return diarization.Process(samples)
+            // The library calls back after each piece of audio. It ignores the answer, so the call cannot stop the work.
+            OfflineSpeakerDiarizationProgressCallback report = (done, total, _) =>
+            {
+                if (total > 0) progress?.Report(Math.Clamp((double)done / total, 0, 1));
+                return 0;
+            };
+            var segments = diarization.ProcessWithCallback(samples, report, IntPtr.Zero);
+            GC.KeepAlive(report);
+
+            return segments
                 .Select(s => new SpeakerTurn(TimeSpan.FromSeconds(s.Start), TimeSpan.FromSeconds(s.End), s.Speaker))
                 .OrderBy(t => t.Start)
                 .ToList();

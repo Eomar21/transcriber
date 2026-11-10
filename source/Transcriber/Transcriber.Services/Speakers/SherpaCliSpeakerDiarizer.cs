@@ -43,7 +43,7 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
         return path;
     }
 
-    public async Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, CancellationToken ct = default)
+    public async Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, IProgress<double>? progress = null, CancellationToken ct = default)
     {
         if (!IsAvailable) throw new SpeakerDetectionException("The speaker detection tool is not part of this build.");
 
@@ -53,6 +53,7 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
         void Collect(object _, DataReceivedEventArgs e)
         {
             if (e.Data is null) return;
+            if (ReadProgress(e.Data) is { } share) progress?.Report(share);
             lock (gate) output.AppendLine(e.Data);
         }
         process.OutputDataReceived += Collect;
@@ -127,6 +128,18 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
 
     [GeneratedRegex(@"^\s*(?<start>\d+(?:\.\d+)?)\s+--\s+(?<end>\d+(?:\.\d+)?)\s+speaker_(?<speaker>\d+)", RegexOptions.Multiline)]
     private static partial Regex TurnLine();
+
+    /// <summary>Reads a line of the form <c>progress 97.87%</c> as a share from 0 to 1. Any other line gives null.</summary>
+    public static double? ReadProgress(string line)
+    {
+        var m = ProgressLine().Match(line);
+        return m.Success
+            ? Math.Clamp(double.Parse(m.Groups["percent"].Value, CultureInfo.InvariantCulture) / 100, 0, 1)
+            : null;
+    }
+
+    [GeneratedRegex(@"^\s*progress\s+(?<percent>\d+(?:\.\d+)?)%")]
+    private static partial Regex ProgressLine();
 
     private static string Tail(string text)
     {

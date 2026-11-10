@@ -120,6 +120,20 @@ public class SherpaCliDiarizerTests
         finally { Directory.Delete(dir, true); }
     }
 
+    [Theory]
+    [InlineData("progress 97.87%", 0.9787)]
+    [InlineData("progress 100.00%", 1.0)]
+    [InlineData("  progress 0.00%", 0.0)]
+    public void A_progress_line_of_the_tool_gives_the_share_that_is_done(string line, double expected) =>
+        Assert.Equal(expected, SherpaCliSpeakerDiarizer.ReadProgress(line)!.Value, 6);
+
+    [Theory]
+    [InlineData("0.318 -- 6.865 speaker_00")]
+    [InlineData("Started")]
+    [InlineData("")]
+    public void A_line_that_is_not_progress_gives_nothing(string line) =>
+        Assert.Null(SherpaCliSpeakerDiarizer.ReadProgress(line));
+
     [Fact]
     public async Task Asking_for_speakers_without_the_tool_is_a_clear_error()
     {
