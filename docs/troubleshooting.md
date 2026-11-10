@@ -62,7 +62,7 @@ On unclear audio, a speech model can invent text. The app removes the clear case
 
 ### The app is slow
 
-- Make sure that **Use graphics card when available** is on. A change has effect after you restart the app.
+- Make sure that **Use graphics card when available** is on. A change has effect on the next run.
 - Select a smaller model.
 - A longer recording needs more time. You can cancel at any time.
 - Speaker labels add time.

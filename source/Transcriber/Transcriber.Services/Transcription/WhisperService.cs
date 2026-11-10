@@ -84,13 +84,13 @@ internal sealed class WhisperService : IWhisperService
 
         var modelPath = await _modelManager.EnsureModelAsync(options.Model ?? _models.Default, progress, ct);
 
-        // Prefer the GPU, fall back to the CPU if no compatible runtime or driver is present.
-        RuntimeOptions.RuntimeLibraryOrder = options.UseGpu
-            ? [RuntimeLibrary.Vulkan, RuntimeLibrary.Cpu]
-            : [RuntimeLibrary.Cpu];
+        // The native library loads one time for the life of the app, so its choice cannot follow the option of each
+        // run. The library with graphics card support is always preferred (the plain one is the fallback when no
+        // compatible driver is present), and each run says for itself whether it uses the graphics card.
+        RuntimeOptions.RuntimeLibraryOrder = [RuntimeLibrary.Vulkan, RuntimeLibrary.Cpu];
 
-        using var factory = WhisperFactory.FromPath(modelPath);
-        LastRuntime = RuntimeOptions.LoadedLibrary?.ToString();
+        using var factory = WhisperFactory.FromPath(modelPath, new WhisperFactoryOptions { UseGpu = options.UseGpu });
+        LastRuntime = (options.UseGpu ? RuntimeOptions.LoadedLibrary : RuntimeLibrary.Cpu)?.ToString();
 
         // Voice activity detection: only the stretches with speech go to Whisper. That is faster on recordings with
         // long pauses and stops Whisper inventing text over silence and noise.

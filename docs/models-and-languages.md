@@ -86,4 +86,4 @@ To get a better result:
 
 ## Speed and the graphics card
 
-The Transcribe tab can use your graphics card (Vulkan). This is usually much faster than the processor. If no graphics card is available, the app uses the processor. The result screen shows which one the app used, for example "Processed with Vulkan". The setting is **Use graphics card when available**. A change has effect after you restart the app.
+The Transcribe tab can use your graphics card (Vulkan). This is usually much faster than the processor. If no graphics card is available, the app uses the processor. The result screen shows which one the app used, for example "Processed with Vulkan". The setting is **Use graphics card when available**. A change has effect on the next run.

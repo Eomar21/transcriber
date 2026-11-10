@@ -80,7 +80,7 @@ If you transcribe the same file again in the same format, the app replaces the e
 | **Model** | Sets the speech model. A larger model is more accurate and slower. |
 | **Save as** | Sets the output format. |
 | **Names or special terms** | Helps the app to write names and special words correctly. |
-| **Use graphics card when available** | Uses the graphics card (Vulkan) for more speed. If no graphics card is available, the app uses the processor. A change has effect after you restart the app. |
+| **Use graphics card when available** | Uses the graphics card (Vulkan) for more speed. If no graphics card is available, the app uses the processor. A change has effect on the next run. |
 | **Label who is speaking** | Adds Speaker 1, Speaker 2 and so on to each line. This setting adds some processing time. |
 
 ## Special cases

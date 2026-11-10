@@ -204,13 +204,13 @@ public class TranscriptionTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task Cpu_request_still_transcribes_and_reports_the_runtime_actually_used()
+    public async Task Cpu_request_transcribes_on_the_processor_in_a_process_that_also_used_the_graphics_card()
     {
-        // Whisper.net loads its native library once per process, so if another test already loaded
-        // Vulkan, a later UseGpu=false cannot switch back. The service must report what really ran.
+        // Whisper.net loads its native library once per process, and other tests in this process use the graphics
+        // card. A run that asks for the processor must get the processor, and the service must report that.
         var (wer, _, runtime) = await RunAsync("en-01.mp3", "en", "Article 1. All human beings are born free and equal in dignity and rights. They are endowed with reason and conscience and should act towards one another in a spirit of brotherhood.", useGpu: false);
         Assert.True(wer <= 0.05);
-        Assert.False(string.IsNullOrEmpty(runtime));
+        Assert.Equal("Cpu", runtime);
     }
 
     [Theory]
