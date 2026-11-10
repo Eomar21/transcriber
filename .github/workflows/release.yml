@@ -104,36 +104,6 @@ jobs:
             if (-not (Test-Path "publish/win-x64/$f")) { Write-Error "Missing from the package: $f"; exit 1 }
           }
 
-      # Code signing with SignPath. These steps run only when the repository variable SIGNPATH_ENABLED is 'true'.
-      # Settings: the variable SIGNPATH_ORGANIZATION_ID and the secret SIGNPATH_API_TOKEN. See docs/code-signing.md.
-      # The app is signed before the zip and the installer are made, so that both contain the signed file.
-      - name: Upload the app for signing
-        id: unsigned-app
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: unsigned-app
-          path: publish/win-x64/Transcriber.Maui.exe
-          if-no-files-found: error
-
-      - name: Sign the app
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: transcriber
-          signing-policy-slug: release-signing
-          artifact-configuration-slug: app-exe
-          github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: signed-app
-
-      - name: Use the signed app
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
-        shell: pwsh
-        run: Copy-Item signed-app/Transcriber.Maui.exe publish/win-x64/Transcriber.Maui.exe -Force
-
       - name: Zip (portable)
         shell: pwsh
         run: Compress-Archive -Path publish/win-x64/* -DestinationPath "Transcriber-${{ steps.ver.outputs.version }}-win-x64-portable.zip"
@@ -143,33 +113,6 @@ jobs:
         run: |
           choco install innosetup -y --no-progress
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=${{ steps.ver.outputs.core }}" "/DSourceDir=$PWD\publish\win-x64" "/DOutputDir=$PWD" installer\windows\Transcriber.iss
-
-      - name: Upload the installer for signing
-        id: unsigned-installer
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: unsigned-installer
-          path: Transcriber-*-win-x64-setup.exe
-          if-no-files-found: error
-
-      - name: Sign the installer
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: transcriber
-          signing-policy-slug: release-signing
-          artifact-configuration-slug: installer
-          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: signed-installer
-
-      - name: Use the signed installer
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
-        shell: pwsh
-        run: Copy-Item signed-installer/Transcriber-*-win-x64-setup.exe . -Force
 
       - uses: actions/upload-artifact@v4
         with:
