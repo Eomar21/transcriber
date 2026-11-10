@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the services for reading media, transcribing, saving transcripts and the language and model lists.
-    /// A speaker detector is added with <see cref="AddNativeSpeakerDetection"/> or <see cref="AddToolSpeakerDetection"/>.
+    /// A speaker detector is added with <see cref="AddToolSpeakerDetection"/>.
     /// </summary>
     /// <param name="userSettingsPath">
     /// A file with changed settings. Null uses appsettings.user.json in the app data folder. A file that does not exist is ignored.
@@ -46,6 +46,8 @@ public static class ServiceCollectionExtensions
 
         // Reading files
         services.AddSingleton<IExecutablePermission, ExecutablePermission>();
+        // Windows command-line programs cannot open every path. macOS programs can.
+        services.AddSingleton<IToolFileStager>(_ => OperatingSystem.IsWindows() ? new AsciiToolFiles() : new DirectToolFiles());
         services.AddSingleton<IFfmpegLocator, FfmpegLocator>();
         services.AddSingleton<IAudioService, AudioService>();
         services.AddSingleton<IVideoReaderService, VideoReaderService>();
@@ -71,11 +73,10 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Speaker detection that runs inside the app. The Windows build uses this.</summary>
-    public static IServiceCollection AddNativeSpeakerDetection(this IServiceCollection services) =>
-        services.AddSingleton<ISpeakerDiarizer, SherpaSpeakerDiarizer>();
-
-    /// <summary>Speaker detection through the program that is built into the app. The macOS build uses this, because a Mac app cannot load the native library.</summary>
+    /// <summary>
+    /// Speaker detection through the program that is built into the app. Windows and macOS use this.
+    /// The app can stop a separate program at any moment, so a cancel has effect at once.
+    /// </summary>
     public static IServiceCollection AddToolSpeakerDetection(this IServiceCollection services) =>
         services.AddSingleton<ISpeakerDiarizer, SherpaCliSpeakerDiarizer>();
 }

@@ -7,26 +7,31 @@ using Transcriber.Services.Configuration;
 using Transcriber.Services.Exceptions;
 using Transcriber.Services.Interfaces;
 using Transcriber.Services.Models;
+using Transcriber.Services.Platform;
 
 namespace Transcriber.Services.Speakers;
 
 /// <summary>
-/// Speaker diarization by running sherpa-onnx's own command-line tool, which ships inside the app.
-/// This is what the Mac build uses: a Mac Catalyst app cannot load the native sherpa-onnx library, but it can start a
-/// separate, statically linked macOS program, the same way it starts the bundled ffmpeg.
+/// Speaker diarization with sherpa-onnx: a pyannote model finds where speech changes hands, a speaker-embedding model
+/// describes each voice, and clustering groups the pieces by voice. The work is done by sherpa-onnx's own command-line
+/// program, which ships inside the app and is started the same way as the bundled ffmpeg. A separate program can be
+/// stopped at any moment, so a cancel has effect at once. It is also the only form that a Mac Catalyst app can use.
 /// </summary>
 internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
 {
     private readonly SpeakerSettings _settings;
+    private readonly IToolFileStager _files;
     private readonly string? _toolPath;
     private readonly string _segmentationPath;
     private readonly string _embeddingPath;
 
+    /// <param name="files">Gives the program paths that it can open.</param>
     /// <param name="toolPath">The tool to run; by default the one next to the app.</param>
     /// <param name="modelDirectory">Where the two speaker models are; by default the app's models folder.</param>
-    public SherpaCliSpeakerDiarizer(IOptions<SpeakerSettings> speakers, IOptions<ModelSettings> models, IExecutablePermission permission, string? toolPath = null, string? modelDirectory = null)
+    public SherpaCliSpeakerDiarizer(IOptions<SpeakerSettings> speakers, IOptions<ModelSettings> models, IExecutablePermission permission, IToolFileStager files, string? toolPath = null, string? modelDirectory = null)
     {
         _settings = speakers.Value;
+        _files = files;
         _toolPath = toolPath ?? Locate(permission);
         var dir = modelDirectory ?? models.Value.BundledDirectory ?? Path.Combine(AppContext.BaseDirectory, "models");
         _segmentationPath = Path.Combine(dir, _settings.SegmentationModelFile);
@@ -35,9 +40,12 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
 
     public bool IsAvailable => _toolPath is not null && File.Exists(_toolPath) && File.Exists(_segmentationPath) && File.Exists(_embeddingPath);
 
+    /// <summary>The file name of the program on this system: Windows adds ".exe" to the name in the settings.</summary>
+    public static string ToolFileName(string name) => OperatingSystem.IsWindows() ? name + ".exe" : name;
+
     private string? Locate(IExecutablePermission permission)
     {
-        var path = Path.Combine(AppContext.BaseDirectory, _settings.ToolFileName);
+        var path = Path.Combine(AppContext.BaseDirectory, ToolFileName(_settings.ToolFileName));
         if (!File.Exists(path)) return null;
         permission.Ensure(path);
         return path;
@@ -46,8 +54,11 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
     public async Task<List<SpeakerTurn>> DiarizeAsync(string wavPath, int? speakerCount = null, IProgress<double>? progress = null, CancellationToken ct = default)
     {
         if (!IsAvailable) throw new SpeakerDetectionException("The speaker detection tool is not part of this build.");
+        ct.ThrowIfCancellationRequested();
 
-        using var process = new Process { StartInfo = CreateStartInfo(wavPath, speakerCount) };
+        // The copies that the program needs (if any) are removed when the program has ended.
+        using var staged = _files.Stage(wavPath, [_segmentationPath, _embeddingPath]);
+        using var process = new Process { StartInfo = CreateStartInfo(staged, speakerCount) };
         var output = new StringBuilder();
         var gate = new object();
         void Collect(object _, DataReceivedEventArgs e)
@@ -84,7 +95,7 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
         return turns;
     }
 
-    private ProcessStartInfo CreateStartInfo(string wavPath, int? speakerCount)
+    private ProcessStartInfo CreateStartInfo(StagedFiles files, int? speakerCount)
     {
         var info = new ProcessStartInfo(_toolPath!)
         {
@@ -93,12 +104,13 @@ internal sealed partial class SherpaCliSpeakerDiarizer : ISpeakerDiarizer
             UseShellExecute = false,
             CreateNoWindow = true,
         };
-        foreach (var arg in BuildArguments(_segmentationPath, _embeddingPath, wavPath, speakerCount, Math.Max(1, Environment.ProcessorCount / 2)))
+        if (files.WorkingDirectory is not null) info.WorkingDirectory = files.WorkingDirectory;
+        foreach (var arg in BuildArguments(files.SharedFiles[0], files.SharedFiles[1], files.InputFile, speakerCount, Math.Max(1, Environment.ProcessorCount / 2)))
             info.ArgumentList.Add(arg);
         return info;
     }
 
-    /// <summary>The same settings as the in-process diarizer, in the tool's command-line form.</summary>
+    /// <summary>The speaker settings in the command-line form of the tool.</summary>
     public List<string> BuildArguments(string segmentationModel, string embeddingModel, string wavPath, int? speakerCount, int threads) =>
     [
         $"--segmentation.pyannote-model={segmentationModel}",

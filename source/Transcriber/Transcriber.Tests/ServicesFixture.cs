@@ -70,11 +70,13 @@ internal static class ServicesFixture
         KeepModelLoadedMinutes = 0,
     };
 
-    public static ISpeakerDiarizer Diarizer(string? modelDirectory = null) =>
-        new SherpaSpeakerDiarizer(Opt(Settings.Speakers), Opt(Settings.Models), modelDirectory);
+    /// <summary>The speaker detector of the app: the bundled program, with the bundled models.</summary>
+    public static ISpeakerDiarizer Diarizer() => CliDiarizer();
 
-    public static SherpaCliSpeakerDiarizer CliDiarizer(string? toolPath = null, string? modelDirectory = null) =>
-        new(Opt(Settings.Speakers), Opt(Settings.Models), Permission, toolPath, modelDirectory);
+    public static SherpaCliSpeakerDiarizer CliDiarizer(string? toolPath = null, string? modelDirectory = null, IToolFileStager? files = null) =>
+        new(Opt(Settings.Speakers), Opt(Settings.Models), Permission, files ?? ToolFiles, toolPath, modelDirectory);
+
+    public static IToolFileStager ToolFiles { get; } = OperatingSystem.IsWindows() ? new AsciiToolFiles() : new DirectToolFiles();
 
     // ---- saving ----------------------------------------------------------------------------
 

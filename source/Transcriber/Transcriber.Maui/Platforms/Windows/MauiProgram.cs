@@ -6,9 +6,9 @@ namespace Transcriber.Maui;
 
 public static partial class MauiProgram
 {
-    // Windows loads the native sherpa-onnx library inside the app.
+    // Speaker detection runs as the bundled sherpa-onnx program, so a cancel can stop it at once.
     private static partial void RegisterSpeakerDetection(IServiceCollection services) =>
-        services.AddNativeSpeakerDetection();
+        services.AddToolSpeakerDetection();
 
     // The native text box and drop-down list have different corners. This gives every field the same shape as the buttons.
     private static partial void ConfigureFieldShape()

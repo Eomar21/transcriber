@@ -85,4 +85,17 @@ public class SpeakerDiarizationTests
 
         Assert.Single(turns.Select(t => t.Speaker).Distinct());
     }
+
+    [Fact]
+    public async Task A_cancel_stops_the_speaker_step_at_once()
+    {
+        using var cancel = new CancellationTokenSource();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        var run = ServicesFixture.Diarizer().DiarizeAsync(Sample, null, null, cancel.Token);
+        cancel.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => run);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(2), $"the cancel took {clock.Elapsed.TotalSeconds:0.0} s");
+    }
 }

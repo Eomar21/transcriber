@@ -5,7 +5,7 @@ namespace Transcriber.Maui;
 
 public static partial class MauiProgram
 {
-    // Mac Catalyst cannot load the native sherpa-onnx library, so run its bundled command-line tool instead.
+    // Speaker detection runs as the bundled sherpa-onnx program. A Mac Catalyst app cannot load the native library.
     private static partial void RegisterSpeakerDetection(IServiceCollection services) =>
         services.AddToolSpeakerDetection();
 

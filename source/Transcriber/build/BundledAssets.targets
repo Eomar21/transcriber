@@ -69,7 +69,7 @@
             using (var output = File.Create(Destination))
                 gz.CopyTo(output);
         }
-        else
+        else if (!string.Equals(Path.GetFullPath(Source), Path.GetFullPath(Destination), StringComparison.OrdinalIgnoreCase))
         {
             File.Copy(Source, Destination, true);
         }
@@ -164,27 +164,69 @@
   </PropertyGroup>
 
   <!--
-    macOS only: sherpa-onnx's statically linked speaker diarization tool (about 28 MB, Apache 2.0, ONNX Runtime inside is MIT),
-    taken from the official release archive pinned by checksum. A Mac Catalyst app cannot load the native library the Windows
-    build uses, so the app runs this program instead. The archive is large, so only the one program is kept.
+    The speaker detection program of sherpa-onnx (Apache 2.0, ONNX Runtime inside is MIT), statically linked, taken
+    from the official release archive pinned by checksum. The app runs this program for speaker labels on Windows and
+    on macOS, so it can stop the program when the person cancels. On macOS there is a second reason: a Mac Catalyst app
+    cannot load the native library. The archive is large (about 240 MB), so only the one program is kept
+    (17 MB on Windows, 28 MB on macOS).
   -->
   <PropertyGroup>
     <SherpaCliVersion>v2.0.1</SherpaCliVersion>
-    <SherpaCliArchive>sherpa-onnx-$(SherpaCliVersion)-osx-arm64-static-no-tts.tar.bz2</SherpaCliArchive>
-    <SherpaCliSha>e2496931fd955ab449c2df1a6839e4c17cedf451e018cc3efd1a77180980c49b</SherpaCliSha>
     <SherpaCliTool>sherpa-onnx-offline-speaker-diarization</SherpaCliTool>
     <SherpaCliCacheDir>$(MSBuildProjectDirectory)/obj/sherpacli/</SherpaCliCacheDir>
   </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <SherpaCliFlavour>osx-arm64-static-no-tts</SherpaCliFlavour>
+    <SherpaCliSha>e2496931fd955ab449c2df1a6839e4c17cedf451e018cc3efd1a77180980c49b</SherpaCliSha>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
+    <SherpaCliFlavour>win-x64-static-MT-Release-no-tts</SherpaCliFlavour>
+    <SherpaCliSha>8e3a59fde5be843058f158cb166222a9722c44ec0ea20589768a459e39a24a9c</SherpaCliSha>
+    <SherpaCliTool>$(SherpaCliTool).exe</SherpaCliTool>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SherpaCliArchive>sherpa-onnx-$(SherpaCliVersion)-$(SherpaCliFlavour).tar.bz2</SherpaCliArchive>
+    <SherpaCliUrl>https://github.com/k2-fsa/sherpa-onnx/releases/download/$(SherpaCliVersion)/$(SherpaCliArchive)</SherpaCliUrl>
+    <SherpaCliEntry>sherpa-onnx-$(SherpaCliVersion)-$(SherpaCliFlavour)/bin/$(SherpaCliTool)</SherpaCliEntry>
+  </PropertyGroup>
 
-  <Target Name="FetchSherpaCli" BeforeTargets="AssignTargetPaths" Condition="'$(TargetPlatformIdentifier)' == 'maccatalyst'">
+  <!-- The licence texts of the program travel with it. They are in the repository, next to this file. -->
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)licenses/sherpa-onnx-LICENSE.txt" Link="licenses/sherpa-onnx-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(MSBuildThisFileDirectory)licenses/onnxruntime-LICENSE.txt" Link="licenses/onnxruntime-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- macOS: the app, and the tests when they run on a Mac. -->
+  <Target Name="FetchSherpaCli" BeforeTargets="AssignTargetPaths" Condition="$([MSBuild]::IsOSPlatform('osx'))">
     <MakeDir Directories="$(SherpaCliCacheDir)" />
 
     <DownloadFile Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
-                  SourceUrl="https://github.com/k2-fsa/sherpa-onnx/releases/download/$(SherpaCliVersion)/$(SherpaCliArchive)"
+                  SourceUrl="$(SherpaCliUrl)"
                   DestinationFolder="$(SherpaCliCacheDir)" Retries="5" RetryDelayMilliseconds="5000" />
     <Exec Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
           WorkingDirectory="$(SherpaCliCacheDir)"
-          Command="echo &quot;$(SherpaCliSha)  $(SherpaCliArchive)&quot; | shasum -a 256 -c - &amp;&amp; tar -xjf $(SherpaCliArchive) --strip-components=2 &quot;sherpa-onnx-$(SherpaCliVersion)-osx-arm64-static-no-tts/bin/$(SherpaCliTool)&quot; &amp;&amp; chmod +x $(SherpaCliTool) &amp;&amp; rm -f $(SherpaCliArchive)" />
+          Command="echo &quot;$(SherpaCliSha)  $(SherpaCliArchive)&quot; | shasum -a 256 -c - &amp;&amp; tar -xjf $(SherpaCliArchive) --strip-components=2 &quot;$(SherpaCliEntry)&quot; &amp;&amp; chmod +x $(SherpaCliTool) &amp;&amp; rm -f $(SherpaCliArchive)" />
+
+    <ItemGroup>
+      <Content Include="$(SherpaCliCacheDir)$(SherpaCliTool)" Link="$(SherpaCliTool)" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Windows: the app and the tests. The tar program is part of Windows 10 and later. -->
+  <Target Name="FetchSherpaCliOnWindows" BeforeTargets="AssignTargetPaths" Condition="$([MSBuild]::IsOSPlatform('windows'))">
+    <MakeDir Directories="$(SherpaCliCacheDir)downloads" />
+
+    <DownloadFile Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
+                  SourceUrl="$(SherpaCliUrl)"
+                  DestinationFolder="$(SherpaCliCacheDir)downloads" Retries="5" RetryDelayMilliseconds="5000" />
+    <!-- Source and destination are the same file: the archive is only checked. A wrong archive is deleted and stops the build. -->
+    <VerifyAndUnpack Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
+                     Source="$(SherpaCliCacheDir)downloads/$(SherpaCliArchive)" ExpectedSha256="$(SherpaCliSha)"
+                     Destination="$(SherpaCliCacheDir)downloads/$(SherpaCliArchive)" Gunzip="false" />
+    <Exec Condition="!Exists('$(SherpaCliCacheDir)$(SherpaCliTool)')"
+          WorkingDirectory="$(SherpaCliCacheDir)"
+          Command="&quot;%SystemRoot%\System32\tar.exe&quot; -xjf &quot;downloads/$(SherpaCliArchive)&quot; --strip-components=2 &quot;$(SherpaCliEntry)&quot;" />
+    <RemoveDir Directories="$(SherpaCliCacheDir)downloads" />
 
     <ItemGroup>
       <Content Include="$(SherpaCliCacheDir)$(SherpaCliTool)" Link="$(SherpaCliTool)" CopyToOutputDirectory="PreserveNewest" />

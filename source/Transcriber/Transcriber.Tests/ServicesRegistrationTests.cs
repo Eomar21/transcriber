@@ -7,7 +7,7 @@ public class ServicesRegistrationTests
     private static ServiceProvider Build(string? userFile = null) =>
         new ServiceCollection()
             .AddTranscriberServices(userFile ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"))
-            .AddNativeSpeakerDetection()
+            .AddToolSpeakerDetection()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
 
     [Fact]
@@ -31,7 +31,7 @@ public class ServicesRegistrationTests
         foreach (var type in new[]
         {
             typeof(IAudioService), typeof(IVideoReaderService), typeof(IFfmpegLocator), typeof(ISpeechDetector), typeof(ISpeechPlanner),
-            typeof(ISpeechCoverageCalculator), typeof(ITranscriptFilter), typeof(ISpeakerAssigner), typeof(ISpeakerDiarizer),
+            typeof(ISpeechCoverageCalculator), typeof(ITranscriptFilter), typeof(ISpeakerAssigner), typeof(ISpeakerDiarizer), typeof(IToolFileStager),
         })
             Assert.NotNull(provider.GetRequiredService(type));
     }
@@ -49,7 +49,7 @@ public class ServicesRegistrationTests
     }
 
     [Fact]
-    public void The_mac_registration_gives_the_tool_based_detector()
+    public void Speaker_detection_runs_as_the_bundled_program()
     {
         using var provider = new ServiceCollection()
             .AddTranscriberServices(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"))

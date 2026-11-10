@@ -139,7 +139,7 @@ public class TranscribeSectionTests
     {
         var services = new ServiceCollection()
             .AddTranscriberServices(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"))
-            .AddNativeSpeakerDetection()
+            .AddToolSpeakerDetection()
             .AddTranscribeScreen()
             .AddSingleton<IFilePickerService, NoPicker>()
             .AddSingleton<IClipboardService, Clipboard>()

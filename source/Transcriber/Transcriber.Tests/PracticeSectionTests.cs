@@ -135,7 +135,7 @@ public class PracticeSectionTests
     {
         var services = new ServiceCollection()
             .AddTranscriberServices(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"))
-            .AddNativeSpeakerDetection()
+            .AddToolSpeakerDetection()
             .AddCoach(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"))
             .AddPracticeScreen()
             .AddSingleton<IFilePickerService, NoPicker>()
