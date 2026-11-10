@@ -14,7 +14,7 @@
 AppId={{6E1B7C0A-3D4F-4B1A-9C55-7A2F1E8D4B10}
 AppName=Transcriber
 AppVersion={#AppVersion}
-AppPublisher=Transcriber
+AppPublisher=Eomar21
 DefaultDirName={autopf}\Transcriber
 DefaultGroupName=Transcriber
 DisableProgramGroupPage=yes
