@@ -199,7 +199,21 @@ public sealed partial class TranscribeViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            Status.SetResult(ResultKind.Info, "Cancelled.");
+            if (saved.Count == 0)
+            {
+                Status.SetResult(ResultKind.Info, "Cancelled.");
+            }
+            else
+            {
+                // The files that were finished before the cancel are saved on the disk. They show on the screen too,
+                // so the person can open them and does not transcribe them again.
+                Playback.SetSource(rows, newPlayback);
+                newPlayback = [];
+                Results.Show(rows);
+                Saved.SetFiles(saved);
+                Status.ResultDetail = saved.Count == 1 ? saved[0] : Path.GetDirectoryName(saved[0]) ?? string.Empty;
+                Status.SetResult(ResultKind.Info, $"Cancelled after {saved.Count} of {files.Count} files. The finished transcripts are saved.");
+            }
         }
         catch (Exception ex)
         {

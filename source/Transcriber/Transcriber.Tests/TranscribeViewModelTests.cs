@@ -491,6 +491,35 @@ public class TranscribeViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task Cancel_in_a_batch_keeps_the_files_that_were_finished()
+    {
+        var (vm, _, whisper, _, _) = Create();
+        var secondStarted = new TaskCompletionSource();
+        var calls = 0;
+        whisper.Handler = async (_, ct) =>
+        {
+            if (++calls == 1) return [new() { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(2), Text = "First file" }];
+            secondStarted.SetResult();
+            await Task.Delay(Timeout.Infinite, ct);
+            return [];
+        };
+
+        vm.Files.AddFiles([MakeInput("one.mp3"), MakeInput("two.mp3"), MakeInput("three.mp3")]);
+
+        var run = vm.TranscribeCommand.ExecuteAsync(null);
+        await secondStarted.Task;
+        vm.TranscribeCancelCommand.Execute(null);
+        await run;
+
+        Assert.Equal(ResultKind.Info, vm.Status.ResultKind);
+        Assert.Equal("Cancelled after 1 of 3 files. The finished transcripts are saved.", vm.Status.ResultMessage);
+        Assert.True(File.Exists(Path.Combine(_dir, "one_transcript.txt")));
+        Assert.True(vm.Saved.HasSavedFiles);
+        Assert.Equal("First file", Assert.Single(vm.Results.VisibleSegments).Text);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
     public async Task Cancel_reaches_the_step_that_prepares_the_audio()
     {
         var (vm, reader, _, _, _) = Create();
