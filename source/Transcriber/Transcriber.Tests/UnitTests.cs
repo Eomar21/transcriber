@@ -52,6 +52,75 @@ public class AudioServiceTests
     }
 }
 
+public class WavSamplesTests : IDisposable
+{
+    private readonly string _dir = Directory.CreateTempSubdirectory().FullName;
+
+    public void Dispose() => Directory.Delete(_dir, true);
+
+    private string MakeWav(int channels, params short[] values)
+    {
+        var path = Path.Combine(_dir, Guid.NewGuid().ToString("N") + ".wav");
+        using var writer = new WaveFileWriter(path, new WaveFormat(16000, 16, channels));
+        writer.WriteSamples(values, 0, values.Length);
+        return path;
+    }
+
+    [Fact]
+    public void A_mono_file_gives_one_sample_for_each_value()
+    {
+        var samples = WavSamples.Read(MakeWav(1, 0, 16384, -32768, 32767));
+
+        Assert.Equal([0f, 0.5f, -1f, 32767 / 32768f], samples);
+    }
+
+    [Fact]
+    public void A_stereo_file_gives_the_average_of_its_channels()
+    {
+        var samples = WavSamples.Read(MakeWav(2, 16384, 0, -16384, -16384));
+
+        Assert.Equal([0.25f, -0.5f], samples);
+    }
+
+    [Fact]
+    public void A_stretch_gives_only_the_samples_of_that_stretch()
+    {
+        // Two seconds: the first second is silent, the second second is at half volume.
+        var values = new short[32000];
+        Array.Fill(values, (short)16384, 16000, 16000);
+        var path = MakeWav(1, values);
+
+        var samples = WavSamples.Read(path, new SpeechSpan(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1.5)));
+
+        Assert.Equal(8000, samples.Length);
+        Assert.All(samples, s => Assert.Equal(0.5f, s));
+    }
+
+    [Fact]
+    public void A_stretch_that_ends_after_the_file_stops_at_the_end_of_the_file()
+    {
+        var path = MakeWav(1, new short[16000]);
+
+        var samples = WavSamples.Read(path, new SpeechSpan(TimeSpan.FromSeconds(0.5), TimeSpan.FromSeconds(9)));
+
+        Assert.Equal(8000, samples.Length);
+    }
+
+    [Fact]
+    public void A_long_file_is_read_in_full()
+    {
+        // Longer than one block of the reader, with a value that shows the position.
+        var values = new short[50000];
+        for (var i = 0; i < values.Length; i++) values[i] = (short)(i % 1000);
+
+        var samples = WavSamples.Read(MakeWav(1, values));
+
+        Assert.Equal(50000, samples.Length);
+        Assert.Equal(999 / 32768f, samples[49999]);
+        Assert.Equal(384 / 32768f, samples[16384]);
+    }
+}
+
 public class TranscriptFilterTests
 {
     private static TranscriptSegment Seg(double start, double end, string text) =>

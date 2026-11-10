@@ -4,6 +4,7 @@ using SherpaOnnx;
 using Transcriber.Services.Configuration;
 using Transcriber.Services.Exceptions;
 using Transcriber.Services.Interfaces;
+using Transcriber.Services.Media;
 using Transcriber.Services.Models;
 
 namespace Transcriber.Services.Speakers;
@@ -59,22 +60,12 @@ internal sealed class SherpaSpeakerDiarizer : ISpeakerDiarizer
 
     private static float[] ReadSamples(string path, int expectedRate)
     {
-        using var reader = new WaveFileReader(path);
-        if (reader.WaveFormat.SampleRate != expectedRate || reader.WaveFormat.Channels != 1 || reader.WaveFormat.BitsPerSample != 16)
-            throw new SpeakerDetectionException($"Speaker detection needs {expectedRate} Hz mono 16-bit audio.");
-
-        var bytes = new byte[reader.Length];
-        var read = 0;
-        while (read < bytes.Length)
+        using (var reader = new WaveFileReader(path))
         {
-            var n = reader.Read(bytes, read, bytes.Length - read);
-            if (n == 0) break;
-            read += n;
+            if (reader.WaveFormat.SampleRate != expectedRate || reader.WaveFormat.Channels != 1 || reader.WaveFormat.BitsPerSample != 16)
+                throw new SpeakerDetectionException($"Speaker detection needs {expectedRate} Hz mono 16-bit audio.");
         }
 
-        var samples = new float[read / 2];
-        for (var i = 0; i < samples.Length; i++)
-            samples[i] = BitConverter.ToInt16(bytes, i * 2) / 32768f;
-        return samples;
+        return WavSamples.Read(path);
     }
 }

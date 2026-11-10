@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Transcriber.Services.Configuration;
 using Transcriber.Services.Interfaces;
+using Transcriber.Services.Media;
 using Transcriber.Services.Models;
 using Whisper.net;
 
@@ -28,8 +29,7 @@ internal sealed class SileroSpeechDetector : ISpeechDetector
             .Build();
 
         var spans = new List<SpeechSpan>();
-        await using var stream = File.OpenRead(wavPath);
-        foreach (var segment in await processor.DetectSpeechAsync(stream, ct))
+        foreach (var segment in await processor.DetectSpeechAsync(WavSamples.Read(wavPath), ct))
             spans.Add(new SpeechSpan(segment.Start, segment.End));
         return spans;
     }

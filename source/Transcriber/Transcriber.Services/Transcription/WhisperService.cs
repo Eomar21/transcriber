@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using NAudio.Wave;
 using Transcriber.Services.Configuration;
 using Transcriber.Services.Interfaces;
+using Transcriber.Services.Media;
 using Transcriber.Services.Models;
 using Whisper.net;
 using Whisper.net.LibraryLoader;
@@ -120,8 +121,7 @@ internal sealed class WhisperService : IWhisperService
         var segments = new List<TranscriptSegment>();
         if (spans is null)
         {
-            await using var fileStream = File.OpenRead(audioFilePath);
-            await foreach (var result in processor.ProcessAsync(fileStream, ct))
+            await foreach (var result in processor.ProcessAsync(WavSamples.Read(audioFilePath), ct))
                 segments.Add(new TranscriptSegment { Start = result.Start, End = result.End, Text = result.Text });
         }
         else
@@ -134,7 +134,7 @@ internal sealed class WhisperService : IWhisperService
                 chunkOffset = done / totalSpeech;
                 chunkShare = span.Length.TotalSeconds / totalSpeech;
 
-                var samples = ReadSamples(audioFilePath, span);
+                var samples = WavSamples.Read(audioFilePath, span);
                 await foreach (var result in processor.ProcessAsync(samples, ct))
                 {
                     segments.Add(new TranscriptSegment
@@ -170,31 +170,5 @@ internal sealed class WhisperService : IWhisperService
     {
         using var reader = new WaveFileReader(path);
         return reader.TotalTime;
-    }
-
-    /// <summary>Reads one stretch of a 16 kHz mono 16-bit wav as the float samples Whisper takes.</summary>
-    private static float[] ReadSamples(string path, SpeechSpan span)
-    {
-        using var reader = new WaveFileReader(path);
-        var format = reader.WaveFormat;
-        var bytesPerSecond = format.AverageBytesPerSecond;
-        var start = (long)(span.Start.TotalSeconds * bytesPerSecond) / format.BlockAlign * format.BlockAlign;
-        var length = (int)(span.Length.TotalSeconds * bytesPerSecond) / format.BlockAlign * format.BlockAlign;
-        length = (int)Math.Min(length, Math.Max(0, reader.Length - start));
-
-        reader.Position = start;
-        var bytes = new byte[length];
-        var read = 0;
-        while (read < length)
-        {
-            var n = reader.Read(bytes, read, length - read);
-            if (n == 0) break;
-            read += n;
-        }
-
-        var samples = new float[read / 2];
-        for (var i = 0; i < samples.Length; i++)
-            samples[i] = BitConverter.ToInt16(bytes, i * 2) / 32768f;
-        return samples;
     }
 }
