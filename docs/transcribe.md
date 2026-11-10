@@ -32,6 +32,8 @@ Use this mode to change speech in a recording into text with time stamps. You ca
 6. Turn on **Label who is speaking** (optional). Refer to [Speaker labels]({{ '/speaker-labels' | relative_url }}).
 7. Click **Transcribe**. The page scrolls to the progress bar. A small character moves along the bar. One bar covers all the files. A burst of sparks shows when the work is complete. Refer to [Progress bar looks](#progress-bar-looks). To stop the work, click **Cancel**.
 
+When you click **Cancel**, the progress bar shows **Cancelling...** until the work stops. Most steps stop in a moment. The speaker label step can take longer. You can start again when the app shows **Cancelled**. If some files were complete before you cancelled, the app keeps their transcripts and shows them.
+
 When the work is done, the app shows **Transcript saved** and the location of the file. Two buttons show: **Open transcript** and **Show in folder**. The text also shows in the list below.
 
 ## Progress bar looks
