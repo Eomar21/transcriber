@@ -18,7 +18,7 @@ public class PracticeViewModelTests : IDisposable
         public List<string> Converted { get; } = [];
         public Exception? Fail { get; set; }
 
-        public Task<string> GetAudioFileFromFileAsync(string filePath)
+        public Task<string> GetAudioFileFromFileAsync(string filePath, CancellationToken ct = default)
         {
             if (Fail is not null) throw Fail;
             if (!convert) return Task.FromResult(filePath);

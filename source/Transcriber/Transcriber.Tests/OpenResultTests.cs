@@ -10,7 +10,7 @@ public class OpenResultTests : IDisposable
 
     private sealed class Reader : IFileReaderService
     {
-        public Task<string> GetAudioFileFromFileAsync(string filePath) => Task.FromResult(filePath);
+        public Task<string> GetAudioFileFromFileAsync(string filePath, CancellationToken ct = default) => Task.FromResult(filePath);
     }
 
     private sealed class Whisper : IWhisperService

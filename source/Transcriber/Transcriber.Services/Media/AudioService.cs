@@ -15,9 +15,10 @@ internal sealed class AudioService(IOptions<AudioSettings> options) : IAudioServ
 {
     private readonly AudioSettings _audio = options.Value;
 
-    public Task<string> GetAudioFilePathAsync(string audioFilePath) => Task.Run(() => ConvertToWhisperWav(audioFilePath));
+    public Task<string> GetAudioFilePathAsync(string audioFilePath, CancellationToken ct = default) =>
+        Task.Run(() => ConvertToWhisperWav(audioFilePath, ct), ct);
 
-    private string ConvertToWhisperWav(string inputPath)
+    private string ConvertToWhisperWav(string inputPath, CancellationToken ct)
     {
         var ext = Path.GetExtension(inputPath).ToLowerInvariant();
 
@@ -53,7 +54,28 @@ internal sealed class AudioService(IOptions<AudioSettings> options) : IAudioServ
         }
 
         var outputPath = Path.Combine(Path.GetTempPath(), $"transcriber_{Guid.NewGuid():N}.wav");
-        WaveFileWriter.CreateWaveFile16(outputPath, samples);
+        try
+        {
+            WaveFileWriter.CreateWaveFile16(outputPath, new StoppableSamples(samples, ct));
+        }
+        catch
+        {
+            // Cancelled or failed: leave no half-written file behind.
+            try { File.Delete(outputPath); } catch { /* best effort */ }
+            throw;
+        }
         return outputPath;
+    }
+
+    /// <summary>Passes the samples on, and stops with an exception between two blocks when the work is cancelled.</summary>
+    private sealed class StoppableSamples(ISampleProvider source, CancellationToken ct) : ISampleProvider
+    {
+        public WaveFormat WaveFormat => source.WaveFormat;
+
+        public int Read(Span<float> buffer)
+        {
+            ct.ThrowIfCancellationRequested();
+            return source.Read(buffer);
+        }
     }
 }

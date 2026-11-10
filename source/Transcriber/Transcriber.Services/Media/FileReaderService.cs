@@ -22,13 +22,13 @@ internal sealed class FileReaderService : IFileReaderService
         _native = new HashSet<string>(options.Value.NativeExtensions, StringComparer.OrdinalIgnoreCase);
     }
 
-    public async Task<string> GetAudioFileFromFileAsync(string filePath)
+    public async Task<string> GetAudioFileFromFileAsync(string filePath, CancellationToken ct = default)
     {
         if (_native.Contains(Path.GetExtension(filePath)))
         {
             try
             {
-                return await _audioService.GetAudioFilePathAsync(filePath);
+                return await _audioService.GetAudioFilePathAsync(filePath, ct);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
@@ -38,6 +38,6 @@ internal sealed class FileReaderService : IFileReaderService
 
         // A file with an unlisted extension only gets here when the person chose it on purpose ("Any file type"),
         // so ffmpeg gets to try, and a file that it cannot read gets a clear message.
-        return await _videoReaderService.ConvertVideoToAudioAsync(filePath);
+        return await _videoReaderService.ConvertVideoToAudioAsync(filePath, ct);
     }
 }

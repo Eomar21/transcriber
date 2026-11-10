@@ -97,4 +97,17 @@ public class VideoConversionTests : IDisposable
         Assert.StartsWith("This file could not be read.", ex.Message);
         Assert.Empty(Directory.GetFiles(tempDir));
     }
+
+    [Fact]
+    public async Task A_cancelled_conversion_stops_and_leaves_no_temp_file()
+    {
+        var video = Path.Combine(_dir, "talk.mp4");
+        await File.WriteAllTextAsync(video, "not read, because the work is cancelled first");
+        var tempDir = Directory.CreateDirectory(Path.Combine(_dir, "tmp-cancel")).FullName;
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => ServicesFixture.VideoReader(tempDirectory: tempDir).ConvertVideoToAudioAsync(video, new CancellationToken(canceled: true)));
+
+        Assert.Empty(Directory.GetFiles(tempDir));
+    }
 }

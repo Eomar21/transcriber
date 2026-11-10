@@ -128,7 +128,7 @@ public sealed partial class TranscribeViewModel : ObservableObject
                 string audioPath;
                 try
                 {
-                    audioPath = await _fileReader.GetAudioFileFromFileAsync(file);
+                    audioPath = await _fileReader.GetAudioFileFromFileAsync(file, ct);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {

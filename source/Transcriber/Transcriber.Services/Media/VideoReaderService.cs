@@ -27,8 +27,9 @@ internal sealed class VideoReaderService : IVideoReaderService
         _tempDirectory = tempDirectory ?? Path.GetTempPath();
     }
 
-    public async Task<string> ConvertVideoToAudioAsync(string videoFilePath)
+    public async Task<string> ConvertVideoToAudioAsync(string videoFilePath, CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
         if (!File.Exists(videoFilePath))
             throw new MediaReadException(MediaReadFailure.FileNotFound, "This file was not found. It may have been moved or deleted.");
         // ffmpeg reports an empty file as a file without audio, which would mislead.
@@ -72,7 +73,18 @@ internal sealed class VideoReaderService : IVideoReaderService
             // Read both streams so ffmpeg can never block on a full pipe buffer.
             var stdout = process.StandardOutput.ReadToEndAsync();
             var stderr = process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            try
+            {
+                await process.WaitForExitAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Stop ffmpeg now. When it is gone, its output file is free and can be removed.
+                try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
+                try { await process.WaitForExitAsync(CancellationToken.None); } catch (InvalidOperationException) { }
+                try { File.Delete(outputFile); } catch { /* best effort */ }
+                throw;
+            }
             await stdout;
             var errorText = await stderr;
 

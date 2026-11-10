@@ -14,7 +14,7 @@ public class PlaybackTests : IDisposable
     {
         public List<string> Converted { get; } = [];
 
-        public Task<string> GetAudioFileFromFileAsync(string filePath)
+        public Task<string> GetAudioFileFromFileAsync(string filePath, CancellationToken ct = default)
         {
             var wav = Path.Combine(dir, $"conv_{Path.GetFileNameWithoutExtension(filePath)}_{Converted.Count}.wav");
             File.WriteAllText(wav, "wav");
@@ -25,7 +25,7 @@ public class PlaybackTests : IDisposable
 
     private sealed class InPlaceReader : IFileReaderService
     {
-        public Task<string> GetAudioFileFromFileAsync(string filePath) => Task.FromResult(filePath);
+        public Task<string> GetAudioFileFromFileAsync(string filePath, CancellationToken ct = default) => Task.FromResult(filePath);
     }
 
     private sealed class Whisper : IWhisperService

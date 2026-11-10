@@ -13,7 +13,16 @@ public class TranscribeViewModelTests : IDisposable
     {
         public List<string> TempFiles { get; } = [];
 
-        public Task<string> GetAudioFileFromFileAsync(string filePath)
+        /// <summary>Work that the reader does before it gives the audio, so a test can make the step slow.</summary>
+        public Func<CancellationToken, Task>? Prepare { get; set; }
+
+        public async Task<string> GetAudioFileFromFileAsync(string filePath, CancellationToken ct = default)
+        {
+            if (Prepare is not null) await Prepare(ct);
+            return Convert(filePath);
+        }
+
+        private string Convert(string filePath)
         {
             if (Path.GetFileName(filePath).StartsWith("bad", StringComparison.Ordinal))
                 throw new InvalidOperationException("This file could not be read. It may be damaged, or it may not be an audio or video file.");
@@ -22,7 +31,7 @@ public class TranscribeViewModelTests : IDisposable
             var temp = Path.Combine(Path.GetDirectoryName(filePath)!, Guid.NewGuid().ToString("N") + ".wav");
             File.WriteAllText(temp, "wav");
             TempFiles.Add(temp);
-            return Task.FromResult(temp);
+            return temp;
         }
     }
 
@@ -442,6 +451,27 @@ public class TranscribeViewModelTests : IDisposable
         await run;
 
         Assert.Equal(ResultKind.Info, vm.Status.ResultKind);
+        Assert.Equal("Cancelled.", vm.Status.ResultMessage);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public async Task Cancel_reaches_the_step_that_prepares_the_audio()
+    {
+        var (vm, reader, _, _, _) = Create();
+        var started = new TaskCompletionSource();
+        reader.Prepare = async ct =>
+        {
+            started.SetResult();
+            await Task.Delay(Timeout.Infinite, ct);
+        };
+        vm.Files.AddFiles([MakeInput()]);
+
+        var run = vm.TranscribeCommand.ExecuteAsync(null);
+        await started.Task;
+        vm.TranscribeCancelCommand.Execute(null);
+        await run;
+
         Assert.Equal("Cancelled.", vm.Status.ResultMessage);
         Assert.False(vm.IsBusy);
     }

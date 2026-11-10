@@ -166,13 +166,13 @@ public class FormatSupportTests : IDisposable
     private sealed class Audio(Func<Task<string>> run) : IAudioService
     {
         public int Calls { get; private set; }
-        public Task<string> GetAudioFilePathAsync(string path) { Calls++; return run(); }
+        public Task<string> GetAudioFilePathAsync(string path, CancellationToken ct = default) { Calls++; return run(); }
     }
 
     private sealed class Video : IVideoReaderService
     {
         public int Calls { get; private set; }
-        public Task<string> ConvertVideoToAudioAsync(string path) { Calls++; return Task.FromResult("from-ffmpeg.wav"); }
+        public Task<string> ConvertVideoToAudioAsync(string path, CancellationToken ct = default) { Calls++; return Task.FromResult("from-ffmpeg.wav"); }
     }
 
     [Fact]

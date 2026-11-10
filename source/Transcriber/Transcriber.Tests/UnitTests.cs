@@ -50,6 +50,15 @@ public class AudioServiceTests
     {
         await Assert.ThrowsAsync<NotSupportedException>(() => ServicesFixture.AudioService.GetAudioFilePathAsync("x.flac"));
     }
+
+    [Fact]
+    public async Task A_cancelled_conversion_stops_and_writes_no_file()
+    {
+        var input = Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3");
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => ServicesFixture.AudioService.GetAudioFilePathAsync(input, new CancellationToken(canceled: true)));
+    }
 }
 
 public class WavSamplesTests : IDisposable

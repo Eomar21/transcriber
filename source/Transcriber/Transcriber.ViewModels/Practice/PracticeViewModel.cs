@@ -97,7 +97,7 @@ public sealed partial class PracticeViewModel : ObservableObject
         string? audio = null;
         try
         {
-            audio = await _fileReader.GetAudioFileFromFileAsync(filePath);
+            audio = await _fileReader.GetAudioFileFromFileAsync(filePath, ct);
 
             var language = Source.SelectedLanguage.Code;
             var progress = new Progress<TranscriptionProgress>(p =>

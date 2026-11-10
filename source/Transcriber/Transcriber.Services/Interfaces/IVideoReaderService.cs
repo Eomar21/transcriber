@@ -6,5 +6,5 @@ namespace Transcriber.Services.Interfaces;
 internal interface IVideoReaderService
 {
     /// <exception cref="MediaReadException">The file cannot be read as audio.</exception>
-    Task<string> ConvertVideoToAudioAsync(string videoFilePath);
+    Task<string> ConvertVideoToAudioAsync(string videoFilePath, CancellationToken ct = default);
 }
