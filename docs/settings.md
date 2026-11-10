@@ -67,6 +67,8 @@ All other settings stay the same.
 | `Transcription:NoSpeechThreshold` | A number between 0 and 1. A lower number keeps more quiet speech. |
 | `Transcription:KeepModelLoadedMinutes` | The number of minutes that the app keeps the model in memory after a run. The next run with the same model then starts faster. The default is 5. Use 0 to release the memory after each file. |
 | `Transcription:Threads` | The number of threads that the app uses when it transcribes on the processor. The default is 0. With 0, the app uses half of the logical processors, and not less than 4 when the computer has 4. |
+| `SpeechPlanning:PackSeconds` | The Transcribe tab sends short parts of speech to the model together. This number is the longest length of such a group, in seconds. The default is 28. The maximum is 30. Use 0 to send each part alone. |
+| `SpeechPlanning:JoinSilenceSeconds` | The length of the silence that the app puts between two parts in a group, in seconds. The default is 0.3. |
 
 The model identifiers are in the `Models:Catalog` list of the default file. Use only an identifier that is in that list.
 
