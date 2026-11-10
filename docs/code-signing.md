@@ -33,7 +33,7 @@ Free code signing is provided by [SignPath.io](https://signpath.io). The certifi
 - The build starts when a version tag is pushed. The tag has the form `v1.2.3`.
 - The approver must approve each signing request in SignPath. Without the approval, the file stays unsigned.
 - The project signs only its own files: the app and the installer.
-- The project does not sign the programs of other projects that are in the download. Examples are ffmpeg and ONNX Runtime. Their licences are in the [README](https://github.com/Eomar21/transcriber#licences-and-notices).
+- The project does not sign the programs of other projects that are in the download. Examples are ffmpeg and the speaker detection program of sherpa-onnx (`sherpa-onnx-offline-speaker-diarization.exe`), which contains ONNX Runtime. These programs are in the download as their projects released them. Their licences are in the [README](https://github.com/Eomar21/transcriber#licences-and-notices).
 
 ## Privacy
 

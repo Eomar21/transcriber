@@ -152,7 +152,7 @@ Intel Macs are not supported: the macOS build is for Apple Silicon (M1 and later
 
 ### What is included
 
-ffmpeg, the default Whisper model, the voice activity model and the two speaker models are all inside the app. On macOS the speaker detection runs as a bundled helper program, because the Mac app cannot load the library the Windows build uses.
+ffmpeg, the default Whisper model, the voice activity model and the two speaker models are all inside the app. The speaker detection program is also inside the app. The app runs it as a separate program on Windows and on macOS, so the app can stop it immediately when you click **Cancel**.
 
 ## Privacy
 
@@ -176,7 +176,7 @@ Other Whisper models are stored in `%LOCALAPPDATA%\Transcriber\models` on Window
 | --- | --- |
 | Windows shows a SmartScreen warning | The app is not signed yet. Choose **More info**, then **Run anyway**. |
 | macOS says the app cannot be opened | Right-click the app, choose **Open**, then confirm. |
-| The speaker option is missing | It appears only when the speaker models and helper are present in the app. Reinstall from the release download. |
+| The speaker option is missing | It appears only when the speaker models and the speaker detection program are present in the app. Reinstall from the release download. |
 | Speaker labels split one person in two (or merge two people) | Set the number of speakers yourself instead of using automatic detection. |
 | Practice shows a "no sound" warning | Check the microphone is connected and unmuted, and allowed in Windows Settings (Privacy and security, Microphone) or macOS System Settings. |
 | Practice says no microphone was found | Connect one, or use **Choose file** with a recording made elsewhere. |
@@ -197,7 +197,7 @@ dotnet workload install maui-windows
 dotnet run --project source/Transcriber/Transcriber.Maui -f net10.0-windows10.0.19041.0
 ```
 
-The first build downloads ffmpeg and the models (about 600 MB in total). Everything is pinned to exact versions and verified by SHA-256, then cached in the project's `obj` folder. The macOS build also fetches sherpa-onnx's speaker detection tool.
+The first build downloads ffmpeg, the models and the speaker detection program of sherpa-onnx (about 850 MB in total). Each download has an exact version and a SHA-256 check. The build keeps the files in the `obj` folder of the project. From the sherpa-onnx archive (about 240 MB), the build keeps only the one program.
 
 ## Project layout
 
@@ -225,6 +225,6 @@ Continuous integration runs the tests and builds the app on every push. Pushing 
 - Transcriber source: MIT, see [LICENSE](LICENSE).
 - Code signing: see the [code signing policy](https://eomar21.github.io/transcriber/code-signing).
 - Whisper and the ggml models: MIT, by OpenAI and the whisper.cpp project.
-- Voice activity detection uses the [Silero VAD](https://github.com/snakers4/silero-vad) model (MIT). Speaker labels use [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (Apache 2.0, with ONNX Runtime, MIT; on macOS its command-line tool is bundled and run as a separate program) with the pyannote segmentation 3.0 model (MIT) and the 3D-Speaker CAM++ embedding model (Apache 2.0).
+- Voice activity detection uses the [Silero VAD](https://github.com/snakers4/silero-vad) model (MIT). Speaker labels use [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (Apache 2.0, with ONNX Runtime, MIT; its command-line tool is bundled unmodified and run as a separate program, and both licence texts ship in the app's `licenses` folder) with the pyannote segmentation 3.0 model (MIT) and the 3D-Speaker CAM++ embedding model (Apache 2.0).
 - **ffmpeg** is bundled unmodified as a separate executable from [eugeneware/ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) (release b6.1.1). The Windows build is licensed under the GPL. Its licence text ships in the app's `licenses` folder, and the source is available from [ffmpeg.org](https://ffmpeg.org/download.html#get-sources).
 - The progress bar uses [SkiaSharp](https://github.com/mono/SkiaSharp) and SkiaSharp.Extended (MIT). The hero, the princess, the surfer, the marathon runner, the cowboy, the volcano, the magic carpet and the sparks are original pixel art. `tools/sprites/sprites.cs` draws them. Each run shows a random look (a sprite with its own bar colours). To add a look, see `ProgressLooks.cs` in the ViewModels project.

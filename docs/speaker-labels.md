@@ -70,6 +70,6 @@ When you select a number, the app uses that number as given.
 | **The switch does not show** | The app did not find the speaker models. Refer to [Troubleshooting]({{ '/troubleshooting' | relative_url }}). |
 | **A question and its answer have the same speaker** | The labels follow the sound of the voices. They do not follow the meaning. If a question and an answer are close together, the app can put them in one group. |
 
-## On macOS
+## The speaker detection program
 
-On macOS, the speaker detection runs as a small helper program in the app. The Mac app cannot load the library that the Windows version uses. You do not have to do anything. The labels are the same type of labels.
+The speaker detection runs as a small program in the app, on Windows and on macOS. You do not have to do anything. When you click **Cancel**, the app stops this program immediately.

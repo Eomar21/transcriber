@@ -75,7 +75,7 @@ The app replaces a transcript that has the same name and format. Rename or copy 
 
 ### The speaker option does not show
 
-The switch shows only when the app finds the speaker models. Install the app again from the release download. On macOS, the speaker detection program is a part of the app. An app copy that is damaged or not complete can cause this problem.
+The switch shows only when the app finds the speaker models and the speaker detection program. Install the app again from the release download. The speaker detection program is a part of the app, on Windows and on macOS. An app copy that is damaged or not complete can cause this problem.
 
 ### The speaker numbers are wrong, or a speaker is missing
 
