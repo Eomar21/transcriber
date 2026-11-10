@@ -82,6 +82,9 @@ public sealed partial class PracticeViewModel : ObservableObject
 
     public bool IsIdle => _state.IsIdle;
 
+    /// <summary>The status line from the moment the analysis is stopped until the work has ended.</summary>
+    public const string StoppingText = "Stopping...";
+
     private bool CanAnalyze() => IsIdle && Source.HasFile;
 
     [RelayCommand(CanExecute = nameof(CanAnalyze), IncludeCancelCommand = true)]
@@ -95,6 +98,9 @@ public sealed partial class PracticeViewModel : ObservableObject
         Status.BeginProgress();
         Status.StatusText = "Preparing audio";
         string? audio = null;
+
+        // Stop only asks the work to stop. The text shows at once and stays until the work has really stopped.
+        using var stopNotice = ct.Register(() => Status.StatusText = StoppingText);
         try
         {
             audio = await _fileReader.GetAudioFileFromFileAsync(filePath, ct);
@@ -102,6 +108,8 @@ public sealed partial class PracticeViewModel : ObservableObject
             var language = Source.SelectedLanguage.Code;
             var progress = new Progress<TranscriptionProgress>(p =>
             {
+                // A report that was sent before the stop can arrive after it. It must not replace the stop text.
+                if (ct.IsCancellationRequested) return;
                 Status.StatusText = p.Stage;
                 Status.Progress = Math.Clamp(p.Fraction, 0, 1);
             });

@@ -36,12 +36,22 @@ public class PracticeViewModelTests : IDisposable
         public List<TranscriptSegment> Segments { get; set; } = Talk(fillers: 6);
         public bool WaitForCancel { get; set; }
 
+        /// <summary>When set, the work does not stop at once: it goes on until the test completes this.</summary>
+        public TaskCompletionSource? Hold { get; set; }
+        public TaskCompletionSource Started { get; } = new();
+
         public async Task<List<TranscriptSegment>> TranscribeAsync(string audioFilePath, TranscriptionOptions? options = null,
             IProgress<TranscriptionProgress>? progress = null, CancellationToken ct = default)
         {
             Options = options;
             progress?.Report(new TranscriptionProgress("Transcribing", 0.5));
             if (WaitForCancel) await Task.Delay(Timeout.Infinite, ct);
+            if (Hold is not null)
+            {
+                Started.SetResult();
+                await Hold.Task;
+                ct.ThrowIfCancellationRequested();
+            }
             return Segments;
         }
     }
@@ -286,6 +296,30 @@ public class PracticeViewModelTests : IDisposable
         Assert.Equal("Stopped.", vm.Status.ErrorMessage);
         Assert.False(vm.IsBusy);
         Assert.Empty(_history.Sessions);
+    }
+
+    [Fact]
+    public async Task Stopping_shows_that_it_is_stopping_until_the_work_has_ended()
+    {
+        _whisper.Hold = new TaskCompletionSource();
+        var vm = Create();
+        vm.Source.SetFile(MakeFile());
+
+        var run = Analyze(vm);
+        await _whisper.Started.Task;
+        vm.AnalyzeCancelCommand.Execute(null);
+
+        Assert.Equal(PracticeViewModel.StoppingText, vm.Status.StatusText);
+        Assert.True(vm.IsBusy, "the analysis is not over until the work has ended");
+        Assert.False(vm.AnalyzeCancelCommand.CanExecute(null), "stop cannot be pressed twice");
+        Assert.False(vm.AnalyzeCommand.CanExecute(null), "a new analysis must wait for the old one");
+
+        _whisper.Hold.SetResult();
+        await run;
+
+        Assert.Equal("Stopped.", vm.Status.ErrorMessage);
+        Assert.Equal("", vm.Status.StatusText);
+        Assert.False(vm.IsBusy);
     }
 
     [Fact]

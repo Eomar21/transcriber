@@ -76,6 +76,9 @@ public sealed partial class TranscribeViewModel : ObservableObject
 
     // ---- Running -------------------------------------------------------------------------
 
+    /// <summary>The status line from the moment Cancel is pressed until the work has stopped.</summary>
+    public const string CancellingText = "Cancelling...";
+
     private bool CanTranscribe() => !IsBusy && Files.HasFiles;
 
     [RelayCommand(CanExecute = nameof(CanTranscribe), IncludeCancelCommand = true)]
@@ -111,6 +114,10 @@ public sealed partial class TranscribeViewModel : ObservableObject
         ClearResult();
         Status.BeginProgress();
         Playback.Release();
+
+        // Cancel only asks the work to stop. The work stops a moment later, and some steps take longer than others.
+        // The text shows at once and stays until the work has really stopped. Only then can a new run start.
+        using var cancelNotice = ct.Register(() => Status.StatusText = CancellingText);
         try
         {
             for (var i = 0; i < files.Count; i++)
@@ -119,6 +126,8 @@ public sealed partial class TranscribeViewModel : ObservableObject
                 var prefix = files.Count > 1 ? $"File {i + 1}/{files.Count}: " : string.Empty;
                 var progress = new Progress<TranscriptionProgress>(p =>
                 {
+                    // A report that was sent before the cancel can arrive after it. It must not replace the cancel text.
+                    if (ct.IsCancellationRequested) return;
                     Status.StatusText = prefix + p.Stage;
                     // One bar for the whole run: each file is an equal share.
                     Status.Progress = (i + Math.Clamp(p.Fraction, 0, 1)) / files.Count;

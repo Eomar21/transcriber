@@ -456,6 +456,41 @@ public class TranscribeViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task Cancel_shows_that_it_is_cancelling_until_the_work_has_stopped()
+    {
+        var (vm, _, whisper, _, _) = Create();
+        var started = new TaskCompletionSource();
+        var stop = new TaskCompletionSource();
+        // Work that does not stop at once, like a step that cannot be interrupted.
+        whisper.Handler = async (_, ct) =>
+        {
+            started.SetResult();
+            await stop.Task;
+            ct.ThrowIfCancellationRequested();
+            return [];
+        };
+        vm.Files.AddFiles([MakeInput()]);
+
+        var run = vm.TranscribeCommand.ExecuteAsync(null);
+        await started.Task;
+        vm.TranscribeCancelCommand.Execute(null);
+
+        Assert.Equal(TranscribeViewModel.CancellingText, vm.Status.StatusText);
+        Assert.True(vm.IsBusy, "the run is not over until the work has stopped");
+        Assert.True(vm.Status.ShowProgress);
+        Assert.False(vm.TranscribeCancelCommand.CanExecute(null), "cancel cannot be pressed twice");
+        Assert.False(vm.TranscribeCommand.CanExecute(null), "a new run must wait for the old one");
+
+        stop.SetResult();
+        await run;
+
+        Assert.Equal("Cancelled.", vm.Status.ResultMessage);
+        Assert.Equal(string.Empty, vm.Status.StatusText);
+        Assert.False(vm.IsBusy);
+        Assert.True(vm.TranscribeCommand.CanExecute(null), "a new run can start when the old one has stopped");
+    }
+
+    [Fact]
     public async Task Cancel_reaches_the_step_that_prepares_the_audio()
     {
         var (vm, reader, _, _, _) = Create();
