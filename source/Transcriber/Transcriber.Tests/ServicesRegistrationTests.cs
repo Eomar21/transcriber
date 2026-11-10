@@ -30,7 +30,7 @@ public class ServicesRegistrationTests
 
         foreach (var type in new[]
         {
-            typeof(IAudioService), typeof(IVideoReaderService), typeof(IFfmpegLocator), typeof(ISpeechDetector), typeof(ISpeechPlanner),
+            typeof(IAudioService), typeof(IVideoReaderService), typeof(IFfmpegLocator), typeof(ISpeechDetector), typeof(ISpeechPlanner), typeof(ISpeechPacker), typeof(ISpeechChunkReader), typeof(IChunkLineBuilder),
             typeof(ISpeechCoverageCalculator), typeof(ITranscriptFilter), typeof(ISpeakerAssigner), typeof(ISpeakerDiarizer), typeof(IToolFileStager),
         })
             Assert.NotNull(provider.GetRequiredService(type));

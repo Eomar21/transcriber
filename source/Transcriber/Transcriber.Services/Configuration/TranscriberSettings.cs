@@ -58,6 +58,8 @@ internal sealed class TranscriberSettings
 
         Require(SpeechPlanning.PaddingSeconds >= 0 && SpeechPlanning.MergeGapSeconds >= 0 && SpeechPlanning.MaxChunkSeconds > 0,
             "SpeechPlanning: the times must be 0 or more, and MaxChunkSeconds more than 0.");
+        Require(SpeechPlanning.PackSeconds is >= 0 and <= 30 && SpeechPlanning.JoinSilenceSeconds is >= 0 and <= 5,
+            "SpeechPlanning: PackSeconds must be 0 to 30, and JoinSilenceSeconds 0 to 5.");
         Require(SpeechCoverage.MinMissingSeconds >= 0 && SpeechCoverage.MinShare is > 0 and <= 1 && SpeechCoverage.BridgeSeconds >= 0,
             "SpeechCoverage: a value is out of range.");
 

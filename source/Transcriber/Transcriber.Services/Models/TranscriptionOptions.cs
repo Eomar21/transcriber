@@ -21,6 +21,12 @@ public record TranscriptionOptions
     /// <summary>Find the speech first and transcribe only that, skipping silence and noise.</summary>
     public bool UseVad { get; init; } = true;
 
+    /// <summary>
+    /// Send short stretches of speech to the model together. This is faster for recordings with many short remarks.
+    /// A line can then cover a pause between two stretches. Turn it off when the pauses between the lines must be exact.
+    /// </summary>
+    public bool PackSpeech { get; init; } = true;
+
     /// <summary>Work out who is speaking and label each line. Takes extra time on long recordings.</summary>
     public bool IdentifySpeakers { get; init; }
 

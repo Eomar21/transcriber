@@ -120,6 +120,8 @@ public sealed partial class PracticeViewModel : ObservableObject
                 Model = _modelCatalog.Practice,
                 // Without this Whisper tidies away the very um's and stutters being measured.
                 Prompt = _verbatimPrompts.For(language),
+                // The pauses between the lines are measured, so each stretch of speech keeps its own times.
+                PackSpeech = false,
             }, progress, ct);
 
             Status.Progress = 1;

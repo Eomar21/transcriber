@@ -50,6 +50,8 @@ public class SettingsTests
     [InlineData("""{ "Transcription": { "KeepModelLoadedMinutes": -1 } }""", "KeepModelLoadedMinutes")]
     [InlineData("""{ "Transcription": { "Threads": -2 } }""", "Threads")]
     [InlineData("""{ "SpeechPlanning": { "MaxChunkSeconds": 0 } }""", "SpeechPlanning")]
+    [InlineData("""{ "SpeechPlanning": { "PackSeconds": 45 } }""", "PackSeconds")]
+    [InlineData("""{ "SpeechPlanning": { "JoinSilenceSeconds": -1 } }""", "JoinSilenceSeconds")]
     [InlineData("""{ "Speakers": { "MinorSpeakerShare": 1.5 } }""", "Speakers")]
     public void A_value_that_cannot_work_stops_the_app_with_a_message_that_names_it(string json, string expected)
     {

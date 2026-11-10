@@ -11,4 +11,13 @@ internal sealed class SpeechPlanningSettings
 
     /// <summary>A piece is never longer than this, because Whisper works best on shorter audio.</summary>
     public double MaxChunkSeconds { get; set; }
+
+    /// <summary>
+    /// Short pieces that follow each other go to Whisper together, until they are this long together. Whisper works on
+    /// a window of 30 seconds, so a larger value has no use. 0 sends each piece alone.
+    /// </summary>
+    public double PackSeconds { get; set; }
+
+    /// <summary>The silence that is put between two pieces that go to Whisper together.</summary>
+    public double JoinSilenceSeconds { get; set; }
 }

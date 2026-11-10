@@ -288,6 +288,61 @@ public class TranscriptionTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task Short_remarks_with_pauses_go_to_whisper_together_and_keep_their_text_and_their_pauses()
+    {
+        const string reference = "Article 1. All human beings are born free and equal in dignity and rights. They are endowed with reason and conscience and should act towards one another in a spirit of brotherhood.";
+        var source = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
+        var wav = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".wav");
+        try
+        {
+            // The same recording, with three seconds of silence after each stretch of speech.
+            var silences = new List<SpeechSpan>();
+            using (var writer = new NAudio.Wave.WaveFileWriter(wav, new NAudio.Wave.WaveFormat(16000, 16, 1)))
+            {
+                foreach (var speech in await ServicesFixture.SpeechDetector().DetectAsync(source))
+                {
+                    var from = speech.Start - TimeSpan.FromSeconds(Math.Min(0.2, speech.Start.TotalSeconds));
+                    var samples = WavSamples.Read(source, new SpeechSpan(from, speech.End + TimeSpan.FromSeconds(0.2)));
+                    writer.WriteSamples(samples, 0, samples.Length);
+                    var silenceStart = writer.TotalTime;
+                    writer.WriteSamples(new float[16000 * 3], 0, 16000 * 3);
+                    silences.Add(new SpeechSpan(silenceStart, writer.TotalTime));
+                }
+            }
+            Assert.True(silences.Count >= 3, $"the sample has only {silences.Count} stretches of speech");
+
+            var total = silences[^1].End;
+            var spans = ServicesFixture.Planner.Plan(await ServicesFixture.SpeechDetector().DetectAsync(wav), total);
+            var chunks = ServicesFixture.Packer.Pack(spans);
+            Assert.True(chunks.Count < spans.Count, $"{spans.Count} stretches gave {chunks.Count} chunks");
+
+            var segments = await ServicesFixture.Whisper(Models, ServicesFixture.SpeechDetector()).TranscribeAsync(wav, new TranscriptionOptions
+            {
+                Language = "en",
+                Model = TestModel,
+                UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
+            });
+
+            var actual = string.Join(' ', segments.Select(s => s.Text));
+            output.WriteLine($"{spans.Count} stretches in {chunks.Count} chunks: {actual}");
+            Assert.True(TextMetrics.WordErrorRate(reference, actual) <= 0.1, actual);
+            Assert.All(segments, s => Assert.True(s.End >= s.Start));
+            Assert.Equal(segments.OrderBy(s => s.Start).Select(s => s.Start), segments.Select(s => s.Start));
+            // No line covers the middle of a silence.
+            foreach (var silence in silences)
+            {
+                var middle = silence.Start + silence.Length / 2;
+                Assert.DoesNotContain(segments, s => s.Start < middle && s.End > middle);
+            }
+        }
+        finally
+        {
+            File.Delete(source);
+            File.Delete(wav);
+        }
+    }
+
+    [Fact]
     public async Task Cancellation_stops_transcription()
     {
         var wav = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));

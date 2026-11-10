@@ -57,6 +57,13 @@ internal static class WavSamples
         return filled == samples.Length ? samples : samples[..filled];
     }
 
+    /// <summary>The number of samples for each second of the file.</summary>
+    public static int SampleRate(string path)
+    {
+        using var reader = new WaveFileReader(path);
+        return reader.WaveFormat.SampleRate;
+    }
+
     private static int Fill(WaveFileReader reader, byte[] buffer, int wanted)
     {
         var read = 0;

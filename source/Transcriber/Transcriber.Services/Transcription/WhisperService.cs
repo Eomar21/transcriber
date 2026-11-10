@@ -21,6 +21,9 @@ internal sealed class WhisperService : IWhisperService, IDisposable
     private readonly IModelManager _modelManager;
     private readonly IModelCatalog _models;
     private readonly ISpeechPlanner _planner;
+    private readonly ISpeechPacker _packer;
+    private readonly ISpeechChunkReader _chunkReader;
+    private readonly IChunkLineBuilder _lineBuilder;
     private readonly ISpeechCoverageCalculator _coverage;
     private readonly ITranscriptFilter _filter;
     private readonly ISpeakerAssigner _speakerAssigner;
@@ -33,6 +36,9 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         IModelManager modelManager,
         IModelCatalog models,
         ISpeechPlanner planner,
+        ISpeechPacker packer,
+        ISpeechChunkReader chunkReader,
+        IChunkLineBuilder lineBuilder,
         ISpeechCoverageCalculator coverage,
         ITranscriptFilter filter,
         ISpeakerAssigner speakerAssigner,
@@ -43,6 +49,9 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         _modelManager = modelManager;
         _models = models;
         _planner = planner;
+        _packer = packer;
+        _chunkReader = chunkReader;
+        _lineBuilder = lineBuilder;
         _coverage = coverage;
         _filter = filter;
         _speakerAssigner = speakerAssigner;
@@ -144,36 +153,30 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         if (!string.IsNullOrWhiteSpace(options.Prompt))
             builder = builder.WithPrompt(options.Prompt);
 
+        // One loop for each case. Without the speech search the whole recording is one chunk. With it, the packer
+        // decides which stretches go to Whisper together, or each stretch goes alone when the run asks for that.
+        var chunks = spans is null ? [SpeechChunk.Of(new SpeechSpan(TimeSpan.Zero, WavDuration(audioFilePath)))]
+            : options.PackSpeech ? _packer.Pack(spans)
+            : spans.Select(SpeechChunk.Of).ToList();
+
+        // When stretches go to Whisper together, the time of each word is needed to cut a line at a join.
+        if (chunks.Any(c => c.Pieces.Count > 1)) builder = builder.WithTokenTimestamps();
+
         await using var processor = builder.Build();
 
         var segments = new List<TranscriptSegment>();
-        if (spans is null)
+        var total = chunks.Sum(c => c.Length.TotalSeconds);
+        var done = 0.0;
+        foreach (var chunk in chunks)
         {
-            await foreach (var result in processor.ProcessAsync(WavSamples.Read(audioFilePath), ct))
-                segments.Add(new TranscriptSegment { Start = result.Start, End = result.End, Text = result.Text });
-        }
-        else
-        {
-            var totalSpeech = spans.Sum(s => s.Length.TotalSeconds);
-            var done = 0.0;
-            foreach (var span in spans)
-            {
-                ct.ThrowIfCancellationRequested();
-                chunkOffset = done / totalSpeech;
-                chunkShare = span.Length.TotalSeconds / totalSpeech;
+            ct.ThrowIfCancellationRequested();
+            chunkOffset = total > 0 ? done / total : 0;
+            chunkShare = total > 0 ? chunk.Length.TotalSeconds / total : 1;
 
-                var samples = WavSamples.Read(audioFilePath, span);
-                await foreach (var result in processor.ProcessAsync(samples, ct))
-                {
-                    segments.Add(new TranscriptSegment
-                    {
-                        Start = span.Start + result.Start,
-                        End = span.Start + result.End,
-                        Text = result.Text,
-                    });
-                }
-                done += span.Length.TotalSeconds;
-            }
+            // Whisper counts from the start of the chunk. The line builder gives the lines with times in the recording.
+            await foreach (var result in processor.ProcessAsync(_chunkReader.Read(audioFilePath, chunk), ct))
+                segments.AddRange(_lineBuilder.Build(chunk, new TimedText(result.Text, result.Start, result.End), Parts(result)));
+            done += chunk.Length.TotalSeconds;
         }
 
         var cleaned = options.FilterHallucinations ? _filter.Clean(segments) : segments;
@@ -217,6 +220,14 @@ internal sealed class WhisperService : IWhisperService, IDisposable
     {
         public void Report(double value) => onReport(value);
     }
+
+    /// <summary>The small parts of the text of a line, with their times. Marks of Whisper that are not text, such as "[_BEG_]", are left out.</summary>
+    private static List<TimedText> Parts(SegmentData line) =>
+    [
+        .. line.Tokens
+            .Where(t => !string.IsNullOrEmpty(t.Text) && !(t.Text.StartsWith("[_", StringComparison.Ordinal) && t.Text.EndsWith(']')))
+            .Select(t => new TimedText(t.Text!, TimeSpan.FromMilliseconds(t.Start * 10), TimeSpan.FromMilliseconds(t.End * 10))),
+    ];
 
     private static TimeSpan WavDuration(string path)
     {

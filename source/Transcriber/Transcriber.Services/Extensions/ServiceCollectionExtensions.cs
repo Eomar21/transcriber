@@ -57,6 +57,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IModelManager, ModelManager>();
         services.AddSingleton<ISpeechDetector, SileroSpeechDetector>();
         services.AddSingleton<ISpeechPlanner, SpeechPlanner>();
+        services.AddSingleton<ISpeechPacker, SpeechPacker>();
+        services.AddSingleton<ISpeechChunkReader, WavSpeechChunkReader>();
+        services.AddSingleton<IChunkLineBuilder, ChunkLineBuilder>();
         services.AddSingleton<ISpeechCoverageCalculator, SpeechCoverageCalculator>();
         services.AddSingleton<ITranscriptFilter, TranscriptFilter>();
         services.AddSingleton<ISpeakerAssigner, SpeakerAssigner>();

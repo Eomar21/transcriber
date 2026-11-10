@@ -48,6 +48,9 @@ internal static class ServicesFixture
     public static ISpeechDetector SpeechDetector(string? modelDirectory = null) => new SileroSpeechDetector(Opt(Settings.Models), modelDirectory);
 
     public static ISpeechPlanner Planner { get; } = new SpeechPlanner(Opt(Settings.SpeechPlanning));
+    public static ISpeechPacker Packer { get; } = new SpeechPacker(Opt(Settings.SpeechPlanning));
+    public static ISpeechChunkReader ChunkReader { get; } = new WavSpeechChunkReader();
+    public static IChunkLineBuilder LineBuilder { get; } = new ChunkLineBuilder();
 
     public static ISpeechCoverageCalculator Coverage { get; } = new SpeechCoverageCalculator(Opt(Settings.SpeechCoverage));
 
@@ -56,11 +59,11 @@ internal static class ServicesFixture
     public static ISpeakerAssigner Assigner { get; } = new SpeakerAssigner(Opt(Settings.Speakers));
 
     public static IWhisperService Whisper(IModelManager modelManager, ISpeechDetector? detector = null, ISpeakerDiarizer? diarizer = null) =>
-        new WhisperService(modelManager, Models, Planner, Coverage, Filter, Assigner, Opt(ReleaseModelAtOnce), detector, diarizer);
+        new WhisperService(modelManager, Models, Planner, Packer, ChunkReader, LineBuilder, Coverage, Filter, Assigner, Opt(ReleaseModelAtOnce), detector, diarizer);
 
     /// <summary>A service with the default settings: it keeps its model in memory after a run. The test must dispose it.</summary>
     public static WhisperService WhisperThatKeepsItsModel(IModelManager modelManager) =>
-        new(modelManager, Models, Planner, Coverage, Filter, Assigner, Opt(Settings.Transcription), SpeechDetector());
+        new(modelManager, Models, Planner, Packer, ChunkReader, LineBuilder, Coverage, Filter, Assigner, Opt(Settings.Transcription), SpeechDetector());
 
     // Each test makes its own service. A service that keeps its model would hold many models in memory at the same time.
     private static TranscriptionSettings ReleaseModelAtOnce { get; } = new()
