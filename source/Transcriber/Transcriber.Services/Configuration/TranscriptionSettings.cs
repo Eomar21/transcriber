@@ -11,6 +11,9 @@ internal sealed class TranscriptionSettings
     /// </summary>
     public double KeepModelLoadedMinutes { get; set; }
 
+    /// <summary>How many threads Whisper uses on the processor. Zero lets the app choose from the number of processors.</summary>
+    public int Threads { get; set; }
+
     /// <summary>
     /// Stock phrases that Whisper invents over silence. A line is removed only when the whole line is one of these,
     /// so real speech that contains the words is kept.

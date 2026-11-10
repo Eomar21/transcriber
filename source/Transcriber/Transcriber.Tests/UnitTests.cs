@@ -274,3 +274,18 @@ public class ModelManagerTests
         finally { Directory.Delete(dir, true); }
     }
 }
+
+public class WhisperThreadsTests
+{
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(4, 4)]
+    [InlineData(8, 4)]
+    [InlineData(12, 6)]
+    [InlineData(16, 8)]
+    [InlineData(32, 16)]
+    [InlineData(128, 16)]
+    public void The_automatic_number_of_threads_follows_the_processors(int logicalProcessors, int expected) =>
+        Assert.Equal(expected, WhisperService.AutomaticThreads(logicalProcessors));
+}

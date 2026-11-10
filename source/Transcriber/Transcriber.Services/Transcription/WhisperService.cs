@@ -133,6 +133,7 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         var builder = factory.CreateBuilder()
             .WithLanguage(options.Language)
             .WithNoSpeechThreshold(options.NoSpeechThreshold ?? _settings.NoSpeechThreshold)
+            .WithThreads(_settings.Threads > 0 ? _settings.Threads : AutomaticThreads(Environment.ProcessorCount))
             .WithProgressHandler(p => progress?.Report(
                 new TranscriptionProgress($"Transcribing ({LastRuntime})", chunkOffset + chunkShare * p / 100.0)));
 
@@ -188,6 +189,19 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         progress?.Report(new TranscriptionProgress("Done", 1));
         return cleaned;
     }
+
+    /// <summary>
+    /// How many threads Whisper uses on the processor when the settings give no number. Whisper itself stops at 4.
+    /// Half of the logical processors is near the number of real cores on most computers, and more than that gives
+    /// little. The result is never less than what Whisper uses by itself.
+    /// </summary>
+    public static int AutomaticThreads(int logicalProcessors)
+    {
+        var whisperDefault = Math.Clamp(logicalProcessors, 1, 4);
+        return Math.Max(whisperDefault, Math.Min(MaxAutomaticThreads, logicalProcessors / 2));
+    }
+
+    private const int MaxAutomaticThreads = 16;
 
     private static TimeSpan WavDuration(string path)
     {
