@@ -380,9 +380,16 @@ public class TranscribeViewModelTests : IDisposable
             if (e.PropertyName == nameof(RunStatusViewModel.Progress)) lock (seen) seen.Add(vm.Status.Progress);
         };
         whisper.OnProgress = progress => progress?.Report(new TranscriptionProgress("Transcribing", 0.5));
+        var file = 0;
         whisper.Handler = async (_, _) =>
         {
-            await Task.Delay(150); // lets the progress report arrive before the file ends
+            // Wait until the progress report of this file arrives, so that the test does not depend on timing.
+            var expected = ++file == 1 ? 0.25 : 0.75;
+            for (var i = 0; i < 400; i++)
+            {
+                lock (seen) if (seen.Contains(expected)) break;
+                await Task.Delay(25);
+            }
             return [new TranscriptSegment { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(1), Text = "Hello" }];
         };
         vm.Files.AddFiles([MakeInput("one.mp3"), MakeInput("two.mp3")]);
