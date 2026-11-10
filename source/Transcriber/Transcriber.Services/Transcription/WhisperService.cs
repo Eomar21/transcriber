@@ -64,7 +64,9 @@ internal sealed class WhisperService : IWhisperService
         CancellationToken ct = default)
     {
         await OneRunAtATime.WaitAsync(ct);
-        try { return await TranscribeCoreAsync(audioFilePath, options, progress, ct); }
+        // The model load, the audio read and the speech search are blocking work. They run on a worker thread, so the
+        // caller (the window) stays free to draw and to take a cancel.
+        try { return await Task.Run(() => TranscribeCoreAsync(audioFilePath, options, progress, ct), ct); }
         finally { OneRunAtATime.Release(); }
     }
 
