@@ -42,6 +42,15 @@ jobs:
             ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
           key: bundled-ffmpeg-b6.1.1-${{ runner.os }}-${{ github.job }}
 
+      # The speaker detection tool comes out of a release archive of about 240 MB; keep the extracted program.
+      - name: Cache speaker detection tool
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/sherpacli
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/sherpacli
+          key: sherpa-cli-v2.0.1-${{ runner.os }}-static-${{ github.job }}
+
       - name: Work out version
         id: ver
         shell: bash
@@ -86,6 +95,14 @@ jobs:
           -p:WindowsAppSDKSelfContained=true -p:SelfContained=true
           -p:ApplicationDisplayVersion=${{ steps.ver.outputs.core }} -p:ApplicationVersion=${{ github.run_number }}
           -o publish/win-x64
+
+      # Speaker labels need the bundled program and its licence texts. A package without them must not be released.
+      - name: Check the package contents
+        shell: pwsh
+        run: |
+          foreach ($f in 'sherpa-onnx-offline-speaker-diarization.exe', 'ffmpeg.exe', 'licenses/sherpa-onnx-LICENSE.txt', 'licenses/onnxruntime-LICENSE.txt') {
+            if (-not (Test-Path "publish/win-x64/$f")) { Write-Error "Missing from the package: $f"; exit 1 }
+          }
 
       # Code signing with SignPath. These steps run only when the repository variable SIGNPATH_ENABLED is 'true'.
       # Settings: the variable SIGNPATH_ORGANIZATION_ID and the secret SIGNPATH_API_TOKEN. See docs/code-signing.md.
@@ -181,6 +198,15 @@ jobs:
             ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/ffmpeg
             ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
           key: bundled-ffmpeg-b6.1.1-${{ runner.os }}-${{ github.job }}
+
+      # The speaker detection tool comes out of a release archive of about 240 MB; keep the extracted program.
+      - name: Cache speaker detection tool
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/sherpacli
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/sherpacli
+          key: sherpa-cli-v2.0.1-${{ runner.os }}-static-${{ github.job }}
 
       - name: Work out version
         id: ver

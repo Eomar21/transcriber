@@ -43,6 +43,15 @@ jobs:
             ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
           key: bundled-ffmpeg-b6.1.1-${{ runner.os }}-${{ github.job }}
 
+      # The speaker detection tool comes out of a release archive of about 240 MB; keep the extracted program.
+      - name: Cache speaker detection tool
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/sherpacli
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/sherpacli
+          key: sherpa-cli-v2.0.1-${{ runner.os }}-static-${{ github.job }}
+
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION_DIR }}/Transcriber.Tests/Transcriber.Tests.csproj
 
@@ -79,6 +88,15 @@ jobs:
             ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
           key: bundled-ffmpeg-b6.1.1-${{ runner.os }}-${{ github.job }}
 
+      # The speaker detection tool comes out of a release archive of about 240 MB; keep the extracted program.
+      - name: Cache speaker detection tool
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/sherpacli
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/sherpacli
+          key: sherpa-cli-v2.0.1-${{ runner.os }}-static-${{ github.job }}
+
       - name: Install MAUI Windows workload
         run: dotnet workload install maui-windows
 
@@ -112,6 +130,15 @@ jobs:
             ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/ffmpeg
             ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/ffmpeg
           key: bundled-ffmpeg-b6.1.1-${{ runner.os }}-${{ github.job }}
+
+      # The speaker detection tool comes out of a release archive of about 240 MB; keep the extracted program.
+      - name: Cache speaker detection tool
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SOLUTION_DIR }}/Transcriber.Maui/obj/sherpacli
+            ${{ env.SOLUTION_DIR }}/Transcriber.Tests/obj/sherpacli
+          key: sherpa-cli-v2.0.1-${{ runner.os }}-static-${{ github.job }}
 
       - name: Install MAUI Windows workload
         run: dotnet workload install maui-windows
