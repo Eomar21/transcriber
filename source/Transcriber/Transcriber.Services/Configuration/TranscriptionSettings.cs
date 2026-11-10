@@ -6,6 +6,12 @@ internal sealed class TranscriptionSettings
     public float NoSpeechThreshold { get; set; }
 
     /// <summary>
+    /// How many minutes the model of the last run stays in memory when it is not used. The next run with the same
+    /// model then starts without a load. Zero releases the model at the end of each file.
+    /// </summary>
+    public double KeepModelLoadedMinutes { get; set; }
+
+    /// <summary>
     /// Stock phrases that Whisper invents over silence. A line is removed only when the whole line is one of these,
     /// so real speech that contains the words is kept.
     /// </summary>

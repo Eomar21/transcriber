@@ -65,6 +65,7 @@ All other settings stay the same.
 | `Models:PracticeModelId` | The model that the Practice tab uses. |
 | `Models:Directory` | The folder where the app keeps downloaded models. |
 | `Transcription:NoSpeechThreshold` | A number between 0 and 1. A lower number keeps more quiet speech. |
+| `Transcription:KeepModelLoadedMinutes` | The number of minutes that the app keeps the model in memory after a run. The next run with the same model then starts faster. The default is 5. Use 0 to release the memory after each file. |
 
 The model identifiers are in the `Models:Catalog` list of the default file. Use only an identifier that is in that list.
 

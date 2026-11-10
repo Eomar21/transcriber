@@ -241,6 +241,42 @@ public class TranscriptionTests(ITestOutputHelper output)
         finally { Directory.Delete(dir, true); }
     }
 
+    private sealed class DirectProgress(Action<TranscriptionProgress> onReport) : IProgress<TranscriptionProgress>
+    {
+        public void Report(TranscriptionProgress value) => onReport(value);
+    }
+
+    [Fact]
+    public async Task A_model_that_stays_in_memory_serves_the_next_runs_and_survives_a_cancel()
+    {
+        const string reference = "Article 1. All human beings are born free and equal in dignity and rights. They are endowed with reason and conscience and should act towards one another in a spirit of brotherhood.";
+        var wav = await ServicesFixture.AudioService.GetAudioFilePathAsync(Path.Combine(AppContext.BaseDirectory, "TestData", "en-01.mp3"));
+        try
+        {
+            using var whisper = ServicesFixture.WhisperThatKeepsItsModel(Models);
+            var options = new TranscriptionOptions
+            {
+                Language = "en",
+                Model = TestModel,
+                UseGpu = Environment.GetEnvironmentVariable("TRANSCRIBER_TEST_CPU") != "1",
+            };
+            async Task<double> RunAsync() =>
+                TextMetrics.WordErrorRate(reference, string.Join(' ', (await whisper.TranscribeAsync(wav, options)).Select(s => s.Text)));
+
+            Assert.True(await RunAsync() <= 0.05, "the run that loads the model");
+            Assert.True(await RunAsync() <= 0.05, "the run that uses the model in memory");
+
+            // A cancel while Whisper works. A short recording can also be complete before the cancel arrives.
+            using var cts = new CancellationTokenSource();
+            var cancelWhenTranscribing = new DirectProgress(p => { if (p.Stage.StartsWith("Transcribing", StringComparison.Ordinal)) cts.Cancel(); });
+            try { await whisper.TranscribeAsync(wav, options, cancelWhenTranscribing, cts.Token); }
+            catch (OperationCanceledException) { output.WriteLine("the run was cancelled while Whisper worked"); }
+
+            Assert.True(await RunAsync() <= 0.05, "the run after a cancel");
+        }
+        finally { File.Delete(wav); }
+    }
+
     [Fact]
     public async Task Cancellation_stops_transcription()
     {

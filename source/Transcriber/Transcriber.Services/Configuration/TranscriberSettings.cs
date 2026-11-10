@@ -53,6 +53,8 @@ internal sealed class TranscriberSettings
 
         Require(Transcription.NoSpeechThreshold is > 0 and < 1, "Transcription:NoSpeechThreshold must be between 0 and 1.");
 
+        Require(Transcription.KeepModelLoadedMinutes is >= 0 and <= 1440, "Transcription:KeepModelLoadedMinutes must be between 0 and 1440.");
+
         Require(SpeechPlanning.PaddingSeconds >= 0 && SpeechPlanning.MergeGapSeconds >= 0 && SpeechPlanning.MaxChunkSeconds > 0,
             "SpeechPlanning: the times must be 0 or more, and MaxChunkSeconds more than 0.");
         Require(SpeechCoverage.MinMissingSeconds >= 0 && SpeechCoverage.MinShare is > 0 and <= 1 && SpeechCoverage.BridgeSeconds >= 0,

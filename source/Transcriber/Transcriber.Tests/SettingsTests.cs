@@ -47,6 +47,7 @@ public class SettingsTests
     [InlineData("""{ "Audio": { "SampleRate": 0 } }""", "SampleRate")]
     [InlineData("""{ "Models": { "DefaultModelId": "does-not-exist" } }""", "DefaultModelId")]
     [InlineData("""{ "Transcription": { "NoSpeechThreshold": 2 } }""", "NoSpeechThreshold")]
+    [InlineData("""{ "Transcription": { "KeepModelLoadedMinutes": -1 } }""", "KeepModelLoadedMinutes")]
     [InlineData("""{ "SpeechPlanning": { "MaxChunkSeconds": 0 } }""", "SpeechPlanning")]
     [InlineData("""{ "Speakers": { "MinorSpeakerShare": 1.5 } }""", "Speakers")]
     public void A_value_that_cannot_work_stops_the_app_with_a_message_that_names_it(string json, string expected)

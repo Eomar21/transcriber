@@ -56,7 +56,19 @@ internal static class ServicesFixture
     public static ISpeakerAssigner Assigner { get; } = new SpeakerAssigner(Opt(Settings.Speakers));
 
     public static IWhisperService Whisper(IModelManager modelManager, ISpeechDetector? detector = null, ISpeakerDiarizer? diarizer = null) =>
-        new WhisperService(modelManager, Models, Planner, Coverage, Filter, Assigner, Opt(Settings.Transcription), detector, diarizer);
+        new WhisperService(modelManager, Models, Planner, Coverage, Filter, Assigner, Opt(ReleaseModelAtOnce), detector, diarizer);
+
+    /// <summary>A service with the default settings: it keeps its model in memory after a run. The test must dispose it.</summary>
+    public static WhisperService WhisperThatKeepsItsModel(IModelManager modelManager) =>
+        new(modelManager, Models, Planner, Coverage, Filter, Assigner, Opt(Settings.Transcription), SpeechDetector());
+
+    // Each test makes its own service. A service that keeps its model would hold many models in memory at the same time.
+    private static TranscriptionSettings ReleaseModelAtOnce { get; } = new()
+    {
+        NoSpeechThreshold = Settings.Transcription.NoSpeechThreshold,
+        Hallucinations = Settings.Transcription.Hallucinations,
+        KeepModelLoadedMinutes = 0,
+    };
 
     public static ISpeakerDiarizer Diarizer(string? modelDirectory = null) =>
         new SherpaSpeakerDiarizer(Opt(Settings.Speakers), Opt(Settings.Models), modelDirectory);

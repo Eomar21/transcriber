@@ -13,7 +13,7 @@ namespace Transcriber.Services.Transcription;
 /// Transcribes a recording with Whisper. It first finds the speech (so silence is never transcribed), transcribes
 /// each piece, cleans the result, and then labels the speakers when that is asked for.
 /// </summary>
-internal sealed class WhisperService : IWhisperService
+internal sealed class WhisperService : IWhisperService, IDisposable
 {
     // Both tabs share one engine, and two runs at once would fight over the GPU and the loaded native library.
     private static readonly SemaphoreSlim OneRunAtATime = new(1, 1);
@@ -27,6 +27,7 @@ internal sealed class WhisperService : IWhisperService
     private readonly TranscriptionSettings _settings;
     private readonly ISpeechDetector? _speechDetector;
     private readonly ISpeakerDiarizer? _speakerDiarizer;
+    private readonly LoadedModelCache<(string Path, bool UseGpu), WhisperFactory> _loadedModel;
 
     public WhisperService(
         IModelManager modelManager,
@@ -48,6 +49,9 @@ internal sealed class WhisperService : IWhisperService
         _settings = settings.Value;
         _speechDetector = speechDetector;
         _speakerDiarizer = speakerDiarizer;
+        _loadedModel = new LoadedModelCache<(string Path, bool UseGpu), WhisperFactory>(
+            key => WhisperFactory.FromPath(key.Path, new WhisperFactoryOptions { UseGpu = key.UseGpu }),
+            TimeSpan.FromMinutes(_settings.KeepModelLoadedMinutes));
     }
 
     /// <summary>The native runtime that was actually loaded for the last run, e.g. "Vulkan" or "Cpu".</summary>
@@ -56,6 +60,9 @@ internal sealed class WhisperService : IWhisperService
     public SpeechCoverage? LastCoverage { get; private set; }
 
     public bool CanIdentifySpeakers => _speakerDiarizer is { IsAvailable: true };
+
+    /// <summary>Releases the model that is kept in memory. The app does this when it closes.</summary>
+    public void Dispose() => _loadedModel.Dispose();
 
     public async Task<List<TranscriptSegment>> TranscribeAsync(
         string audioFilePath,
@@ -89,8 +96,22 @@ internal sealed class WhisperService : IWhisperService
         // compatible driver is present), and each run says for itself whether it uses the graphics card.
         RuntimeOptions.RuntimeLibraryOrder = [RuntimeLibrary.Vulkan, RuntimeLibrary.Cpu];
 
-        using var factory = WhisperFactory.FromPath(modelPath, new WhisperFactoryOptions { UseGpu = options.UseGpu });
+        // The model of the last run stays in memory for some time. The next file of a batch, or the next run with the
+        // same model, starts at once. Another model, or another choice for the graphics card, loads again.
+        progress?.Report(new TranscriptionProgress("Loading the model", 0));
+        var factory = _loadedModel.Take((modelPath, options.UseGpu));
         LastRuntime = (options.UseGpu ? RuntimeOptions.LoadedLibrary : RuntimeLibrary.Cpu)?.ToString();
+        try { return await TranscribeWithModelAsync(factory, audioFilePath, options, progress, ct); }
+        finally { _loadedModel.Return(); }
+    }
+
+    private async Task<List<TranscriptSegment>> TranscribeWithModelAsync(
+        WhisperFactory factory,
+        string audioFilePath,
+        TranscriptionOptions options,
+        IProgress<TranscriptionProgress>? progress,
+        CancellationToken ct)
+    {
 
         // Voice activity detection: only the stretches with speech go to Whisper. That is faster on recordings with
         // long pauses and stops Whisper inventing text over silence and noise.
