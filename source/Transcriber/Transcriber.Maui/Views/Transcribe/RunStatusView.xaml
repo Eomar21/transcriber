@@ -7,6 +7,15 @@
     x:DataType="vm:RunStatusViewModel">
 
     <!-- The outcome of a run: a status line (icon and text), the path and the notes. -->
+    <Border StrokeThickness="0" StrokeShape="RoundRectangle 14" Padding="16,14" BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundLight}, Dark={StaticResource CardBackgroundDark}}">
+        <Border.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding ResultKind}" Value="Success">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessTintLight}, Dark={StaticResource SuccessTintDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding ResultKind}" Value="Error">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ErrorTintLight}, Dark={StaticResource ErrorTintDark}}" />
+            </DataTrigger>
+        </Border.Triggers>
     <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
         <HorizontalStackLayout Spacing="{StaticResource SpaceSm}">
             <Label x:Name="StatusIcon" FontAttributes="Bold" VerticalOptions="Center"
@@ -14,11 +23,11 @@
                 <Label.Triggers>
                     <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Success">
                         <Setter Property="Text" Value="&#x2713;" />
-                        <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}" />
                     </DataTrigger>
                     <DataTrigger TargetType="Label" Binding="{Binding ResultKind}" Value="Error">
                         <Setter Property="Text" Value="!" />
-                        <Setter Property="TextColor" Value="{StaticResource ErrorColor}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" />
                     </DataTrigger>
                 </Label.Triggers>
             </Label>
@@ -31,15 +40,16 @@
 
         <!-- Files that could not be read, with the reason for each. Shown next to the result of the files that did work. -->
         <Label AutomationId="FailureNote" Text="{Binding FailureNote, StringFormat='&#x26A0;  {0}'}" Style="{StaticResource Caption}"
-               TextColor="{StaticResource ErrorColor}" IsVisible="{Binding HasFailureNote}" />
+               TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" IsVisible="{Binding HasFailureNote}" />
 
         <!-- Next to the result, where the user is looking after a run: only shown when there is something to check. -->
         <Label AutomationId="CompletenessNote" Text="{Binding CompletenessNote}" Style="{StaticResource Caption}"
-               TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasCompletenessNote}" />
+               TextColor="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" IsVisible="{Binding HasCompletenessNote}" />
         <VerticalStackLayout IsVisible="{Binding HasAccuracyNote}" Spacing="{StaticResource SpaceSm}">
-            <Label AutomationId="AccuracyNote" Text="{Binding AccuracyNote}" Style="{StaticResource Caption}" TextColor="{StaticResource WarningColor}" />
-            <Button AutomationId="UseMediumResultButton" Text="{Binding UseSuggestedModelText}" Style="{StaticResource SmallButton}"
+            <Label AutomationId="AccuracyNote" Text="{Binding AccuracyNote}" Style="{StaticResource Caption}" TextColor="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" />
+            <Button AutomationId="UseMediumResultButton" Text="{Binding UseSuggestedModelText}" StyleClass="FilledTonalButton,Small"
                     HorizontalOptions="Start" Command="{Binding UseSuggestedModelCommand}" />
         </VerticalStackLayout>
     </VerticalStackLayout>
+    </Border>
 </ContentView>

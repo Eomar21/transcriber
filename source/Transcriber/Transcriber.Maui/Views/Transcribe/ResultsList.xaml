@@ -6,24 +6,55 @@
     xmlns:models="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
     x:Class="Transcriber.Maui.Views.Transcribe.ResultsList"
     x:DataType="vm:ResultsViewModel">
-
+    <!-- Each line is a rounded row. A faint play symbol on every row shows that a click plays it.
+         The selected row gets a tint, an accent bar and a full-strength symbol. The row that plays gets a stronger tint. -->
     <CollectionView AutomationId="Segments" ItemsSource="{Binding VisibleSegments}" HeightRequest="340"
                     SelectionMode="Single" SelectedItem="{Binding SelectedSegment}">
+        <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Vertical" ItemSpacing="4" />
+        </CollectionView.ItemsLayout>
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="models:SegmentItem">
-                <Grid ColumnDefinitions="110,*" ColumnSpacing="{StaticResource SpaceSm}" Padding="6,5" SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
-                    <Grid.Triggers>
+                <Border x:Name="Row" StrokeThickness="0" StrokeShape="RoundRectangle 10" BackgroundColor="Transparent"
+                        SemanticProperties.Description="{Binding Text}" SemanticProperties.Hint="Click to play from this line">
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup Name="CommonStates">
+                            <VisualState Name="Normal" />
+                            <VisualState Name="Selected">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource RowSelectedLight}, Dark={StaticResource RowSelectedDark}}" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                    <Border.Triggers>
                         <!-- The line being played right now. -->
-                        <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="True">
+                        <DataTrigger TargetType="Border" Binding="{Binding IsActive}" Value="True">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActiveRowLight}, Dark={StaticResource ActiveRowDark}}" />
                         </DataTrigger>
-                    </Grid.Triggers>
-                    <VerticalStackLayout Spacing="{StaticResource SpaceXs}" VerticalOptions="Start">
-                        <Label Text="{Binding Time}" Style="{StaticResource Caption}" />
-                        <Label Text="{Binding SpeakerLabel}" IsVisible="{Binding HasSpeaker}" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource Primary}" />
-                    </VerticalStackLayout>
-                    <Label Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Body}" />
-                </Grid>
+                    </Border.Triggers>
+                    <Grid ColumnDefinitions="4,28,96,*" ColumnSpacing="{StaticResource SpaceSm}" Padding="0,8,12,8">
+                        <BoxView x:Name="Bar" Opacity="0" WidthRequest="4" CornerRadius="2" Margin="0,2"
+                                 Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
+                            <BoxView.Triggers>
+                                <DataTrigger TargetType="BoxView" Binding="{Binding IsActive}" Value="True"><Setter Property="Opacity" Value="1" /></DataTrigger>
+                            </BoxView.Triggers>
+                        </BoxView>
+                        <Label x:Name="PlayGlyph" Grid.Column="1" Text="&#x25B6;" Opacity="0.35" FontSize="12"
+                               HorizontalOptions="Center" VerticalOptions="Start" Margin="0,3,0,0"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="True"><Setter Property="Opacity" Value="1" /></DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource SpaceXs}" VerticalOptions="Start">
+                            <Label Text="{Binding Time}" Style="{StaticResource Caption}" FontFamily="Consolas" />
+                            <Label Text="{Binding SpeakerLabel}" IsVisible="{Binding HasSpeaker}" FontAttributes="Bold" FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="3" Text="{Binding Text}" Style="{StaticResource Body}" FontSize="15" LineHeight="1.3" />
+                    </Grid>
+                </Border>
             </DataTemplate>
         </CollectionView.ItemTemplate>
     </CollectionView>
