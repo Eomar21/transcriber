@@ -21,9 +21,9 @@ Both use [OpenAI Whisper](https://github.com/openai/whisper) through [Whisper.ne
 
 ## Demo video
 
-<video src="https://github.com/Eomar21/transcriber/raw/master/docs/demo.mp4" controls muted playsinline width="100%"></video>
+[![Watch the demo video of Transcriber](docs/demo-poster.jpg)](docs/demo.mp4)
 
-The video is about one minute long. It shows the Transcribe mode and the Practice mode. If the video does not play, [download it](docs/demo.mp4).
+The video is about one minute long. It shows the Transcribe mode and the Practice mode. Select the picture to play the video.
 
 ## Contents
 
