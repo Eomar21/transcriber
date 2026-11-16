@@ -121,7 +121,9 @@ public class TranscriptionTests(ITestOutputHelper output)
         var speakerSteps = reports.Where(r => r.Stage == "Identifying speakers").Select(r => r.Fraction).ToList();
         Assert.True(speakerSteps.Count >= 2, "the speaker step reports its own progress");
         Assert.Equal(1 - WhisperService.SpeakerShare, speakerSteps[0], 6);
-        Assert.Equal(1, speakerSteps[^1], 6);
+        // The speaker step stops just short of full. Only the last report ("Done") fills the bar.
+        Assert.Equal(1 - WhisperService.SpeakerShare * (1 - WhisperService.SpeakerStepMaxShare), speakerSteps[^1], 6);
+        Assert.True(speakerSteps[^1] < 1);
 
         output.WriteLine(string.Join("\n", segments.Select(s => $"{s.Start.TotalSeconds:F1}s Speaker {s.Speaker}: {s.Text}")));
         Assert.NotEmpty(segments);

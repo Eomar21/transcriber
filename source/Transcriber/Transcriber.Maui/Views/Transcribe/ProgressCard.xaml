@@ -10,9 +10,12 @@
     <!-- Progress. The page shows this view while a run is in progress, and for a moment after it, so the finish can be seen. -->
     <Border Style="{StaticResource Card}">
         <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
-            <controls:RunnerProgress Progress="{Binding Progress}" Look="{Binding Look}" FillColor="{StaticResource Primary}"
+            <controls:RunnerProgress AutomationId="RunProgressBar" Progress="{Binding Progress}" Look="{Binding Look}" FillColor="{StaticResource Primary}"
                                      TrackColor="{AppThemeBinding Light={StaticResource CardStrokeLight}, Dark={StaticResource CardStrokeDark}}" />
-            <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="{Binding StatusText}" Style="{StaticResource Body}" />
+                <Label Grid.Column="1" AutomationId="RunProgressPercent" Text="{Binding Progress, StringFormat='{0:P0}'}" Style="{StaticResource Caption}" VerticalOptions="Center" />
+            </Grid>
         </VerticalStackLayout>
     </Border>
 </ContentView>

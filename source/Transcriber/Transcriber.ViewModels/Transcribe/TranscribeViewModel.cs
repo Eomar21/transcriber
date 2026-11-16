@@ -130,7 +130,8 @@ public sealed partial class TranscribeViewModel : ObservableObject
                     if (ct.IsCancellationRequested) return;
                     Status.StatusText = prefix + p.Stage;
                     // One bar for the whole run: each file is an equal share.
-                    Status.Progress = (i + Math.Clamp(p.Fraction, 0, 1)) / files.Count;
+                    // A report that arrives late must not move the bar back: the finished bar has to stay full.
+                    Status.Progress = Math.Max(Status.Progress, (i + Math.Clamp(p.Fraction, 0, 1)) / files.Count);
                 });
 
                 Status.StatusText = prefix + "Preparing audio";

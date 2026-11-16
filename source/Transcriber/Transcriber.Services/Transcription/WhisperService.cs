@@ -187,7 +187,7 @@ internal sealed class WhisperService : IWhisperService, IDisposable
         {
             progress?.Report(new TranscriptionProgress("Identifying speakers", transcribeShare));
             var speakerProgress = new Relay(share => progress?.Report(
-                new TranscriptionProgress("Identifying speakers", transcribeShare + (1 - transcribeShare) * share)));
+                new TranscriptionProgress("Identifying speakers", transcribeShare + (1 - transcribeShare) * Math.Min(share, SpeakerStepMaxShare))));
             var turns = await _speakerDiarizer.DiarizeAsync(audioFilePath, options.SpeakerCount, speakerProgress, ct);
             // With a count chosen by the user the clustering already produced exactly that many voices; otherwise
             // short fragments that are not real speakers are folded into the nearest real one.
@@ -214,6 +214,12 @@ internal sealed class WhisperService : IWhisperService, IDisposable
 
     /// <summary>The part of the progress bar that the speaker step gets when speaker labels are on.</summary>
     public const double SpeakerShare = 0.3;
+
+    /// <summary>
+    /// The speaker step never fills its part of the bar. The tool says 100 percent before the speakers are matched to the
+    /// lines and the file is written. Only the last report ("Done") fills the bar, so a full bar always means a finished run.
+    /// </summary>
+    public const double SpeakerStepMaxShare = 0.95;
 
     /// <summary>Passes a progress report on in the thread that makes it, so the reports keep their order.</summary>
     private sealed class Relay(Action<double> onReport) : IProgress<double>
