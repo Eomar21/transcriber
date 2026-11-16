@@ -186,7 +186,8 @@ public class RunProgressContractTests(ITestOutputHelper output)
             // Nothing before the last report is full.
             Assert.Equal("Done", reports[^1].Stage);
             Assert.Equal(1, reports[^1].Fraction);
-            Assert.All(reports.Take(reports.Count - 1), r => Assert.True(r.Fraction < 1, $"'{r.Stage}' reported a full bar before the end"));
+            // A model download (only on a machine without the model) has its own scale, so it is not part of this rule.
+            Assert.All(reports.Take(reports.Count - 1).Where(r => !r.Stage.StartsWith("Downloading", StringComparison.Ordinal)), r => Assert.True(r.Fraction < 1, $"'{r.Stage}' reported a full bar before the end"));
 
             // The speaker step has its own part of the bar, after the transcription, and it only moves forward.
             Assert.All(speakerStage, r => Assert.InRange(r.Fraction, 1 - Transcriber.Services.Transcription.WhisperService.SpeakerShare - 1e-9, 1));
