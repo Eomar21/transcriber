@@ -64,7 +64,7 @@ Drop in audio or video and get a transcript, without sending it anywhere.
 1. Drop files on the window, or choose them with **Choose files**. You can also pass a file on the command line.
 2. Pick the language (or leave it on auto-detect), the model and the output format.
 3. Optionally turn on **Label who is speaking** and choose how many people speak.
-4. Press **Transcribe**. The page scrolls to the progress bar, which covers all the files in the run. The result appears below with the saved path.
+4. Press **Transcribe**. The page scrolls to the progress bar, which covers all the files in the run. When the bar is full, the page scrolls to the transcript. The playing line has an accent bar, so you can see which line you hear.
 
 ### Speaker labels, in short
 

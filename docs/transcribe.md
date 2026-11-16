@@ -30,7 +30,7 @@ Use this mode to change speech in a recording into text with time stamps. You ca
 4. Set the format. Select **Text (.txt)**, **.srt**, **.vtt** or **JSON**. Refer to [Output formats]({{ '/output-formats' | relative_url }}).
 5. Type names or special terms in the **Names or special terms** field (optional). For example, type `Eindhoven, Dr. Haddad`. This helps the app to write these words correctly.
 6. Turn on **Label who is speaking** (optional). Refer to [Speaker labels]({{ '/speaker-labels' | relative_url }}).
-7. Click **Transcribe**. The page scrolls to the progress bar. A small character moves along the bar. One bar covers all the files. A burst of sparks shows when the work is complete. Refer to [Progress bar looks](#progress-bar-looks). To stop the work, click **Cancel**.
+7. Click **Transcribe**. The page scrolls to the progress bar. A small character moves along the bar. One bar covers all the files. A burst of sparks shows when the work is complete. After the burst, the page scrolls to the transcript. Refer to [Progress bar looks](#progress-bar-looks). To stop the work, click **Cancel**.
 
 When you click **Cancel**, the progress bar shows **Cancelling...** until the work stops. Each step stops in a moment. You can start again when the app shows **Cancelled**. If some files were complete before you cancelled, the app keeps their transcripts and shows them.
 
@@ -60,7 +60,7 @@ The app takes the audio from a video file. You do not have to convert the file. 
 
 ## Use the result
 
-- **Hear a line.** Click a line. The recording plays from that point. A player bar shows. Use the bar to pause or stop the recording.
+- **Hear a line.** Click a line. The recording plays from that point. The line that plays has an accent bar and a bright play symbol. A player bar shows. Use the bar to pause or stop the recording.
 - **Search.** Type a word in the search box above the list.
 - **Copy all.** Click **Copy all** to copy the full transcript. The copy includes the speaker labels, if you used them.
 - **Open the file.** Click **Open transcript** to open the saved file. Click **Show in folder** to show the file in Explorer or Finder.
