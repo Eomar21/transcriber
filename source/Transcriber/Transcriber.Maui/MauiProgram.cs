@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Maui;
 using SkiaSharp.Views.Maui.Controls.Hosting;
+using UraniumUI;
 using Transcriber.Coach.Extensions;
 using Transcriber.Services.Extensions;
 using Transcriber.Maui.Services;
@@ -23,6 +25,9 @@ namespace Transcriber.Maui
             builder
                 .UseMauiApp<App>()
                 .UseSkiaSharp()
+                .UseMauiCommunityToolkit()
+                .UseUraniumUI()
+                .UseUraniumUIMaterial()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

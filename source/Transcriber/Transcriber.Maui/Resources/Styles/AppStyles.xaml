@@ -2,24 +2,49 @@
 <?xaml-comp compile="true" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material">
 
     <!-- Design tokens: every screen uses these, so the look changes in one place and follows light/dark. -->
-    <Color x:Key="PageBackgroundLight">#F5F6FA</Color>
-    <Color x:Key="PageBackgroundDark">#121214</Color>
+    <!-- Neutrals carry a faint violet tint (the hue of the brand), so the brand colour feels part of the surface.
+         Light mode: a cool off-white page with white cards. Dark mode: a lifted charcoal, not black, with softer text,
+         because pure white on near-black glares. Higher surfaces are lighter, the same way Apple layers its dark mode. -->
+    <Color x:Key="PageBackgroundLight">#F3F2F8</Color>
+    <Color x:Key="PageBackgroundDark">#131217</Color>
     <Color x:Key="CardBackgroundLight">#FFFFFF</Color>
-    <Color x:Key="CardBackgroundDark">#1C1C20</Color>
-    <Color x:Key="CardStrokeLight">#E3E5EE</Color>
-    <Color x:Key="CardStrokeDark">#2C2C33</Color>
-    <Color x:Key="TextPrimaryLight">#1B1B1F</Color>
-    <Color x:Key="TextPrimaryDark">#F2F2F5</Color>
-    <Color x:Key="TextMutedLight">#6B6F80</Color>
-    <Color x:Key="TextMutedDark">#9A9EB0</Color>
-    <Color x:Key="SuccessColor">#1F9D55</Color>
-    <Color x:Key="ErrorColor">#D64545</Color>
-    <Color x:Key="WarningColor">#C77700</Color>
-    <Color x:Key="ActiveRowLight">#ECE8FF</Color>
-    <Color x:Key="ActiveRowDark">#2B2754</Color>
+    <Color x:Key="CardBackgroundDark">#1D1C23</Color>
+    <Color x:Key="CardStrokeLight">#E4E1EE</Color>
+    <Color x:Key="CardStrokeDark">#2E2C38</Color>
+    <Color x:Key="TextPrimaryLight">#1D1B26</Color>
+    <Color x:Key="TextPrimaryDark">#E8E6F0</Color>
+    <Color x:Key="TextMutedLight">#5E5B70</Color>
+    <Color x:Key="TextMutedDark">#A6A3B8</Color>
+
+    <!-- Status colours come as a light and a dark value, each with enough contrast on its own background.
+         A tint is the soft background of a status banner. -->
+    <Color x:Key="SuccessLight">#1B7F47</Color>
+    <Color x:Key="SuccessDark">#6FD39A</Color>
+    <Color x:Key="SuccessTintLight">#E5F4EB</Color>
+    <Color x:Key="SuccessTintDark">#1B2D24</Color>
+    <Color x:Key="ErrorLight">#B93434</Color>
+    <Color x:Key="ErrorDark">#FF9A94</Color>
+    <Color x:Key="ErrorTintLight">#FBE8E8</Color>
+    <Color x:Key="ErrorTintDark">#36202A</Color>
+    <Color x:Key="WarningLight">#8F5500</Color>
+    <Color x:Key="WarningDark">#F2BC6B</Color>
+    <Color x:Key="WarningTintLight">#FBF0DC</Color>
+    <Color x:Key="WarningTintDark">#332A1A</Color>
+    <!-- The red of the recording dot. It is the same in both themes, because it must read as "recording". -->
+    <Color x:Key="RecordRed">#E5484D</Color>
+    <!-- A soft surface for a tile that sits inside a card. -->
+    <Color x:Key="TileLight">#F7F6FB</Color>
+    <Color x:Key="TileDark">#25232D</Color>
+
+    <!-- A line of the transcript: tint when it is selected, a stronger tint while it plays. -->
+    <Color x:Key="RowSelectedLight">#F0ECFD</Color>
+    <Color x:Key="RowSelectedDark">#27243A</Color>
+    <Color x:Key="ActiveRowLight">#E3DCFB</Color>
+    <Color x:Key="ActiveRowDark">#322D52</Color>
 
     <!-- Spacing scale: the only gaps that screens use. A gap between a label and its field is Xs, between rows of a card is Lg. -->
     <x:Double x:Key="SpaceXs">4</x:Double>
@@ -46,6 +71,14 @@
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource CardBackgroundLight}, Dark={StaticResource CardBackgroundDark}}" />
         <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource CardStrokeLight}, Dark={StaticResource CardStrokeDark}}" />
         <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+    </Style>
+
+    <!-- A tile inside a card: one tip, one past run. A soft surface with no outline. -->
+    <Style x:Key="Tile" TargetType="Border">
+        <Setter Property="Padding" Value="14,12" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource TileLight}, Dark={StaticResource TileDark}}" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
     </Style>
 
@@ -77,75 +110,56 @@
         <Setter Property="FontSize" Value="13" />
     </Style>
 
-    <!-- Buttons: regular ones are all 44 high, small ones 32. Each button is centred in its row, so it never stretches to the height of the text next to it. -->
-    <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-        <Setter Property="TextColor" Value="White" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
-        <Setter Property="Padding" Value="20,0" />
+    <!-- Buttons. The look (colour, shape, hover and press states) comes from the Material button classes of UraniumUI:
+         FilledButton for the main action, OutlinedButton for a second action, FilledTonalButton for a small action in a list,
+         TextButton for a quiet link. A screen sets one of those, plus one size class from here. Regular buttons are 44 high,
+         small ones are 32, and each is centred in its row, so it never stretches to the height of the text next to it. -->
+    <Style TargetType="Button" Class="Large">
+        <Setter Property="Padding" Value="24,0" />
         <Setter Property="HeightRequest" Value="{StaticResource ControlHeight}" />
         <Setter Property="MinimumHeightRequest" Value="{StaticResource ControlHeight}" />
         <Setter Property="MinimumWidthRequest" Value="{StaticResource ControlMinWidth}" />
         <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="Opacity" Value="0.45" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
     </Style>
-    <Style x:Key="SecondaryButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource CardStrokeLight}, Dark={StaticResource CardStrokeDark}}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
-        <Setter Property="Padding" Value="20,0" />
-        <Setter Property="HeightRequest" Value="{StaticResource ControlHeight}" />
-        <Setter Property="MinimumHeightRequest" Value="{StaticResource ControlHeight}" />
-        <Setter Property="MinimumWidthRequest" Value="{StaticResource ControlMinWidth}" />
-        <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="Opacity" Value="0.45" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
-    <!-- For an action that sits inside a list or next to a field: Delete, Clear all, Copy all, the player buttons. -->
-    <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+    <Style TargetType="Button" Class="Small">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Padding" Value="16,0" />
         <Setter Property="HeightRequest" Value="{StaticResource SmallControlHeight}" />
         <Setter Property="MinimumHeightRequest" Value="{StaticResource SmallControlHeight}" />
         <Setter Property="MinimumWidthRequest" Value="0" />
+        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
-    <!-- Text only, for a quiet action such as Any file type. -->
-    <Style x:Key="LinkButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource Primary}" />
+    <Style TargetType="Button" Class="Inline">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="BorderWidth" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HeightRequest" Value="{StaticResource SmallControlHeight}" />
         <Setter Property="MinimumHeightRequest" Value="0" />
         <Setter Property="MinimumWidthRequest" Value="0" />
         <Setter Property="HorizontalOptions" Value="Start" />
         <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- A switch uses the brand colours, not the accent colour of the operating system. -->
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="ThumbColor" Value="{StaticResource White}" />
+    </Style>
+
+    <!-- The tab bar at the top of the window uses the brand colours. -->
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource OnSurfaceVariant}, Dark={StaticResource OnSurfaceVariantDark}}" />
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}" />
+    </Style>
+
+    <!-- Every drop-down list field cannot be cleared, because a choice is always needed. -->
+    <Style TargetType="material:PickerField">
+        <Setter Property="AllowClear" Value="False" />
+        <Setter Property="AccentColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+    </Style>
+    <!-- A focused text field uses the brand violet. -->
+    <Style TargetType="material:TextField">
+        <Setter Property="AccentColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
     </Style>
 </ResourceDictionary>

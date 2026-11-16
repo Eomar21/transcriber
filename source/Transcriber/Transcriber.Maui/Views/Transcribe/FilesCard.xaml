@@ -27,16 +27,16 @@
                         </DataTrigger>
                     </Label.Triggers>
                 </Label>
-                <Button AutomationId="AnyFileButton" Text="Any file type" Style="{StaticResource LinkButton}"
+                <Button AutomationId="AnyFileButton" Text="Any file type" StyleClass="TextButton,Inline"
                         Command="{Binding BrowseAnyCommand}" IsEnabled="{Binding IsIdle}"
                         SemanticProperties.Description="Choose a file of any type. The app tries to read it."
                         ToolTipProperties.Text="Show files of every type. The app tries to read the file you choose." />
-                <Label AutomationId="DropMessage" Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{StaticResource WarningColor}"
+                <Label AutomationId="DropMessage" Text="{Binding DropMessage, StringFormat='&#x26A0;  {0}'}" TextColor="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}"
                        FontSize="13" IsVisible="{Binding HasDropMessage}" />
             </VerticalStackLayout>
-            <Button AutomationId="ClearFilesButton" Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}"
+            <Button AutomationId="ClearFilesButton" Grid.Column="1" Text="Clear" StyleClass="OutlinedButton,Large"
                     Command="{Binding ClearFilesCommand}" IsVisible="{Binding HasFiles}" />
-            <Button AutomationId="ChooseFilesButton" Grid.Column="2" Text="Choose files" Style="{StaticResource PrimaryButton}"
+            <Button AutomationId="ChooseFilesButton" Grid.Column="2" Text="Choose files" StyleClass="FilledButton,Large"
                     Command="{Binding BrowseCommand}" IsEnabled="{Binding IsIdle}" />
         </Grid>
     </Border>

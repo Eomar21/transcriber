@@ -6,5 +6,5 @@
     x:Class="Transcriber.Maui.Views.Practice.PracticeErrorLine"
     x:DataType="vm:PracticeStatusViewModel">
 
-    <Label AutomationId="PracticeError" Text="{Binding ErrorMessage}" TextColor="{StaticResource ErrorColor}" FontSize="13" />
+    <Label AutomationId="PracticeError" Text="{Binding ErrorMessage}" TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" FontSize="13" />
 </ContentView>

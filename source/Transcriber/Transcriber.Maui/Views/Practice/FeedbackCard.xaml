@@ -2,6 +2,7 @@
 <ContentView
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
     xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
     x:Class="Transcriber.Maui.Views.Practice.FeedbackCard"
     x:DataType="vm:FeedbackViewModel">
@@ -19,13 +20,13 @@
                 </Label.Triggers>
             </Label>
             <VerticalStackLayout Spacing="{StaticResource SpaceMd}" IsVisible="{Binding CanAskForFeedback}">
-                <Picker AutomationId="FeedbackModelPicker" ItemsSource="{Binding FeedbackModels}" SelectedItem="{Binding SelectedFeedbackModel}"
+                <material:PickerField Title="Model for the written feedback" AutomationId="FeedbackModelPicker" ItemsSource="{Binding FeedbackModels}" SelectedItem="{Binding SelectedFeedbackModel}"
                         WidthRequest="260" HorizontalOptions="Start" />
-                <Button AutomationId="FeedbackButton" Text="Get written feedback" Style="{StaticResource SecondaryButton}"
+                <Button AutomationId="FeedbackButton" Text="Get written feedback" StyleClass="OutlinedButton,Large"
                         Command="{Binding GetFeedbackCommand}" HorizontalOptions="Start" />
                 <ActivityIndicator IsRunning="{Binding IsGettingFeedback}" IsVisible="{Binding IsGettingFeedback}" HorizontalOptions="Start" Color="{StaticResource Primary}" />
                 <Label AutomationId="FeedbackText" Text="{Binding FeedbackText}" Style="{StaticResource Body}" LineBreakMode="WordWrap" />
-                <Label AutomationId="FeedbackError" Text="{Binding FeedbackError}" TextColor="{StaticResource ErrorColor}" FontSize="13" />
+                <Label AutomationId="FeedbackError" Text="{Binding FeedbackError}" TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" FontSize="13" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </Border>

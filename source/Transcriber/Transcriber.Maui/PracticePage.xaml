@@ -3,29 +3,26 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
+    xmlns:controls="clr-namespace:Transcriber.Maui.Controls"
     xmlns:views="clr-namespace:Transcriber.Maui.Views.Practice"
     x:Class="Transcriber.Maui.PracticePage"
     x:DataType="vm:PracticeViewModel"
     Title="Practice">
 
     <!-- The page only arranges the sections. Each section is a view with its own view model. -->
-    <ScrollView x:Name="Scroller" AutomationId="PageScroller">
-        <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
-        <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="{StaticResource SpaceLg}">
+    <controls:PageColumn x:Name="Scroller" AutomationId="PageScroller">
+        <VerticalStackLayout x:Name="Column" Margin="0,24" Spacing="{StaticResource SpaceLg}">
 
             <!-- Header -->
-            <VerticalStackLayout Spacing="{StaticResource SpaceXs}">
-                <Label Text="Practice" Style="{StaticResource PageTitle}" />
-                <Label Text="Record yourself speaking, then see how to improve. Everything stays on this computer." Style="{StaticResource Caption}" />
-            </VerticalStackLayout>
+            <controls:PageHeader Title="Practice" Subtitle="Record yourself speaking, then see how to improve. Everything stays on this computer." />
 
             <!-- 1. Recording -->
             <views:SourceCard BindingContext="{Binding Source}" />
 
             <!-- 2. Action -->
             <Grid ColumnDefinitions="*,Auto">
-                <Button AutomationId="AnalyzeButton" Text="Analyse my speaking" Style="{StaticResource PrimaryButton}" Command="{Binding AnalyzeCommand}" />
-                <Button Grid.Column="1" Text="Cancel" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0"
+                <Button AutomationId="AnalyzeButton" Text="Analyse my speaking" StyleClass="FilledButton,Large" Command="{Binding AnalyzeCommand}" />
+                <Button Grid.Column="1" Text="Cancel" StyleClass="OutlinedButton,Large" Margin="12,0,0,0"
                         Command="{Binding AnalyzeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
 
@@ -34,7 +31,7 @@
             <views:PracticeErrorLine BindingContext="{Binding Status}" IsVisible="{Binding HasError, x:DataType=vm:PracticeStatusViewModel}" />
 
             <!-- 3. Results -->
-            <VerticalStackLayout Spacing="{StaticResource SpaceLg}" IsVisible="{Binding Analysis.HasResult}">
+            <VerticalStackLayout x:Name="ResultsView" Spacing="{StaticResource SpaceLg}" IsVisible="{Binding Analysis.HasResult}">
                 <views:MetricsPanel BindingContext="{Binding Analysis}" />
                 <views:TipsCard BindingContext="{Binding Analysis}" />
                 <views:FeedbackCard BindingContext="{Binding Feedback}" />
@@ -45,5 +42,5 @@
             <views:HistoryCard BindingContext="{Binding History}" IsVisible="{Binding HasHistory, x:DataType=vm:HistoryViewModel}" />
 
         </VerticalStackLayout>
-    </ScrollView>
+    </controls:PageColumn>
 </ContentPage>

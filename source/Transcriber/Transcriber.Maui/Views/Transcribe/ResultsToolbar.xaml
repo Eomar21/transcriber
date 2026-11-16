@@ -2,12 +2,13 @@
 <ContentView
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
     xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
     x:Class="Transcriber.Maui.Views.Transcribe.ResultsToolbar"
     x:DataType="vm:ResultsViewModel">
 
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceMd}">
-        <SearchBar Placeholder="Search the transcript" Text="{Binding SearchText}" />
-        <Button Grid.Column="1" Text="Copy all" Style="{StaticResource SmallButton}" Command="{Binding CopyAllCommand}" />
+        <material:TextField Title="Search the transcript" Text="{Binding SearchText}" AllowClear="True" />
+        <Button Grid.Column="1" Text="Copy all" StyleClass="FilledTonalButton,Small" Command="{Binding CopyAllCommand}" />
     </Grid>
 </ContentView>

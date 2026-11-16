@@ -9,15 +9,15 @@
     <VerticalStackLayout Spacing="{StaticResource SpaceSm}">
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceMd}">
             <VerticalStackLayout VerticalOptions="Center" Spacing="{StaticResource SpaceSm}">
-                <Label AutomationId="RecordingText" Text="{Binding RecordingText}" TextColor="{StaticResource ErrorColor}"
+                <Label AutomationId="RecordingText" Text="{Binding RecordingText}" TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                        FontAttributes="Bold" Style="{StaticResource Body}" />
-                <ProgressBar AutomationId="RecordingLevel" Progress="{Binding RecordingLevel}" ProgressColor="{StaticResource SuccessColor}"
+                <ProgressBar AutomationId="RecordingLevel" Progress="{Binding RecordingLevel}" ProgressColor="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}"
                              SemanticProperties.Description="Microphone level" />
             </VerticalStackLayout>
-            <Button AutomationId="StopRecordingButton" Grid.Column="1" Text="Stop" Style="{StaticResource PrimaryButton}"
+            <Button AutomationId="StopRecordingButton" Grid.Column="1" Text="Stop" StyleClass="FilledButton,Large"
                     Command="{Binding StopRecordingCommand}" />
         </Grid>
-        <Label AutomationId="MicrophoneSilentWarning" IsVisible="{Binding MicrophoneSilent}" TextColor="{StaticResource WarningColor}" FontSize="13"
+        <Label AutomationId="MicrophoneSilentWarning" IsVisible="{Binding MicrophoneSilent}" TextColor="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" FontSize="13"
                Text="&#x26A0;  No sound is coming in. Check the microphone is connected, not muted, and allowed in your system's privacy settings." />
     </VerticalStackLayout>
 </ContentView>

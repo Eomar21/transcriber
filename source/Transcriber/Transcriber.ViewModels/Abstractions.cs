@@ -76,12 +76,21 @@ public sealed record LanguageOption(string Code, string Name, string? Advice = n
 {
     /// <summary>The text in the picker: the name, and the tag when there is one.</summary>
     public string Label => Tag is null ? Name : $"{Name} - {Tag}";
+
+    /// <summary>Pickers that cannot use a display binding show this text.</summary>
+    public override string ToString() => Label;
 }
 
 /// <summary>How many people speak in the recording; a null count means "work it out".</summary>
-public sealed record SpeakerCountOption(string Label, int? Count);
+public sealed record SpeakerCountOption(string Label, int? Count)
+{
+    public override string ToString() => Label;
+}
 
-public sealed record FormatOption(TranscriptFormat Format, string Label);
+public sealed record FormatOption(TranscriptFormat Format, string Label)
+{
+    public override string ToString() => Label;
+}
 
 public enum ResultKind { None, Success, Info, Error }
 

@@ -3,21 +3,18 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Transcriber.ViewModels.Transcribe;assembly=Transcriber.ViewModels"
+    xmlns:controls="clr-namespace:Transcriber.Maui.Controls"
     xmlns:views="clr-namespace:Transcriber.Maui.Views.Transcribe"
     x:Class="Transcriber.Maui.TranscribePage"
     x:DataType="vm:TranscribeViewModel"
     Title="Transcribe">
 
     <!-- The page only arranges the sections. Each section is a view with its own view model. -->
-    <ScrollView x:Name="Scroller" AutomationId="PageScroller">
-      <!-- Centred column; its width is capped in the code-behind (see OnSizeAllocated). -->
-      <VerticalStackLayout x:Name="Column" HorizontalOptions="Center" Margin="0,24" Spacing="{StaticResource SpaceLg}">
+    <controls:PageColumn x:Name="Scroller" AutomationId="PageScroller">
+      <VerticalStackLayout x:Name="Column" Margin="0,24" Spacing="{StaticResource SpaceLg}">
 
             <!-- Header -->
-            <VerticalStackLayout Spacing="{StaticResource SpaceXs}">
-                <Label Text="Transcriber" Style="{StaticResource PageTitle}" />
-                <Label Text="Private, offline transcription. Your audio never leaves this computer." Style="{StaticResource Caption}" />
-            </VerticalStackLayout>
+            <controls:PageHeader Title="Transcriber" Subtitle="Private, offline transcription. Your audio never leaves this computer." />
 
             <!-- 1. Files -->
             <views:FilesCard BindingContext="{Binding Files}" />
@@ -27,8 +24,8 @@
 
             <!-- 3. Action -->
             <Grid ColumnDefinitions="*,Auto">
-                <Button AutomationId="TranscribeButton" Text="Transcribe" Style="{StaticResource PrimaryButton}" Command="{Binding TranscribeCommand}" />
-                <Button Grid.Column="1" Text="Cancel" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0"
+                <Button AutomationId="TranscribeButton" Text="Transcribe" StyleClass="FilledButton,Large" Command="{Binding TranscribeCommand}" />
+                <Button Grid.Column="1" Text="Cancel" StyleClass="OutlinedButton,Large" Margin="12,0,0,0"
                         Command="{Binding TranscribeCancelCommand}" IsVisible="{Binding IsBusy}" />
             </Grid>
 
@@ -42,7 +39,7 @@
             </VerticalStackLayout>
 
             <!-- 4. Results -->
-            <Border Style="{StaticResource Card}" IsVisible="{Binding Results.HasResults}">
+            <Border x:Name="ResultsCard" Style="{StaticResource Card}" IsVisible="{Binding Results.HasResults}">
                 <VerticalStackLayout Spacing="{StaticResource SpaceMd}">
                     <views:ResultsToolbar BindingContext="{Binding Results}" />
                     <views:PlayerBar BindingContext="{Binding Playback}" />
@@ -51,5 +48,5 @@
             </Border>
 
       </VerticalStackLayout>
-    </ScrollView>
+    </controls:PageColumn>
 </ContentPage>
