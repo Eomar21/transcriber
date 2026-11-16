@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Visual Studio: Test menu, Configure Run Settings, Select Solution Wide runsettings File, then choose this file.
+  Command line: dotnet test Transcriber.UiTests with the setting "settings" set to the path of this file.
+  Build the app first. The UI tests start the real app and use its window, so do not use the mouse and keyboard while they run.
+-->
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <TRANSCRIBER_UI_TESTS>1</TRANSCRIBER_UI_TESTS>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

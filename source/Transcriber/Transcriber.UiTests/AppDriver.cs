@@ -68,6 +68,24 @@ public sealed class AppDriver : IDisposable
         Thread.Sleep(500);
     }
 
+    /// <summary>Makes the window smaller, so that the parts of the page lower down are outside the window until the page scrolls.</summary>
+    public void Resize(double width, double height)
+    {
+        Window.Patterns.Transform.Pattern.Resize(width, height);
+        Thread.Sleep(500);
+    }
+
+    /// <summary>True when the control is inside the window, so a person can see all of it without scrolling.</summary>
+    public bool IsInView(string automationId)
+    {
+        var box = Find(automationId)?.BoundingRectangle;
+        var window = Window.BoundingRectangle;
+        return box is { IsEmpty: false } b && b.Top >= window.Top && b.Bottom <= window.Bottom && b.Left >= window.Left && b.Right <= window.Right;
+    }
+
+    /// <summary>How far the page is scrolled, from 0 (top) to 100 (bottom). It is negative when the page does not scroll.</summary>
+    public double PageScrollPercent() => Get("PageScroller").Patterns.Scroll.Pattern.VerticalScrollPercent.Value;
+
     public void Maximize()
     {
         try { Window.Patterns.Window.PatternOrDefault?.SetWindowVisualState(FlaUI.Core.Definitions.WindowVisualState.Maximized); } catch { }

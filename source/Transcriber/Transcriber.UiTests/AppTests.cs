@@ -67,6 +67,9 @@ public class AppTests
         using var app = new AppDriver(file);
         try
         {
+            // A small window: the progress bar is below the fold, so the page has to scroll to it. In a tall window the
+            // whole page fits and there is nothing to scroll.
+            app.Resize(1000, 640);
             AppDriver.Wait(() => app.Get("TranscribeButton").IsEnabled, TimeSpan.FromSeconds(10), "the file to be added");
             Assert.Null(app.Find("RunProgress"));
             var scroller = app.Get("PageScroller");
