@@ -21,7 +21,7 @@ Both use [OpenAI Whisper](https://github.com/openai/whisper) through [Whisper.ne
 
 ## Demo video
 
-https://github.com/user-attachments/assets/e7713ba7-ebb6-470d-ae62-a2fc1efcd67d
+https://github.com/user-attachments/assets/33c374bf-46ce-4fe9-80ff-ef0cf6aefae5
 
 ## Contents
 
