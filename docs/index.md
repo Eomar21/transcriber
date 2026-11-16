@@ -15,6 +15,12 @@ The app works on your computer only. It does not send your audio to the internet
 [Download the latest version](https://github.com/Eomar21/transcriber/releases/latest){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Get started]({{ '/getting-started' | relative_url }}){: .btn .fs-5 .mb-4 .mb-md-0 }
 
+<video controls muted playsinline preload="metadata" width="100%" style="margin-top: 1.5rem">
+  <source src="{{ '/demo.mp4' | relative_url }}" type="video/mp4">
+</video>
+
+The video is about one minute long. It shows the Transcribe mode and the Practice mode.
+
 ---
 
 ## The two modes

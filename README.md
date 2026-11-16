@@ -19,8 +19,15 @@ Transcriber has two modes, each on its own tab:
 
 Both use [OpenAI Whisper](https://github.com/openai/whisper) through [Whisper.net](https://github.com/sandrohanea/whisper.net), running locally.
 
+## Demo video
+
+<video src="https://github.com/Eomar21/transcriber/raw/master/docs/demo.mp4" controls muted playsinline width="100%"></video>
+
+The video is about one minute long. It shows the Transcribe mode and the Practice mode. If the video does not play, [download it](docs/demo.mp4).
+
 ## Contents
 
+- [Demo video](#demo-video)
 - [Transcribe mode](#transcribe-mode)
 - [Practice mode](#practice-mode)
 - [Get it](#get-it)
