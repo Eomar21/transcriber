@@ -12,18 +12,27 @@
             <VerticalStackLayout AutomationId="PracticeTips" Spacing="{StaticResource SpaceMd}" BindableLayout.ItemsSource="{Binding Tips}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:TipItem">
+                        <Border Style="{StaticResource Tile}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Kind}" Value="Good">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessTintLight}, Dark={StaticResource SuccessTintDark}}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding Kind}" Value="Improve">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource WarningTintLight}, Dark={StaticResource WarningTintDark}}" />
+                                </DataTrigger>
+                            </Border.Triggers>
                         <Grid ColumnDefinitions="28,*" ColumnSpacing="{StaticResource SpaceSm}">
                             <Label Text="{Binding Symbol}" FontAttributes="Bold" FontSize="16" VerticalOptions="Start" HorizontalTextAlignment="Center"
                                    SemanticProperties.Description="{Binding Kind}">
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Good">
-                                        <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}" />
                                     </DataTrigger>
                                     <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Improve">
-                                        <Setter Property="TextColor" Value="{StaticResource WarningColor}" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" />
                                     </DataTrigger>
                                     <DataTrigger TargetType="Label" Binding="{Binding Kind}" Value="Info">
-                                        <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>
@@ -32,6 +41,7 @@
                                 <Label Text="{Binding Detail}" Style="{StaticResource Caption}" LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                         </Grid>
+                        </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>

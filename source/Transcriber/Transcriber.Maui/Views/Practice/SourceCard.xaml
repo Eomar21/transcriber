@@ -2,6 +2,7 @@
 <ContentView
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:material="http://schemas.enisn-projects.io/dotnet/maui/uraniumui/material"
     xmlns:vm="clr-namespace:Transcriber.ViewModels.Practice;assembly=Transcriber.ViewModels"
     xmlns:models="clr-namespace:Transcriber.ViewModels;assembly=Transcriber.ViewModels"
     xmlns:views="clr-namespace:Transcriber.Maui.Views.Practice"
@@ -24,9 +25,20 @@
                     <Label Text="Record yourself with the microphone, or choose an audio or video file, for example a presentation rehearsal." Style="{StaticResource Caption}" />
                 </VerticalStackLayout>
                 <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource SpaceMd}" VerticalOptions="Center">
-                    <Button AutomationId="RecordButton" Text="&#x25CF;  Record" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding Microphone.StartRecordingCommand}" />
-                    <Button AutomationId="PracticeChooseButton" Text="Choose file" Style="{StaticResource PrimaryButton}"
+                    <!-- The red dot lies on top of the button and does not take clicks. It flashes while recording (see the code-behind). -->
+                    <Grid>
+                        <Button AutomationId="RecordButton" Text="Record" StyleClass="OutlinedButton,Large" Padding="44,0,24,0"
+                                Command="{Binding Microphone.StartRecordingCommand}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding Microphone.IsRecording}" Value="True">
+                                    <Setter Property="Text" Value="Recording" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Ellipse x:Name="RecordDot" WidthRequest="10" HeightRequest="10" HorizontalOptions="Start" VerticalOptions="Center"
+                                 Margin="22,0,0,0" InputTransparent="True" Fill="{StaticResource RecordRed}" />
+                    </Grid>
+                    <Button AutomationId="PracticeChooseButton" Text="Choose file" StyleClass="FilledButton,Large"
                             Command="{Binding ChooseFileCommand}" IsEnabled="{Binding IsIdle}" />
                 </HorizontalStackLayout>
             </Grid>
@@ -35,13 +47,11 @@
             <views:MicrophonePanel BindingContext="{Binding Microphone}" IsVisible="{Binding IsRecording, x:DataType=vm:MicrophoneViewModel}" />
 
             <VerticalStackLayout Spacing="4">
-                <Label Text="Language spoken" Style="{StaticResource FieldLabel}" />
-                <Picker AutomationId="PracticeLanguagePicker" ItemsSource="{Binding Languages}"
-                        ItemDisplayBinding="{Binding Label, x:DataType=models:LanguageOption}"
+                <material:PickerField Title="Language spoken" AutomationId="PracticeLanguagePicker" ItemsSource="{Binding Languages}"
                         SelectedItem="{Binding SelectedLanguage}" IsEnabled="{Binding IsIdle}"
                         WidthRequest="260" HorizontalOptions="Start" />
                 <Label AutomationId="PracticeLanguageAdvice" Text="{Binding LanguageAdvice}" Style="{StaticResource Caption}"
-                       TextColor="{StaticResource WarningColor}" IsVisible="{Binding HasLanguageAdvice}" />
+                       TextColor="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" IsVisible="{Binding HasLanguageAdvice}" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </Border>

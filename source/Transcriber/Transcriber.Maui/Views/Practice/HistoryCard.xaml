@@ -14,21 +14,23 @@
                     <Label Text="Your progress" Style="{StaticResource SectionTitle}" />
                     <Label Text="Past practice runs, newest first. Saved only on this computer." Style="{StaticResource Caption}" />
                 </VerticalStackLayout>
-                <Button Grid.Column="1" Text="Clear all" Style="{StaticResource SmallButton}" Command="{Binding ClearHistoryCommand}" />
+                <Button Grid.Column="1" Text="Clear all" StyleClass="FilledTonalButton,Small" Command="{Binding ClearHistoryCommand}" />
             </Grid>
             <VerticalStackLayout AutomationId="PracticeHistory" Spacing="{StaticResource SpaceSm}" BindableLayout.ItemsSource="{Binding Sessions}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:SessionItem">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceSm}" Padding="0,4">
+                        <Border Style="{StaticResource Tile}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource SpaceSm}">
                             <VerticalStackLayout Spacing="{StaticResource SpaceXs}">
                                 <Label Text="{Binding Title}" Style="{StaticResource Body}" LineBreakMode="MiddleTruncation" />
                                 <Label Text="{Binding When}" Style="{StaticResource Caption}" />
                                 <Label Text="{Binding Summary}" Style="{StaticResource Caption}" />
                             </VerticalStackLayout>
-                            <Button Grid.Column="1" Text="Delete" Style="{StaticResource SmallButton}" VerticalOptions="Center"
+                            <Button Grid.Column="1" Text="Delete" StyleClass="FilledTonalButton,Small" VerticalOptions="Center"
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:HistoryViewModel}}, Path=DeleteSessionCommand, x:DataType=vm:HistoryViewModel}"
                                     CommandParameter="{Binding .}" />
                         </Grid>
+                        </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>

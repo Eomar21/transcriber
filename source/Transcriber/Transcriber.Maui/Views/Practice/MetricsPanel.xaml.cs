@@ -68,7 +68,7 @@ public partial class MetricsPanel : ContentView
                 Children =
                 {
                     new Label { Text = metric.Label, Style = (Style)resources["Caption"] },
-                    new Label { Text = metric.Value, FontSize = 22, FontAttributes = FontAttributes.Bold, Style = (Style)resources["Body"] },
+                    new Label { Text = metric.Value, FontSize = 24, FontAttributes = FontAttributes.Bold, Style = (Style)resources["Body"], TextColor = (Color)resources[AppInfo.Current.RequestedTheme == AppTheme.Dark ? "PrimaryDark" : "Primary"] },
                     new Label { Text = metric.Hint, Style = (Style)resources["Caption"], LineBreakMode = LineBreakMode.WordWrap },
                 },
             },
