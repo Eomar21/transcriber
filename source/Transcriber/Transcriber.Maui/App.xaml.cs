@@ -31,6 +31,8 @@ namespace Transcriber.Maui
             return new Window(new AppShell())
             {
                 Title = "Transcriber",
+                // The logo and the name in the title bar, in the place of the system icon. The tabs are below it.
+                TitleBar = new TitleBar { Title = "Transcriber", Icon = "app_logo.png", HeightRequest = 40 },
                 Width = width,
                 Height = height,
                 X = Math.Max(0, (screenWidth - width) / 2),
