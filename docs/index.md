@@ -19,8 +19,6 @@ The app works on your computer only. It does not send your audio to the internet
   <source src="{{ '/demo.mp4' | relative_url }}" type="video/mp4">
 </video>
 
-The video is about one minute long. It shows the Transcribe mode and the Practice mode.
-
 ---
 
 ## The two modes
