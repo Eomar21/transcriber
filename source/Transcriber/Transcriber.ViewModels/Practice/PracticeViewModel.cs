@@ -25,6 +25,9 @@ public sealed partial class PracticeViewModel : ObservableObject
     private readonly IVerbatimPromptProvider _verbatimPrompts;
     private readonly Func<DateTimeOffset> _now;
 
+    /// <summary>Raised when an analysis has ended with a result and its bar is gone. The page then brings the result into view.</summary>
+    public event EventHandler? ResultsReady;
+
     public PracticeViewModel(
         PracticeState state,
         SourceViewModel source,
@@ -55,6 +58,7 @@ public sealed partial class PracticeViewModel : ObservableObject
         _now = now ?? (() => DateTimeOffset.Now);
 
         // The sections only raise events. What each event means for the others is decided here and only here.
+        Status.ProgressEnded += (_, _) => { if (Analysis.HasResult) ResultsReady?.Invoke(this, EventArgs.Empty); };
         Source.SourceChanged += (_, _) => ClearResult();
         Source.PropertyChanged += (_, e) =>
         {
@@ -111,7 +115,8 @@ public sealed partial class PracticeViewModel : ObservableObject
                 // A report that was sent before the stop can arrive after it. It must not replace the stop text.
                 if (ct.IsCancellationRequested) return;
                 Status.StatusText = p.Stage;
-                Status.Progress = Math.Clamp(p.Fraction, 0, 1);
+                // A report that arrives late must not move the bar back: the finished bar has to stay full.
+                Status.Progress = Math.Max(Status.Progress, Math.Clamp(p.Fraction, 0, 1));
             });
 
             var segments = await _whisper.TranscribeAsync(audio, new TranscriptionOptions

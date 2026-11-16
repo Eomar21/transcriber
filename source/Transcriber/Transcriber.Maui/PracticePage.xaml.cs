@@ -4,9 +4,6 @@ namespace Transcriber.Maui;
 
 public partial class PracticePage : ContentPage
 {
-    private const double MaxColumnWidth = 912;
-    private const double SideMargin = 24;
-
     private readonly PracticeViewModel _viewModel;
 
     // The page is only a view: all behaviour lives in the view models of its sections.
@@ -14,7 +11,9 @@ public partial class PracticePage : ContentPage
     {
         InitializeComponent();
         BindingContext = _viewModel = viewModel;
-        Controls.ScrollToProgress.When(_viewModel.Status, () => _viewModel.Status.ShowProgress, Scroller, ProgressView);
+        Controls.ScrollIntoView.When(_viewModel.Status, "ShowProgress", () => _viewModel.Status.ShowProgress, Scroller, ProgressView);
+        // The view model says when the result is ready: after the finished bar was seen and hidden.
+        _viewModel.ResultsReady += async (_, _) => await Controls.ScrollIntoView.ToAsync(Scroller, ResultsView, ScrollToPosition.Start);
     }
 
     // Look for Ollama each time the tab is shown, so starting it later is picked up without restarting the app.
@@ -22,13 +21,5 @@ public partial class PracticePage : ContentPage
     {
         base.OnAppearing();
         _viewModel.Feedback.RefreshFeedbackModelsCommand.Execute(null);
-    }
-
-    // Layout only: keep the content column centred and no wider than 912.
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        if (width > 0)
-            Column.WidthRequest = Math.Max(0, Math.Min(MaxColumnWidth, width - 2 * SideMargin));
     }
 }

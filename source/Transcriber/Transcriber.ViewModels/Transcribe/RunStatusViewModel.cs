@@ -30,6 +30,13 @@ public sealed partial class RunStatusViewModel : SectionViewModel
 
     private int _runId;
 
+    /// <summary>
+    /// Raised once for each run that ended with a saved result, after the bar was hidden. A run that failed, was cancelled,
+    /// or was replaced by a new run does not raise it. The page uses it to scroll to the transcript, so the finish of the bar
+    /// is seen first.
+    /// </summary>
+    public event EventHandler? ResultsReady;
+
     /// <summary>How long the bar stays after a run that finished.</summary>
     public static TimeSpan FinishLinger { get; } = TimeSpan.FromMilliseconds(3000);
 
@@ -45,7 +52,11 @@ public sealed partial class RunStatusViewModel : SectionViewModel
     {
         var id = _runId;
         if (Progress >= 1 && linger > TimeSpan.Zero) await Task.Delay(linger);
-        if (id == _runId) ShowProgress = false;
+        if (id != _runId) return; // a new run started: this end is out of date
+
+        ShowProgress = false;
+        // The finished bar has been seen and is gone: now the page may bring the result into view.
+        if (ResultKind == ResultKind.Success) ResultsReady?.Invoke(this, EventArgs.Empty);
     }
     [ObservableProperty] private string _statusText = string.Empty;
 

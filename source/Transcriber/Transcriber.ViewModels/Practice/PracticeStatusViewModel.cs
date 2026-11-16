@@ -16,6 +16,9 @@ public sealed partial class PracticeStatusViewModel(PracticeState state, IProgre
 
     private int _runId;
 
+    /// <summary>Raised once for each analysis, after the bar was hidden. A new analysis that started in the meantime does not raise it.</summary>
+    public event EventHandler? ProgressEnded;
+
     /// <summary>How long the bar stays after an analysis that finished.</summary>
     public static TimeSpan FinishLinger { get; } = TimeSpan.FromMilliseconds(3000);
 
@@ -31,7 +34,10 @@ public sealed partial class PracticeStatusViewModel(PracticeState state, IProgre
     {
         var id = _runId;
         if (Progress >= 1 && linger > TimeSpan.Zero) await Task.Delay(linger);
-        if (id == _runId) ShowProgress = false;
+        if (id != _runId) return; // a new analysis started: this end is out of date
+
+        ShowProgress = false;
+        ProgressEnded?.Invoke(this, EventArgs.Empty);
     }
     [ObservableProperty] private string _statusText = "";
 
