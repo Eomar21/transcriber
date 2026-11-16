@@ -558,4 +558,25 @@ public class TranscribeViewModelTests : IDisposable
 
         Assert.Equal($"Hello world{Environment.NewLine}Goodbye moon", clipboard.Text);
     }
+
+    [Fact]
+    public async Task The_page_is_told_to_show_the_transcript_only_after_the_finished_bar_is_gone()
+    {
+        var (vm, _, _, _, _) = Create();
+        vm.Files.AddFiles([MakeInput()]);
+        var revealed = new TaskCompletionSource<bool>();
+        vm.Status.ResultsReady += (_, _) => revealed.TrySetResult(vm.Status.ShowProgress);
+
+        await vm.TranscribeCommand.ExecuteAsync(null);
+
+        // The run is done and the bar is full. It stays for a moment, so the finish can be seen. Nothing scrolls yet.
+        Assert.Equal(ResultKind.Success, vm.Status.ResultKind);
+        Assert.True(vm.Status.ShowProgress);
+        Assert.False(revealed.Task.IsCompleted);
+
+        var barWasShownAtTheReveal = await revealed.Task.WaitAsync(RunStatusViewModel.FinishLinger + TimeSpan.FromSeconds(5));
+
+        Assert.False(barWasShownAtTheReveal);
+        Assert.True(vm.Results.HasResults);
+    }
 }

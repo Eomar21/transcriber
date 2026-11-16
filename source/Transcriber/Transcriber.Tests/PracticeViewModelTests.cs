@@ -790,4 +790,40 @@ public class PracticeViewModelTests : IDisposable
 
         Assert.False(vm.Microphone.MicrophoneSilent);
     }
+
+    [Fact]
+    public async Task The_page_is_told_to_show_the_result_only_after_the_finished_bar_is_gone()
+    {
+        var vm = Create();
+        vm.Source.SetFile(MakeFile());
+        var revealed = new TaskCompletionSource<bool>();
+        vm.ResultsReady += (_, _) => revealed.TrySetResult(vm.Status.ShowProgress);
+
+        await Analyze(vm);
+
+        // The analysis is done and the bar is full. It stays for a moment, so the finish can be seen. Nothing scrolls yet.
+        Assert.True(vm.Analysis.HasResult);
+        Assert.True(vm.Status.ShowProgress);
+        Assert.False(revealed.Task.IsCompleted);
+
+        var barWasShownAtTheReveal = await revealed.Task.WaitAsync(PracticeStatusViewModel.FinishLinger + TimeSpan.FromSeconds(5));
+
+        Assert.False(barWasShownAtTheReveal);
+    }
+
+    [Fact]
+    public async Task An_analysis_that_fails_does_not_scroll_the_page()
+    {
+        var vm = Create();
+        vm.Source.SetFile(MakeFile());
+        _reader.Fail = new IOException("cannot read");
+        var revealed = 0;
+        vm.ResultsReady += (_, _) => revealed++;
+
+        await Analyze(vm);
+        await Task.Delay(300);
+
+        Assert.False(vm.Analysis.HasResult);
+        Assert.Equal(0, revealed);
+    }
 }
